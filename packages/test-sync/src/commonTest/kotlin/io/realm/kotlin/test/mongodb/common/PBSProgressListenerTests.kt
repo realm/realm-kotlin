@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.last
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.supervisorScope
@@ -118,12 +117,10 @@ class PBSProgressListenerTests {
                     flow.takeWhile { completed -> completed < 3 }
                         .collect { completed ->
                             realm.syncSession.runWhilePaused {
-                                println("Writing data")
                                 uploadRealm.writeSampleData(
                                     TEST_SIZE,
                                     timeout = TIMEOUT
                                 )
-                                println("Data written")
                             }
                         }
                 }
@@ -287,16 +284,13 @@ class PBSProgressListenerTests {
         }
 
         timeout?.let {
-            println("Upload all changes")
             assertTrue { syncSession.uploadAllLocalChanges(timeout) }
-            println("Uploaded")
         }
     }
 
     // Operator that will return a flow that emits an increasing integer on each completion event
     private fun Flow<Progress>.completionCounter(): Flow<Int> =
-        onEach { println(it) }
-            .filter { it.isTransferComplete }
+        filter { it.isTransferComplete }
             .scan(0) { accumulator, _ ->
                 accumulator + 1
             }
