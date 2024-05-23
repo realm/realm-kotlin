@@ -45,36 +45,19 @@ class ParentCollectionDataType : RealmObject {
     var child: ChildCollectionDataType? = null
     var embeddedChild: EmbeddedChildCollectionDataType? = null
     var any: RealmAny? = null
-
-    // Supplying custom companion object to work around that multiple K2 FIR extension clashes if
-    // they both generate a Companion.
-    // https://youtrack.jetbrains.com/issue/KT-62194/K2-Two-compiler-plugins-interference-in-generated-companion-object
-    companion object
 }
 
-@Serializable
 class ChildCollectionDataType : RealmObject {
     @PrimaryKey
     @Suppress("VariableNaming")
     var _id: ObjectId = BsonObjectId()
     var name: String = "CHILD-DEFAULT"
-
-    // Supplying custom companion object to work around that multiple K2 FIR extension clashes if
-    // they both generate a Companion.
-    // https://youtrack.jetbrains.com/issue/KT-62194/K2-Two-compiler-plugins-interference-in-generated-companion-object
-    companion object
 }
 
-@Serializable
 class EmbeddedChildCollectionDataType : EmbeddedRealmObject {
     @Suppress("VariableNaming")
     var _id: ObjectId = BsonObjectId()
     var name: String = "EMBEDDEDCHILD-DEFAULT"
-
-    // Supplying custom companion object to work around that multiple K2 FIR extension clashes if
-    // they both generate a Companion.
-    // https://youtrack.jetbrains.com/issue/KT-62194/K2-Two-compiler-plugins-interference-in-generated-companion-object
-    companion object
 }
 
 internal val COLLECTION_SCHEMAS = setOf(
