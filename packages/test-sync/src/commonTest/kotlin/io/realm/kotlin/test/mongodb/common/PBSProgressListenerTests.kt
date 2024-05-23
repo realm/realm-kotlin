@@ -9,6 +9,7 @@ import io.realm.kotlin.mongodb.sync.Direction
 import io.realm.kotlin.mongodb.sync.Progress
 import io.realm.kotlin.mongodb.sync.ProgressMode
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
@@ -21,10 +22,10 @@ import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.supervisorScope
@@ -84,7 +85,9 @@ class PBSProgressListenerTests {
                             }
                         }
                     }
-                    uploadRealm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
+                    realm.syncSession.runWhilePaused {
+                        uploadRealm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
+                    }
 
                     transferCompleteJob.await()
 
@@ -111,10 +114,12 @@ class PBSProgressListenerTests {
                 withTimeout(TIMEOUT) {
                     flow.takeWhile { completed -> completed < 3 }
                         .collect { completed ->
-                            uploadRealm.writeSampleData(
-                                TEST_SIZE,
-                                timeout = TIMEOUT
-                            )
+                            realm.syncSession.runWhilePaused {
+                                uploadRealm.writeSampleData(
+                                    TEST_SIZE,
+                                    timeout = TIMEOUT
+                                )
+                            }
                         }
                 }
             }
@@ -124,7 +129,7 @@ class PBSProgressListenerTests {
     @Test
     fun uploadProgressListener_changesOnly() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
-            for (i in 0..3) {
+            repeat(3) {
                 realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
                 realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES)
                     .run {
@@ -142,13 +147,16 @@ class PBSProgressListenerTests {
     @Test
     fun uploadProgressListener_indefinitely() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
-            val flow = realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
+            val flow = realm.syncSession
+                .progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
                 .completionCounter()
 
             withTimeout(TIMEOUT) {
                 flow.takeWhile { completed -> completed < 3 }
-                    .collect { completed ->
-                        realm.writeSampleData(TEST_SIZE)
+                    .collect { _ ->
+                        realm.syncSession.runWhilePaused {
+                            realm.writeSampleData(TEST_SIZE)
+                        }
                         realm.syncSession.uploadAllLocalChangesOrFail()
                     }
             }
@@ -162,7 +170,9 @@ class PBSProgressListenerTests {
         }
 
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
-            val flow = realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
+            val flow = realm.syncSession
+                .progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
+
             assertFailsWith<RuntimeException> {
                 flow.collect {
                     @Suppress("TooGenericExceptionThrown")
@@ -185,7 +195,9 @@ class PBSProgressListenerTests {
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
             // Setup a flow that we are just going to cancel
             val flow =
-                realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
+                realm.syncSession
+                    .progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
+
             supervisorScope {
                 val mutex = Mutex(true)
                 val task = async {
@@ -260,9 +272,15 @@ class PBSProgressListenerTests {
     private suspend fun Realm.writeSampleData(count: Int, timeout: Duration? = null) {
         repeat(count) {
             write {
-                copyToRealm(SyncObjectWithAllTypes().apply { binaryField = Random.nextBytes(1_000_000) })
+                copyToRealm(
+                    SyncObjectWithAllTypes()
+                        .apply {
+                            binaryField = Random.nextBytes(1_000_000)
+                        }
+                )
             }
         }
+
         timeout?.let {
             assertTrue { syncSession.uploadAllLocalChanges(timeout) }
         }
@@ -270,7 +288,8 @@ class PBSProgressListenerTests {
 
     // Operator that will return a flow that emits an increasing integer on each completion event
     private fun Flow<Progress>.completionCounter(): Flow<Int> =
-        filter { it.isTransferComplete }
+        onEach { println(it) }
+            .filter { it.isTransferComplete }
             .scan(0) { accumulator, _ ->
                 accumulator + 1
             }
@@ -288,5 +307,11 @@ class PBSProgressListenerTests {
             fail("Test not setup correctly. Partition value is missing")
         }
         return partitionValue
+    }
+
+    private suspend fun SyncSession.runWhilePaused(block: suspend () -> Unit) {
+        pause()
+        block()
+        resume()
     }
 }
