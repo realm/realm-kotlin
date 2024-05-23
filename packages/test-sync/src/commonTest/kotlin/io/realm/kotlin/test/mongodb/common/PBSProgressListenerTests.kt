@@ -4,6 +4,8 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.Direction
 import io.realm.kotlin.mongodb.sync.Progress
@@ -51,6 +53,7 @@ class PBSProgressListenerTests {
 
     @BeforeTest
     fun setup() {
+        RealmLog.setLevel(LogLevel.INFO)
         app = TestApp(this::class.simpleName, appName = TEST_APP_PARTITION)
         partitionValue = org.mongodb.kbson.ObjectId().toString()
     }
@@ -115,10 +118,12 @@ class PBSProgressListenerTests {
                     flow.takeWhile { completed -> completed < 3 }
                         .collect { completed ->
                             realm.syncSession.runWhilePaused {
+                                println("Writing data")
                                 uploadRealm.writeSampleData(
                                     TEST_SIZE,
                                     timeout = TIMEOUT
                                 )
+                                println("Data written")
                             }
                         }
                 }
@@ -282,7 +287,9 @@ class PBSProgressListenerTests {
         }
 
         timeout?.let {
+            println("Upload all changes")
             assertTrue { syncSession.uploadAllLocalChanges(timeout) }
+            println("Uploaded")
         }
     }
 
