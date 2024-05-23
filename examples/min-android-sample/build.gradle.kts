@@ -15,7 +15,7 @@ buildscript {
     }
     dependencies {
         classpath("com.android.tools.build:gradle:7.1.3")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.0-RC1")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.0")
         classpath("io.realm.kotlin:gradle-plugin:${rootProject.extra["realmVersion"]}")
     }
 }
