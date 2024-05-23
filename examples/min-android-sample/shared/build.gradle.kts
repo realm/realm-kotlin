@@ -18,7 +18,7 @@ kotlin {
                 implementation("io.realm.kotlin:library-base:${rootProject.ext["realmVersion"]}")
             }
         }
-        val androidTest by getting
+        val androidInstrumentedTest by getting
         val jvmMain by getting
     }
 }

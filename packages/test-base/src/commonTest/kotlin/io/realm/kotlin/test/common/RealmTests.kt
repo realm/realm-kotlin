@@ -53,6 +53,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -318,7 +319,7 @@ class RealmTests {
         }
         writeStarted.lock()
         realm.close()
-        assert(write.await() is RuntimeException)
+        assertIs<RuntimeException>(write.await())
         realm = Realm.open(configuration)
         assertEquals(0, realm.query<Parent>().find().size)
     }

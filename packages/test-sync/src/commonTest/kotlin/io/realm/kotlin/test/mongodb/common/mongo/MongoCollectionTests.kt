@@ -1457,6 +1457,11 @@ inline operator fun <reified T : Any> BsonDocument.Companion.invoke(
 @Serializable
 class NonSchemaType : RealmObject {
     var name = "Unknown"
+
+    // Supplying custom companion object to work around that multiple K2 FIR extension clashes if
+    // they both generate a Companion.
+    // https://youtrack.jetbrains.com/issue/KT-62194/K2-Two-compiler-plugins-interference-in-generated-companion-object
+    companion object
 }
 
 // Distinct data type with same fields as the above CollectionDataType used to showcase injection
