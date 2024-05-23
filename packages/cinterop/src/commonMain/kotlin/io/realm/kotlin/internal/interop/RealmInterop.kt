@@ -55,6 +55,8 @@ expect val INVALID_PROPERTY_KEY: PropertyKey
 const val OBJECT_ID_BYTES_SIZE = 12
 const val UUID_BYTES_SIZE = 16
 
+const val INDEX_NOT_FOUND = -1L
+
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
 interface CapiT
 interface RealmConfigT : CapiT
@@ -304,6 +306,8 @@ expect object RealmInterop {
         isDefault: Boolean
     )
     fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer
+    fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer
+    fun realm_set_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer
     fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long)
     fun <T> realm_object_get_parent(
         obj: RealmObjectPointer,
@@ -315,10 +319,17 @@ expect object RealmInterop {
     fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer
     fun realm_list_size(list: RealmListPointer): Long
     fun MemAllocator.realm_list_get(list: RealmListPointer, index: Long): RealmValue
+    fun realm_list_find(list: RealmListPointer, value: RealmValue): Long
+    fun realm_list_get_list(list: RealmListPointer, index: Long): RealmListPointer
+    fun realm_list_get_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
     fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue)
     fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer
     // Returns the element previously at the specified position
     fun realm_list_set(list: RealmListPointer, index: Long, inputTransport: RealmValue)
+    fun realm_list_insert_list(list: RealmListPointer, index: Long): RealmListPointer
+    fun realm_list_insert_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
+    fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer
+    fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
 
     // Returns the newly inserted element as the previous embedded element is automatically delete
     // by this operation
@@ -350,10 +361,19 @@ expect object RealmInterop {
         dictionary: RealmMapPointer,
         mapKey: RealmValue
     ): RealmValue
+    fun realm_dictionary_find_list(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmListPointer
+    fun realm_dictionary_find_dictionary(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmMapPointer
     fun MemAllocator.realm_dictionary_get(
         dictionary: RealmMapPointer,
         pos: Int
     ): Pair<RealmValue, RealmValue>
+
     fun MemAllocator.realm_dictionary_insert(
         dictionary: RealmMapPointer,
         mapKey: RealmValue,
@@ -375,6 +395,8 @@ expect object RealmInterop {
         dictionary: RealmMapPointer,
         mapKey: RealmValue
     ): RealmValue
+    fun realm_dictionary_insert_list(dictionary: RealmMapPointer, mapKey: RealmValue): RealmListPointer
+    fun realm_dictionary_insert_dictionary(dictionary: RealmMapPointer, mapKey: RealmValue): RealmMapPointer
     fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer
     fun realm_dictionary_resolve_in(
         dictionary: RealmMapPointer,
@@ -439,6 +461,8 @@ expect object RealmInterop {
 
     // FIXME OPTIMIZE Get many
     fun MemAllocator.realm_results_get(results: RealmResultsPointer, index: Long): RealmValue
+    fun realm_results_get_list(results: RealmResultsPointer, index: Long): RealmListPointer
+    fun realm_results_get_dictionary(results: RealmResultsPointer, index: Long): RealmMapPointer
     fun realm_results_delete_all(results: RealmResultsPointer)
 
     fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer
@@ -593,6 +617,12 @@ expect object RealmInterop {
 
     fun realm_set_log_level(level: CoreLogLevel)
 
+    fun realm_set_log_level_category(category: String, level: CoreLogLevel)
+
+    fun realm_get_log_level_category(category: String): CoreLogLevel
+
+    fun realm_get_category_names(): List<String>
+
     fun realm_app_config_set_metadata_mode(
         appConfig: RealmAppConfigurationPointer,
         metadataMode: MetadataMode
@@ -742,6 +772,7 @@ expect object RealmInterop {
         app: RealmAppPointer,
         user: RealmUserPointer,
         name: String,
+        serviceName: String? = null,
         serializedEjsonArgs: String, // as ejson
         callback: AppCallback<String>
     )

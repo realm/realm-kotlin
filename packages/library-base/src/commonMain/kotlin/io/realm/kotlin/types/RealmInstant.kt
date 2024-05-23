@@ -37,7 +37,7 @@ import io.realm.kotlin.internal.platform.currentTime
 public interface RealmInstant : Comparable<RealmInstant> {
 
     public companion object {
-        private const val SEC_AS_NANOSECOND: Int = 1_000_000_000
+        internal const val SEC_AS_NANOSECOND: Int = 1_000_000_000
 
         /**
          * Minimum timestamp that can be stored in Realm.

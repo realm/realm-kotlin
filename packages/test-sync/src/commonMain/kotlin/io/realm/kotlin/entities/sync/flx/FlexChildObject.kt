@@ -16,9 +16,9 @@
 
 package io.realm.kotlin.entities.sync.flx
 
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.mongodb.kbson.BsonObjectId
 
 /**
  * Object used when testing Flexible Sync.
@@ -26,7 +26,7 @@ import io.realm.kotlin.types.annotations.PrimaryKey
 class FlexChildObject : RealmObject {
     @PrimaryKey
     @Suppress("VariableNaming")
-    var _id: ObjectId = ObjectId.create()
+    var _id: BsonObjectId = BsonObjectId()
     var section: Int = 0
     var name: String = ""
 }

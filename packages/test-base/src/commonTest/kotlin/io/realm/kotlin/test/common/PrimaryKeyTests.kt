@@ -28,8 +28,6 @@ import io.realm.kotlin.entities.primarykey.PrimaryKeyInt
 import io.realm.kotlin.entities.primarykey.PrimaryKeyIntNullable
 import io.realm.kotlin.entities.primarykey.PrimaryKeyLong
 import io.realm.kotlin.entities.primarykey.PrimaryKeyLongNullable
-import io.realm.kotlin.entities.primarykey.PrimaryKeyObjectId
-import io.realm.kotlin.entities.primarykey.PrimaryKeyObjectIdNullable
 import io.realm.kotlin.entities.primarykey.PrimaryKeyRealmUUID
 import io.realm.kotlin.entities.primarykey.PrimaryKeyRealmUUIDNullable
 import io.realm.kotlin.entities.primarykey.PrimaryKeyShort
@@ -43,7 +41,6 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.kotlin.test.util.TypeDescriptor.rType
 import io.realm.kotlin.test.util.use
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
@@ -173,8 +170,6 @@ class PrimaryKeyTests {
             typeOf<Long?>(),
             typeOf<String>(),
             typeOf<String?>(),
-            typeOf<ObjectId>(),
-            typeOf<ObjectId?>(),
             typeOf<BsonObjectId>(),
             typeOf<BsonObjectId?>(),
             typeOf<RealmUUID>(),
@@ -206,8 +201,6 @@ class PrimaryKeyTests {
             PrimaryKeyStringNullable::class,
             PrimaryKeyBsonObjectId::class,
             PrimaryKeyBsonObjectIdNullable::class,
-            PrimaryKeyObjectId::class,
-            PrimaryKeyObjectIdNullable::class,
             PrimaryKeyRealmUUID::class,
             PrimaryKeyRealmUUIDNullable::class,
         )
@@ -228,8 +221,6 @@ class PrimaryKeyTests {
                 PrimaryKeyStringNullable::class,
                 PrimaryKeyBsonObjectId::class,
                 PrimaryKeyBsonObjectIdNullable::class,
-                PrimaryKeyObjectId::class,
-                PrimaryKeyObjectIdNullable::class,
                 PrimaryKeyRealmUUID::class,
                 PrimaryKeyRealmUUIDNullable::class,
             )

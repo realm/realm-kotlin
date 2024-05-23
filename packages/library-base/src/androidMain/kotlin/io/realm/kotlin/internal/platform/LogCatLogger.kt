@@ -16,11 +16,14 @@
 package io.realm.kotlin.internal.platform
 
 import android.util.Log
+import io.realm.kotlin.internal.messageWithCategory
+import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.util.Locale
+import kotlin.math.min
 
 /**
  * Create a logger that outputs to Android LogCat.
@@ -29,13 +32,22 @@ import java.util.Locale
  * for message creation and formatting
  */
 internal class LogCatLogger(
-    override val tag: String = "REALM",
-    override val level: LogLevel
+    private val tag: String,
 ) : RealmLogger {
 
-    override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
+    override fun log(
+        category: LogCategory,
+        level: LogLevel,
+        throwable: Throwable?,
+        message: String?,
+        vararg args: Any?,
+    ) {
         val priority: Int = level.priority
-        val logMessage: String = prepareLogMessage(throwable, message, *args)
+        val logMessage: String = prepareLogMessage(
+            throwable = throwable,
+            message = messageWithCategory(category, message),
+            args = *args
+        )
 
         // Short circuit if message can fit into a single line in LogCat
         if (logMessage.length < MAX_LOG_LENGTH) {
@@ -50,7 +62,7 @@ internal class LogCatLogger(
             var newline = logMessage.indexOf('\n', i)
             newline = if (newline != -1) newline else length
             do {
-                val end = Math.min(newline, i + MAX_LOG_LENGTH)
+                val end = min(newline, i + MAX_LOG_LENGTH)
                 val part = logMessage.substring(i, end)
                 printMessage(priority, part)
                 i = end

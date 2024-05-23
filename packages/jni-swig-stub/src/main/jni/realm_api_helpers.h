@@ -51,7 +51,7 @@ realm_http_transport_t*
 realm_network_transport_new(jobject network_transport);
 
 void
-set_log_callback(jobject log_callbac);
+set_log_callback(jobject log_callback);
 
 realm_scheduler_t*
 realm_create_scheduler(jobject dispatchScheduler);
@@ -160,5 +160,7 @@ void realm_sync_websocket_error(int64_t observer_ptr);
 bool realm_sync_websocket_message(int64_t observer_ptr, jbyteArray data, size_t size);
 
 void realm_sync_websocket_closed(int64_t observer_ptr, bool was_clean, int error_code, const char* reason);
+
+jobjectArray realm_get_log_category_names();
 
 #endif //TEST_REALM_API_HELPERS_H

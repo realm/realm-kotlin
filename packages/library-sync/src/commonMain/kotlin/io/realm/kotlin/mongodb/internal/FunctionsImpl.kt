@@ -19,21 +19,25 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.Functions
 import kotlinx.coroutines.channels.Channel
+import org.mongodb.kbson.BsonValue
+import org.mongodb.kbson.serialization.Bson
 
 @PublishedApi
 internal class FunctionsImpl(
     override val app: AppImpl,
-    override val user: UserImpl
+    override val user: UserImpl,
+    val serviceName: String? = null,
 ) : Functions {
     @PublishedApi
     internal suspend fun callInternal(
-        name: String,
+        functionName: String,
         serializedEjsonArgs: String
     ): String = Channel<Result<String>>(1).use { channel ->
         RealmInterop.realm_app_call_function(
             app = app.nativePointer,
             user = user.nativePointer,
-            name = name,
+            name = functionName,
+            serviceName = serviceName,
             serializedEjsonArgs = serializedEjsonArgs,
             callback = channelResultCallback(channel) { ejsonEncodedObject: String ->
                 // First we decode from ejson -> BsonValue
@@ -44,4 +48,7 @@ internal class FunctionsImpl(
 
         return channel.receive().getOrThrow()
     }
+
+    internal suspend fun callInternal(functionName: String, bsonValue: BsonValue): BsonValue =
+        Bson(callInternal(functionName, Bson.toJson(bsonValue)))
 }

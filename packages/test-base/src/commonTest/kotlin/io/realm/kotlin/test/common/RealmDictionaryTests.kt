@@ -34,7 +34,6 @@ import io.realm.kotlin.test.common.utils.GenericTypeSafetyManager
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmDictionaryEntrySet
@@ -1323,6 +1322,21 @@ class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
         Unit
     }
 
+    @Test
+    fun contains_unmanagedArgs() = runBlocking<Unit> {
+        val frozenObject = realm.write {
+            val liveObject = copyToRealm(RealmDictionaryContainer())
+            assertEquals(1, query<RealmDictionaryContainer>().find().size)
+            assertFalse(liveObject.nullableObjectDictionaryField.containsValue(RealmDictionaryContainer()))
+            assertFalse(liveObject.nullableRealmAnyDictionaryField.containsValue(RealmAny.create(RealmDictionaryContainer())))
+            assertEquals(1, query<RealmDictionaryContainer>().find().size)
+            liveObject
+        }
+        // Verify that we can also call this on frozen instances
+        assertFalse(frozenObject.nullableObjectDictionaryField.containsValue(RealmDictionaryContainer()))
+        assertFalse(frozenObject.nullableRealmAnyDictionaryField.containsValue(RealmAny.create(RealmDictionaryContainer())))
+    }
+
     private fun getCloseableRealm(): Realm =
         RealmConfiguration.Builder(schema = dictionarySchema)
             .directory(tmpDir)
@@ -1402,11 +1416,6 @@ fun <T> getDataSetForDictionaryClassifier(
         NULLABLE_TIMESTAMP_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
     } else {
         TIMESTAMP_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
-    }
-    ObjectId::class -> if (nullable) {
-        NULLABLE_OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-    } else {
-        OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
     }
     BsonObjectId::class -> if (nullable) {
         NULLABLE_BSON_OBJECT_ID_VALUES.mapIndexed { i, value ->
@@ -3063,6 +3072,9 @@ internal class RealmAnyDictionaryTester(
                 assertEquals(expectedObj.stringField, assertNotNull(actualObj).stringField)
             }
             null -> assertNull(actualValue)
+            // Collections in RealmAny are tested separately in RealmAnyNestedCollectionTests
+            RealmAny.Type.LIST,
+            RealmAny.Type.DICTIONARY -> {}
         }
     }
 }

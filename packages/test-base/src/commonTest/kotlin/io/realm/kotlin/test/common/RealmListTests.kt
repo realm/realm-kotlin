@@ -39,7 +39,6 @@ import io.realm.kotlin.test.common.utils.GenericTypeSafetyManager
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
@@ -632,6 +631,35 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
         Unit
     }
 
+    @Test
+    fun contains_unmanagedArgs() = runBlocking<Unit> {
+        val frozenObject = realm.write {
+            val liveObject = copyToRealm(RealmListContainer())
+            assertEquals(1, query<RealmListContainer>().find().size)
+            assertFalse(liveObject.objectListField.contains(RealmListContainer()))
+            assertFalse(liveObject.nullableRealmAnyListField.contains(RealmAny.create(RealmListContainer())))
+            assertEquals(1, query<RealmListContainer>().find().size)
+            liveObject
+        }
+        // Verify that we can also call this on frozen instances
+        assertFalse(frozenObject.objectListField.contains(RealmListContainer()))
+        assertFalse(frozenObject.nullableRealmAnyListField.contains(RealmAny.create(RealmListContainer())))
+    }
+
+    @Test
+    fun remove_unmanagedArgs() = runBlocking<Unit> {
+        val frozenObject = realm.write {
+            val liveObject = copyToRealm(RealmListContainer())
+            assertEquals(1, query<RealmListContainer>().find().size)
+            assertFalse(liveObject.objectListField.remove(RealmListContainer()))
+            assertFalse(liveObject.nullableRealmAnyListField.remove(RealmAny.create(RealmListContainer())))
+            assertEquals(1, query<RealmListContainer>().find().size)
+            liveObject
+        }
+        assertFalse(frozenObject.objectListField.contains(RealmListContainer()))
+        assertFalse(frozenObject.nullableRealmAnyListField.contains(RealmAny.create(RealmListContainer())))
+    }
+
     private fun getCloseableRealm(): Realm =
         RealmConfiguration.Builder(schema = listTestSchema)
             .directory(tmpDir)
@@ -657,7 +685,6 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
         Decimal128::class -> if (nullable) NULLABLE_DECIMAL128_VALUES else DECIMAL128_VALUES
         String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
         RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
-        ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
         BsonObjectId::class -> if (nullable) NULLABLE_BSON_OBJECT_ID_VALUES else BSON_OBJECT_ID_VALUES
         RealmUUID::class -> if (nullable) NULLABLE_UUID_VALUES else UUID_VALUES
         ByteArray::class -> if (nullable) NULLABLE_BINARY_VALUES else BINARY_VALUES
@@ -692,13 +719,6 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
                         dataSetToLoad = OBJECT_VALUES
                     ),
                     classifier
-                )
-                ByteArray::class -> ByteArrayListTester(
-                    realm = realm,
-                    typeSafetyManager = getTypeSafety(
-                        classifier,
-                        elementType.nullable
-                    ) as ListTypeSafetyManager<ByteArray?>
                 )
                 RealmAny::class -> RealmAnyListTester(
                     realm = realm,
@@ -1316,6 +1336,9 @@ internal class RealmAnyListTester constructor(
                     expected.asRealmObject<RealmListContainer>().stringField,
                     actual.asRealmObject<RealmListContainer>().stringField
                 )
+                // Collections in RealmAny are tested separately in RealmAnyNestedCollectionTests
+                RealmAny.Type.LIST,
+                RealmAny.Type.DICTIONARY -> TODO()
             }
         } else if (expected != null || actual != null) {
             fail("One of the RealmAny values is null, expected = $expected, actual = $actual")
@@ -1336,38 +1359,6 @@ internal class RealmObjectListTester(
         assertEquals(expected.stringField, actual.stringField)
 }
 
-/**
- * Check equality for ByteArrays at a structural level with `assertContentEquals`.
- */
-internal class ByteArrayListTester(
-    realm: Realm,
-    typeSafetyManager: ListTypeSafetyManager<ByteArray?>
-) : ManagedListTester<ByteArray?>(realm, typeSafetyManager, ByteArray::class) {
-    override fun assertElementsAreEqual(expected: ByteArray?, actual: ByteArray?) =
-        assertContentEquals(expected, actual)
-
-    // Removing elements using equals/hashcode will fail for byte arrays since they are
-    // are only equal if identical
-    override fun remove() {
-        val dataSet = typeSafetyManager.dataSetToLoad
-        val assertions = { list: RealmList<ByteArray?> ->
-            assertFalse(list.isEmpty())
-        }
-
-        errorCatcher {
-            realm.writeBlocking {
-                val list = typeSafetyManager.createContainerAndGetCollection(this)
-                assertFalse(list.remove(dataSet[0]))
-                assertTrue(list.add(dataSet[0]))
-                assertFalse(list.remove(list.last()))
-                assertions(list)
-            }
-        }
-
-        assertListAndCleanup { list -> assertions(list) }
-    }
-}
-
 // -----------------------------------
 // Data used to initialize structures
 // -----------------------------------
@@ -1386,8 +1377,6 @@ internal val DECIMAL128_VALUES = listOf(DECIMAL128_MAX_VALUE, DECIMAL128_MIN_VAL
 internal val BOOLEAN_VALUES = listOf(true, false)
 internal val TIMESTAMP_VALUES =
     listOf(RealmInstant.from(0, 0), RealmInstant.from(42, 420))
-internal val OBJECT_ID_VALUES =
-    listOf(ObjectId.create(), ObjectId.from("507f191e810c19729de860ea"))
 internal val BSON_OBJECT_ID_VALUES =
     listOf(BsonObjectId(), BsonObjectId("507f191e810c19729de860ea"))
 internal val UUID_VALUES =
@@ -1435,7 +1424,6 @@ internal val NULLABLE_DOUBLE_VALUES = DOUBLE_VALUES + null
 internal val NULLABLE_DECIMAL128_VALUES = DECIMAL128_VALUES + null
 internal val NULLABLE_BOOLEAN_VALUES = BOOLEAN_VALUES + null
 internal val NULLABLE_TIMESTAMP_VALUES = TIMESTAMP_VALUES + null
-internal val NULLABLE_OBJECT_ID_VALUES = OBJECT_ID_VALUES + null
 internal val NULLABLE_BSON_OBJECT_ID_VALUES = BSON_OBJECT_ID_VALUES + null
 internal val NULLABLE_UUID_VALUES = UUID_VALUES + null
 internal val NULLABLE_BINARY_VALUES = BINARY_VALUES + null

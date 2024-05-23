@@ -17,10 +17,16 @@ package io.realm.kotlin.test.mongodb.common.utils
 
 import io.realm.kotlin.mongodb.sync.SubscriptionSet
 import io.realm.kotlin.mongodb.sync.SyncSession
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.test.fail
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 // NOTE: Copy from :base:commonTest. It is unclear if there is an easy way to share test code like
 // this between :base and :sync
@@ -52,6 +58,13 @@ fun <T : Throwable> assertFailsWithMessage(exceptionClass: KClass<T>, exceptionM
 inline fun <reified T : Throwable> assertFailsWithMessage(exceptionMessage: String, noinline block: () -> Unit): T =
     assertFailsWithMessage(T::class, exceptionMessage, block)
 
+inline fun <reified T : Throwable> CoroutineScope.assertFailsWithMessage(exceptionMessage: String, noinline block: suspend CoroutineScope.() -> Unit): T =
+    assertFailsWithMessage(T::class, exceptionMessage) {
+        runBlocking(this.coroutineContext) {
+            block()
+        }
+    }
+
 suspend inline fun SubscriptionSet<*>.waitForSynchronizationOrFail() {
     val timeout = 5.minutes
     assertTrue(this.waitForSynchronization(timeout), "Failed to synchronize subscriptions in time: $timeout")
@@ -60,4 +73,17 @@ suspend inline fun SubscriptionSet<*>.waitForSynchronizationOrFail() {
 suspend inline fun SyncSession.uploadAllLocalChangesOrFail() {
     val timeout = 5.minutes
     assertTrue(this.uploadAllLocalChanges(timeout), "Failed to upload local changes in time: $timeout")
+}
+
+suspend fun <R> retry(action: suspend () -> R?, until: (R?) -> Boolean, retries: Int = 5, delay: Duration = 1.seconds): R? {
+    repeat(retries) {
+        action().let {
+            if (until(it)) {
+                return it
+            } else {
+                delay(delay)
+            }
+        }
+    }
+    fail("Exceeded retries")
 }

@@ -31,9 +31,12 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.SerializableEmbeddedObject
 import io.realm.kotlin.entities.SerializableSample
 import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.ext.realmAnyDictionaryOf
+import io.realm.kotlin.ext.realmAnyListOf
 import io.realm.kotlin.internal.restrictToMillisPrecision
 import io.realm.kotlin.serializers.MutableRealmIntKSerializer
 import io.realm.kotlin.serializers.RealmAnyKSerializer
+import io.realm.kotlin.serializers.RealmDictionaryKSerializer
 import io.realm.kotlin.serializers.RealmInstantKSerializer
 import io.realm.kotlin.serializers.RealmListKSerializer
 import io.realm.kotlin.serializers.RealmSetKSerializer
@@ -42,21 +45,20 @@ import io.realm.kotlin.test.common.utils.GenericTypeSafetyManager
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.RealmSet
 import kotlinx.serialization.UseSerializers
+import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
-import org.mongodb.kbson.BsonObjectId
-import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -83,6 +85,16 @@ class SerializationTests {
 
             polymorphic(EmbeddedRealmObject::class) {
                 subclass(SerializableEmbeddedObject::class)
+            }
+
+            contextual(RealmSet::class) { _ ->
+                RealmSetKSerializer(RealmAnyKSerializer.nullable)
+            }
+            contextual(RealmList::class) { _ ->
+                RealmListKSerializer(RealmAnyKSerializer.nullable)
+            }
+            contextual(RealmDictionary::class) { _ ->
+                RealmDictionaryKSerializer(RealmAnyKSerializer.nullable)
             }
         }
     }
@@ -262,10 +274,6 @@ class SerializationTests {
 
         TypeDescriptor.elementTypes
             .filterNot { it.classifier == RealmAny::class } // tested in exhaustiveRealmAnyTester
-            .filterNot {
-                // filter out as it deprecated and we don't provide a serializer
-                it.classifier == ObjectId::class
-            }
             .forEach { elementType ->
                 val property: KMutableProperty1<SerializableSample, out Any?> =
                     when (elementType.nullable) {
@@ -279,62 +287,61 @@ class SerializationTests {
 
     @Test
     fun exhaustiveRealmAnyTester() {
-        TypeDescriptor
-            .anyClassifiers
-            .map { classifier ->
-                when (classifier.key) {
-                    Byte::class -> SerializableSample().apply {
-                        nullableRealmAnyField = RealmAny.create(byteField)
-                    }
-                    Char::class -> SerializableSample().apply {
-                        nullableRealmAnyField = RealmAny.create(charField)
-                    }
-                    Short::class -> SerializableSample().apply {
-                        nullableRealmAnyField = RealmAny.create(shortField)
-                    }
-                    Int::class -> SerializableSample().apply {
-                        nullableRealmAnyField = RealmAny.create(intField)
-                    }
-                    Long::class -> SerializableSample().apply {
+        RealmAny.Type.values()
+            .map { type: RealmAny.Type ->
+                type to when (type) {
+                    RealmAny.Type.INT -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(longField)
                     }
-                    Float::class -> SerializableSample().apply {
+                    RealmAny.Type.FLOAT -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(floatField)
                     }
-                    Double::class -> SerializableSample().apply {
+                    RealmAny.Type.DOUBLE -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(doubleField)
                     }
-                    ByteArray::class -> SerializableSample().apply {
+                    RealmAny.Type.BINARY -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(binaryField)
                     }
-                    Boolean::class -> SerializableSample().apply {
+                    RealmAny.Type.BOOL -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(booleanField)
                     }
-                    String::class -> SerializableSample().apply {
+                    RealmAny.Type.STRING -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(stringField)
                     }
-                    Decimal128::class -> SerializableSample().apply {
+                    RealmAny.Type.DECIMAL128 -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(decimal128Field)
                     }
-                    RealmInstant::class -> SerializableSample().apply {
+                    RealmAny.Type.TIMESTAMP -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(timestampField)
                     }
-                    BsonObjectId::class -> SerializableSample().apply {
+                    RealmAny.Type.OBJECT -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(bsonObjectIdField)
                     }
-                    RealmUUID::class -> SerializableSample().apply {
+                    RealmAny.Type.UUID -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(uuidField)
                     }
-                    RealmObject::class -> SerializableSample().apply {
+                    RealmAny.Type.OBJECT_ID -> SerializableSample().apply {
                         SerializableSample().let {
                             nullableObject = it
                             nullableRealmAnyField = RealmAny.create(it)
                         }
                     }
-                    else -> throw IllegalStateException("Untested type $classifier")
+                    RealmAny.Type.OBJECT -> SerializableSample().apply {
+                        SerializableSample().let {
+                            nullableObject = it
+                            nullableRealmAnyField = RealmAny.create(it)
+                        }
+                    }
+                    RealmAny.Type.LIST -> SerializableSample().apply {
+                        nullableRealmAnyField = realmAnyListOf(RealmAny.create(1), RealmAny.create(2))
+                    }
+                    RealmAny.Type.DICTIONARY -> SerializableSample().apply {
+                        nullableRealmAnyField = realmAnyDictionaryOf("key1" to RealmAny.create(1), "key2" to RealmAny.create(2))
+                    }
+                    else -> throw IllegalStateException("Untested type $type")
                 }
             }
-            .forEach { expected ->
+            .forEach { (type, expected) ->
                 val encoded: String = json.encodeToString(expected)
                 val decoded: SerializableSample = json.decodeFromString(encoded)
 
@@ -381,10 +388,6 @@ class SerializationTests {
     fun exhaustiveRealmListTest() {
         TypeDescriptor
             .allListFieldTypes
-            .filterNot {
-                // filter out as it deprecated and we don't provide a serializer
-                it.elementType.classifier == ObjectId::class
-            }
             .mapCollectionDataSets(
                 properties = SerializableSample.listNonNullableProperties,
                 nullableProperties = SerializableSample.listNullableProperties
@@ -408,10 +411,6 @@ class SerializationTests {
     fun exhaustiveRealmSetTest() {
         TypeDescriptor
             .allSetFieldTypes
-            .filterNot {
-                // filter out as it deprecated and we don't provide a serializer
-                it.elementType.classifier == ObjectId::class
-            }
             .mapCollectionDataSets(
                 properties = SerializableSample.setNonNullableProperties,
                 nullableProperties = SerializableSample.setNullableProperties
@@ -434,10 +433,6 @@ class SerializationTests {
     fun exhaustiveRealmDictTest() {
         TypeDescriptor
             .allDictionaryFieldTypes
-            .filterNot {
-                // filter out as it deprecated and we don't provide a serializer
-                it.elementType.classifier == ObjectId::class
-            }
             .map { fieldType: TypeDescriptor.RealmFieldType ->
                 DictionaryTypeSafetyManager<Any?>(
                     dataSet = getDataSetForDictionaryClassifier(

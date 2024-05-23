@@ -18,11 +18,9 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.ext.asRealmObject
-import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
@@ -172,9 +170,6 @@ internal object BsonEncoder {
                             }
                             RealmUUID.from(bsonBinary.data)
                         }
-                        ObjectId::class -> {
-                            ObjectId.from(bsonValue.asObjectId().toByteArray())
-                        }
                         RealmInstant::class -> {
                             bsonValue.asDateTime().value.milliseconds.toRealmInstant()
                         }
@@ -246,6 +241,7 @@ internal object BsonEncoder {
             RealmAny.Type.OBJECT_ID -> asObjectId()
             RealmAny.Type.UUID -> asRealmUUID()
             RealmAny.Type.OBJECT -> asRealmObject()
+            else -> TODO("Unsupported type $type")
         }
     )
 
@@ -264,7 +260,6 @@ internal object BsonEncoder {
             is ByteArray -> BsonBinary(BsonBinarySubType.BINARY, value)
             is MutableRealmInt -> BsonInt64(value.toLong())
             is RealmUUID -> BsonBinary(BsonBinarySubType.UUID_STANDARD, value.bytes)
-            is ObjectId -> BsonObjectId((value as ObjectIdImpl).bytes)
             is RealmInstant -> BsonDateTime(value.toDuration().inWholeMilliseconds)
             is BsonValue -> value
             null -> BsonNull

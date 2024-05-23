@@ -60,6 +60,8 @@ import kotlin.reflect.KClass
  *          OBJECT_ID -> doSomething(realmAny.asObjectId())
  *          REALM_UUID -> doSomething(realmAny.asRealmUUID())
  *          REALM_OBJECT -> doSomething(realmAny.asRealmObject<MyRealmObject>())
+ *          LIST -> doSomething(realmAny.asList())
+ *          DICTIONARY -> doSomething(realmAny.asDictionary())
  *      }
  * ```
  * [Short], [Int], [Byte], [Char] and [Long] values are converted internally to `int64_t` values.
@@ -81,6 +83,23 @@ import kotlin.reflect.KClass
  *      warehouse.nullableStorage = null // Assign null directly to the property
  * ```
  * `RealmAny` cannot store [EmbeddedRealmObject]s.
+ *
+ * `RealmAny` can contain other [RealmList] and [RealmDictionary] of [RealmAny]. This means that
+ * you can build nested collections inside a `RealmAny`-field.
+ * ```
+ * realmObject.realmAnyField = realmAnyListOf(
+ *     // Primitive values can be added in collections
+ *     1,
+ *     // Lists and dictionaries can contain other nested collection types
+ *     realmListOf(
+ *         realmListOf(),
+ *         realmDictionaryOf()
+ *     ),
+ *     realmDictionaryOf(
+ *         "key1" to realmListOf(),
+ *         "key2" to realmDictionaryOf())
+ * )
+ * ```
  *
  * [DynamicRealmObject]s and [DynamicMutableRealmObject]s can be used inside `RealmAny` with
  * the corresponding [create] function for `DynamicRealmObject`s and with [asRealmObject] using
@@ -112,7 +131,7 @@ public interface RealmAny {
      * Supported Realm data types that can be stored in a `RealmAny` instance.
      */
     public enum class Type {
-        INT, BOOL, STRING, BINARY, TIMESTAMP, FLOAT, DOUBLE, DECIMAL128, OBJECT_ID, UUID, OBJECT
+        INT, BOOL, STRING, BINARY, TIMESTAMP, FLOAT, DOUBLE, DECIMAL128, OBJECT_ID, UUID, OBJECT, LIST, DICTIONARY;
     }
 
     /**
@@ -234,6 +253,18 @@ public interface RealmAny {
     public fun <T : BaseRealmObject> asRealmObject(clazz: KClass<T>): T
 
     /**
+     * Returns the value from this `RealmAny` as a [RealmList] containing new [RealmAny]s.
+     * @throws [IllegalStateException] if the stored value is not a list.
+     */
+    public fun asList(): RealmList<RealmAny?>
+
+    /**
+     * Returns the value from this `RealmAny` as a [RealmDictionary] containing new [RealmAny]s.
+     * @throws [IllegalStateException] if the stored value is not a dictionary.
+     */
+    public fun asDictionary(): RealmDictionary<RealmAny?>
+
+    /**
      * Two [RealmAny] instances are equal if and only if their types and contents are the equal.
      */
     override fun equals(other: Any?): Boolean
@@ -343,5 +374,68 @@ public interface RealmAny {
          */
         public fun create(realmObject: DynamicRealmObject): RealmAny =
             RealmAnyImpl(Type.OBJECT, DynamicRealmObject::class, realmObject)
+
+        /**
+         * Creates an unmanaged `RealmAny` instance from a [RealmList] of [RealmAny] values.
+         *
+         * To create a [RealmAny] containing a [RealmList] of arbitrary values wrapped in [RealmAny]s
+         * use the [io.realm.kotlin.ext.realmAnyListOf].
+         *
+         * A `RealmList<RealmAny?>` can contain all [RealmAny] types, also other collection types:
+         * ```
+         * class SampleObject() : RealmObject {
+         *     val realmAnyField: RealmAny? = null
+         * }
+         * val realmObject = copyToRealm(SampleObject())
+         *
+         * // List can contain other collections, but only `RealmList<RealmAny>` and
+         * // `RealmDictionary<RealmAny>`.
+         * realmObject.realmAnyField = realmAnyListOf(
+         *     // Primitive values
+         *     1,
+         *     // Lists and dictionaries can contain other collection types
+         *     realmListOf(
+         *         realmListOf(),
+         *         realmDictionaryOf()
+         *     ),
+         *     realmDictionaryOf(
+         *         "key1" to realmListOf(),
+         *         "key2" to realmDictionaryOf())
+         * )
+         * ```
+         */
+        public fun create(value: RealmList<RealmAny?>): RealmAny =
+            RealmAnyImpl(Type.LIST, RealmAny::class, value)
+
+        /**
+         * Creates an unmanaged `RealmAny` instance from a [RealmDictionary] of [RealmAny] values.
+         *
+         * To create a [RealmAny] containing a [RealmDictionary] of arbitrary values wrapped in
+         * [RealmAny]s use the [io.realm.kotlin.ext.realmAnyDictionaryOf].
+         *
+         * A `RealmDictionary<RealmAny?>` can contain all [RealmAny] types, also other collection types:
+         * ```
+         * class SampleObject() : RealmObject {
+         *     val realmAnyField: RealmAny? = null
+         * }
+         * val realmObject = copyToRealm(SampleObject())
+         *
+         * // Dictionaries can contain other collections, but only `RealmList<RealmAny>` and
+         * // `RealmDictionary<RealmAny>`.
+         * realmObject.realmAnyField = realmAnyDictionaryOf(
+         *     "int" to 5,
+         *     // Lists and dictionaries can contain other nested collection types
+         *     "list" to realmListOf(
+         *         realmListOf(),
+         *         realmDictionaryOf()
+         *     ),
+         *     "dictionary" to realmDictionaryOf(
+         *         "key1" to realmListOf(),
+         *         "key2" to realmDictionaryOf())
+         * )
+         * ```
+         */
+        public fun create(value: RealmDictionary<RealmAny?>): RealmAny =
+            RealmAnyImpl(Type.DICTIONARY, RealmAny::class, value)
     }
 }

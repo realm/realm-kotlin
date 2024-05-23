@@ -19,7 +19,6 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.CompactOnLaunchCallback
 import io.realm.kotlin.InitialDataCallback
 import io.realm.kotlin.InitialRealmFileConfiguration
-import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealm
@@ -53,7 +52,6 @@ public open class ConfigurationImpl(
     directory: String,
     name: String,
     schema: Set<KClass<out BaseRealmObject>>,
-    logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long,
     notificationDispatcher: CoroutineDispatcherFactory,
     writeDispatcher: CoroutineDispatcherFactory,
@@ -67,7 +65,7 @@ public open class ConfigurationImpl(
     override val isFlexibleSyncConfiguration: Boolean,
     inMemory: Boolean,
     initialRealmFileConfiguration: InitialRealmFileConfiguration?,
-    logger: ContextLogger
+    override val logger: ContextLogger
 ) : InternalConfiguration {
 
     final override val path: String
@@ -76,15 +74,11 @@ public open class ConfigurationImpl(
 
     final override val schema: Set<KClass<out BaseRealmObject>>
 
-    final override val log: LogConfiguration
-
     final override val maxNumberOfActiveVersions: Long
 
     final override val schemaVersion: Long
 
     final override val schemaMode: SchemaMode
-
-    override val logger: ContextLogger = logger
 
     override val encryptionKey: ByteArray?
         get(): ByteArray? = userEncryptionKey
@@ -138,7 +132,6 @@ public open class ConfigurationImpl(
         this.name = name
         this.schema = schema
         this.mapOfKClassWithCompanion = schema.associateWith { realmObjectCompanionOrThrow(it) }
-        this.log = logConfig
         this.maxNumberOfActiveVersions = maxNumberOfActiveVersions
         this.notificationDispatcherFactory = notificationDispatcher
         this.writeDispatcherFactory = writeDispatcher

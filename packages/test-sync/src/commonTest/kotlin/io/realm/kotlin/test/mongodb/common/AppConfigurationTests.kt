@@ -21,6 +21,7 @@ import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.isWindows
 import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
@@ -397,15 +398,13 @@ class AppConfigurationTests {
     }
 
     private suspend fun doCustomHeaderTest(app: App) {
-        val originalLevel = RealmLog.level
-        RealmLog.level = LogLevel.ALL
+        val originalLevel = RealmLog.getLevel()
+        RealmLog.setLevel(LogLevel.ALL)
         val channel = TestChannel<Boolean>()
 
         val logger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.DEBUG
-            override val tag: String = "LOGGER"
-
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
@@ -435,20 +434,8 @@ class AppConfigurationTests {
         } finally {
             // Restore log status
             RealmLog.remove(logger)
-            RealmLog.level = originalLevel
+            RealmLog.setLevel(originalLevel)
         }
-    }
-
-    @Test
-    fun logLevelDoesNotGetOverwrittenByConfig() {
-        val expectedLogLevel = LogLevel.ALL
-        RealmLog.level = expectedLogLevel
-
-        AppConfiguration.create("")
-
-        assertEquals(expectedLogLevel, RealmLog.level)
-
-        RealmLog.reset()
     }
 
     @Test
@@ -516,8 +503,8 @@ class AppConfigurationTests {
         with(config.syncTimeoutOptions) {
             assertEquals(2.minutes, connectTimeout)
             assertEquals(30.seconds, connectionLingerTime)
-            assertEquals(1.minutes, pingKeepalivePeriod)
-            assertEquals(2.minutes, pongKeepalivePeriod)
+            assertEquals(1.minutes, pingKeepAlivePeriod)
+            assertEquals(2.minutes, pongKeepAlivePeriod)
             assertEquals(1.minutes, fastReconnectLimit)
         }
     }
@@ -528,16 +515,16 @@ class AppConfigurationTests {
             .syncTimeouts {
                 connectTimeout = 10.seconds
                 connectionLingerTime = 10.seconds
-                pingKeepalivePeriod = 10.seconds
-                pongKeepalivePeriod = 10.seconds
+                pingKeepAlivePeriod = 10.seconds
+                pongKeepAlivePeriod = 10.seconds
                 fastReconnectLimit = 10.seconds
             }
             .build()
         with(config.syncTimeoutOptions) {
             assertEquals(10.seconds, connectTimeout)
             assertEquals(10.seconds, connectionLingerTime)
-            assertEquals(10.seconds, pingKeepalivePeriod)
-            assertEquals(10.seconds, pongKeepalivePeriod)
+            assertEquals(10.seconds, pingKeepAlivePeriod)
+            assertEquals(10.seconds, pongKeepAlivePeriod)
             assertEquals(10.seconds, fastReconnectLimit)
         }
     }
@@ -553,13 +540,13 @@ class AppConfigurationTests {
                     connectionLingerTime = 0.seconds
                 }
                 assertFailsWith<IllegalArgumentException> {
-                    pingKeepalivePeriod = 5.seconds
+                    pingKeepAlivePeriod = 5.seconds
                 }
                 assertFailsWith<IllegalArgumentException> {
-                    pongKeepalivePeriod = 5.seconds
+                    pongKeepAlivePeriod = 5.seconds
                 }
                 assertFailsWith<IllegalArgumentException> {
-                    pongKeepalivePeriod = 1.seconds
+                    pongKeepAlivePeriod = 1.seconds
                 }
             }
     }

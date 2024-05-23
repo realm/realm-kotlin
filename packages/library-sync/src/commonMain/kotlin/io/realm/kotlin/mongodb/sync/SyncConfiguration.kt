@@ -16,20 +16,15 @@
 package io.realm.kotlin.mongodb.sync
 
 import io.realm.kotlin.Configuration
-import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.ConfigurationImpl
 import io.realm.kotlin.internal.ContextLogger
-import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
-import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLog
-import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Credentials
@@ -39,7 +34,6 @@ import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.internal.SyncConfigurationImpl
 import io.realm.kotlin.mongodb.internal.UserImpl
 import io.realm.kotlin.types.BaseRealmObject
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonBinary
 import org.mongodb.kbson.BsonBinarySubType
@@ -254,26 +248,6 @@ public interface SyncConfiguration : Configuration {
          * @param user user used to access server side data. This will define which data is
          * available from the server.
          * @param partitionValue the partition value to use data from. The server must have been
-         * configured with an [ObjectId](https://www.mongodb.com/docs/v4.4/reference/method/ObjectId/) partition key for this to work.
-         * @param schema the classes of the schema. The elements of the set must be direct class
-         * literals.
-         * **See:** [partition key](https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/)
-         */
-        public constructor(
-            user: User,
-            partitionValue: ObjectId?,
-            schema: Set<KClass<out BaseRealmObject>>
-        ) : this(user, schema, partitionValue?.let { BsonObjectId((it as ObjectIdImpl).bytes) } ?: BsonNull)
-
-        /**
-         * Creates a [SyncConfiguration.Builder] for Partition-Based Sync. Partition-Based Sync
-         * must be enabled on the server for this to work.
-         *
-         * **See:** [Partitions](https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/)
-         *
-         * @param user user used to access server side data. This will define which data is
-         * available from the server.
-         * @param partitionValue the partition value to use data from. The server must have been
          * configured with an [BsonObjectId](https://www.mongodb.com/docs/v4.4/reference/method/ObjectId/) partition key for this to work.
          * @param schema the classes of the schema. The elements of the set must be direct class
          * literals.
@@ -373,11 +347,6 @@ public interface SyncConfiguration : Configuration {
             if (!user.loggedIn) {
                 throw IllegalArgumentException("A valid, logged in user is required.")
             }
-            // Prime builder with log configuration from AppConfiguration
-            (user as UserImpl).app.configuration.logger?.let { appLog ->
-                this.logLevel = appLog.level
-                this.appConfigLoggers = appLog.loggers
-            }
         }
 
         /**
@@ -399,13 +368,6 @@ public interface SyncConfiguration : Configuration {
         public fun syncClientResetStrategy(resetStrategy: SyncClientResetStrategy): Builder =
             apply {
                 this.syncClientResetStrategy = resetStrategy
-            }
-
-        override fun log(level: LogLevel, customLoggers: List<RealmLogger>): Builder =
-            apply {
-                // Will clear any primed configuration
-                this.logLevel = level
-                this.realmConfigLoggers = customLoggers
             }
 
         /**
@@ -493,7 +455,7 @@ public interface SyncConfiguration : Configuration {
 
         @Suppress("LongMethod")
         override fun build(): SyncConfiguration {
-            val realmLogger = ContextLogger("Sdk")
+            val realmLogger = ContextLogger()
 
             // Set default error handler after setting config logging logic
             if (this.errorHandler == null) {
@@ -539,18 +501,10 @@ public interface SyncConfiguration : Configuration {
             val fileName = fullPathToFile.substringAfterLast(PATH_SEPARATOR)
             val directory = fullPathToFile.removeSuffix("$PATH_SEPARATOR$fileName")
 
-            // Configure logging during creation of a (Realm/Sync)Configuration to keep old behavior
-            // for configuring logging. This should be removed when `LogConfiguration` is removed.
-            RealmLog.level = logLevel
-            realmConfigLoggers.forEach { RealmLog.add(it) }
-            @Suppress("invisible_reference", "invisible_member")
-            val allLoggers: List<RealmLogger> = listOf(RealmLog.systemLoggerInstalled).filterNotNull() + appConfigLoggers + realmConfigLoggers
-
             val baseConfiguration = ConfigurationImpl(
                 directory,
                 fileName,
                 schema,
-                LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
                 if (notificationDispatcher != null) {
                     CoroutineDispatcherFactory.unmanaged(notificationDispatcher!!)
@@ -694,7 +648,7 @@ public interface SyncConfiguration : Configuration {
          * @throws IllegalArgumentException if the user is not valid and logged in.
          * * **See:** [partition key](https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/)
          */
-        public fun create(user: User, partitionValue: ObjectId?, schema: Set<KClass<out BaseRealmObject>>): SyncConfiguration =
+        public fun create(user: User, partitionValue: BsonObjectId?, schema: Set<KClass<out BaseRealmObject>>): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
 
         /**

@@ -147,7 +147,7 @@ public class CachedClassMetadata(
             properties = interopProperties.map { propertyInfo: PropertyInfo ->
                 CachedPropertyMetadata(
                     propertyInfo,
-                    companion?.io_realm_kotlin_fields?.get(propertyInfo.name)
+                    companion?.io_realm_kotlin_fields?.get(propertyInfo.name)?.second
                 )
             }
         }

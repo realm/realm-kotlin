@@ -42,16 +42,16 @@ public data class SyncTimeoutOptions(
      * How long to wait between each ping message sent to the server. The client periodically
      * sends ping messages to the server to check if the connection is still alive. Shorter
      * periods make connection state change notifications more responsive at the cost of
-     * more trafic.
+     * more traffic.
      */
-    val pingKeepalivePeriod: Duration,
+    val pingKeepAlivePeriod: Duration,
 
     /**
      * How long to wait for the server to respond to a ping message. Shorter values make
      * connection state change notifications more responsive, but increase the chance of
      * spurious disconnections.
      */
-    val pongKeepalivePeriod: Duration,
+    val pongKeepAlivePeriod: Duration,
 
     /**
      * When a client first connects to the server, it downloads all data from the server

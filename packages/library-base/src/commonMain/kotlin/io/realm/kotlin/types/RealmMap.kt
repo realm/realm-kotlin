@@ -57,7 +57,7 @@ public interface RealmMap<K, V> : MutableMap<K, V> {
      *
      * @param keyPaths An optional list of model class properties that defines when a change to
      * objects inside the map will result in a change being emitted. For maps, keypaths are
-     * evaluted based on the values of the map. This means that keypaths are only supported
+     * evaluated based on the values of the map. This means that keypaths are only supported
      * for maps containing realm objects. Nested properties can be defined using a dotted syntax,
      * e.g. `parent.child.name`. Wildcards `*` can be be used to capture all properties at a given
      * level, e.g. `child.*` or `*.*`. If no keypaths are provided, changes to all top-level

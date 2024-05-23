@@ -62,7 +62,7 @@ val HOST_OS: OperatingSystem = findHostOs()
 
 object Realm {
     val ciBuild = (System.getenv("CI") != null)
-    const val version = "1.16.1-K2-SNAPSHOT"
+    const val version = "2.0.0-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
     const val pluginPortalId = "io.realm.kotlin"
@@ -121,7 +121,7 @@ object Versions {
     const val jmh = "1.34" // https://github.com/openjdk/jmh
     const val jmhPlugin = "0.6.6" // https://github.com/melix/jmh-gradle-plugin
     const val junit = "4.13.2" // https://mvnrepository.com/artifact/junit/junit
-    const val kbson = "0.3.0" // https://github.com/mongodb/kbson
+    const val kbson = "0.4.0" // https://github.com/mongodb/kbson
     // When updating the Kotlin version, also remember to update /examples/min-android-sample/build.gradle.kts
     const val kotlin = "2.0.0" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
     const val kotlinJvmTarget = "1.8" // Which JVM bytecode version is kotlin compiled to.
