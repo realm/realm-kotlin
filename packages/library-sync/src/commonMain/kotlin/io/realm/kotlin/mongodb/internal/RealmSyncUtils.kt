@@ -173,7 +173,8 @@ internal fun convertAppError(appError: AppError): Throwable {
             when (appError.code) {
                 ErrorCode.RLM_ERR_INTERNAL_SERVER_ERROR -> {
                     if (msg.contains("linking an anonymous identity is not allowed") || // Trying to link an anonymous account to a named one.
-                        msg.contains("linking a local-userpass identity is not allowed") // Trying to link two email logins with each other
+                        msg.contains("linking a local-userpass identity is not allowed") || // Trying to link two email logins with each other
+                        msg.contains("unauthorized")
                     ) {
                         CredentialsCannotBeLinkedException(msg)
                     } else {
@@ -181,7 +182,9 @@ internal fun convertAppError(appError: AppError): Throwable {
                     }
                 }
                 ErrorCode.RLM_ERR_INVALID_SESSION -> {
-                    if (msg.contains("a user already exists with the specified provider")) {
+                    if (msg.contains("a user already exists with the specified provider") ||
+                        msg.contains("unauthorized")
+                    ) {
                         CredentialsCannotBeLinkedException(msg)
                     } else {
                         ServiceException(msg)
@@ -199,6 +202,10 @@ internal fun convertAppError(appError: AppError): Throwable {
                     } else if (msg.contains("invalid custom auth token:")) {
                         // Custom JWT
                         // See https://github.com/10gen/baas/blob/master/authprovider/providers/custom/provider.go
+                        InvalidCredentialsException(msg)
+                    } else if (msg.contains("unauthorized")) {
+                        // Sanitized error messages
+                        // See https://github.com/10gen/baas/pull/14005/files
                         InvalidCredentialsException(msg)
                     } else {
                         // It does not look possible to reliably detect Facebook, Google and Apple

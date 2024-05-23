@@ -463,7 +463,7 @@ class UserTests {
             anonUser.linkCredentials(credentials)
         }.let {
             assertTrue(
-                it.message!!.contains("linking a local-userpass identity is not allowed when one is already linked"),
+                it.message!!.contains("unauthorized"),
                 it.message
             )
         }
@@ -482,7 +482,7 @@ class UserTests {
             emailUser1.linkCredentials(credentials2)
         }.let {
             assertTrue(
-                it.message!!.contains("linking a local-userpass identity is not allowed when one is already linked"),
+                it.message!!.contains("unauthorized"),
                 it.message
             )
         }
@@ -516,7 +516,7 @@ class UserTests {
             anonUser.linkCredentials(creds)
         }.let {
             assertTrue(
-                it.message!!.contains("a user already exists with the specified provider"),
+                it.message!!.contains("unauthorized"),
                 it.message
             )
         }
