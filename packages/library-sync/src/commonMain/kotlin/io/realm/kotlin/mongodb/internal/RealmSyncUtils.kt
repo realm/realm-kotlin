@@ -172,46 +172,14 @@ internal fun convertAppError(appError: AppError): Throwable {
             // generic `ServiceException`'s.
             when (appError.code) {
                 ErrorCode.RLM_ERR_INTERNAL_SERVER_ERROR -> {
-                    if (msg.contains("linking an anonymous identity is not allowed") || // Trying to link an anonymous account to a named one.
-                        msg.contains("linking a local-userpass identity is not allowed") || // Trying to link two email logins with each other
-                        msg.contains("unauthorized")
-                    ) {
-                        CredentialsCannotBeLinkedException(msg)
-                    } else {
-                        ServiceException(msg)
-                    }
+                    ServiceException(msg)
                 }
                 ErrorCode.RLM_ERR_INVALID_SESSION -> {
-                    if (msg.contains("a user already exists with the specified provider") ||
-                        msg.contains("unauthorized")
-                    ) {
-                        CredentialsCannotBeLinkedException(msg)
-                    } else {
-                        ServiceException(msg)
-                    }
+                    ServiceException(msg)
                 }
                 ErrorCode.RLM_ERR_USER_DISABLED,
                 ErrorCode.RLM_ERR_AUTH_ERROR -> {
-                    // Some auth providers return a generic AuthError when
-                    // invalid credentials are presented. We make a best effort
-                    // to map these to a more sensible `InvalidCredentialsExceptions`
-                    if (msg.contains("invalid API key")) {
-                        // API Key
-                        // See https://github.com/10gen/baas/blob/master/authprovider/providers/apikey/provider.go
-                        InvalidCredentialsException(msg)
-                    } else if (msg.contains("invalid custom auth token:")) {
-                        // Custom JWT
-                        // See https://github.com/10gen/baas/blob/master/authprovider/providers/custom/provider.go
-                        InvalidCredentialsException(msg)
-                    } else if (msg.contains("unauthorized")) {
-                        // Sanitized error messages
-                        // See https://github.com/10gen/baas/pull/14005/files
-                        InvalidCredentialsException(msg)
-                    } else {
-                        // It does not look possible to reliably detect Facebook, Google and Apple
-                        // invalid tokens: https://github.com/10gen/baas/blob/master/authprovider/providers/oauth2/oauth.go#L139
-                        AuthException(msg)
-                    }
+                    AuthException(msg)
                 }
                 ErrorCode.RLM_ERR_USER_NOT_FOUND -> {
                     UserNotFoundException(msg)

@@ -459,7 +459,7 @@ class UserTests {
         app.emailPasswordAuth.registerUser(otherEmail, otherPassword)
         val credentials = Credentials.emailPassword(otherEmail, otherPassword)
 
-        assertFailsWith<CredentialsCannotBeLinkedException> {
+        assertFailsWith<ServiceException> {
             anonUser.linkCredentials(credentials)
         }.let {
             assertTrue(
@@ -478,7 +478,7 @@ class UserTests {
         val (email2, password2) = randomEmail() to "123456"
         app.emailPasswordAuth.registerUser(email2, password2)
         val credentials2 = Credentials.emailPassword(email2, password2)
-        assertFailsWith<CredentialsCannotBeLinkedException> {
+        assertFailsWith<ServiceException> {
             emailUser1.linkCredentials(credentials2)
         }.let {
             assertTrue(
@@ -512,7 +512,7 @@ class UserTests {
         app.emailPasswordAuth.registerUser(email, password)
         val creds = Credentials.emailPassword(email, password)
         app.login(creds)
-        assertFailsWith<CredentialsCannotBeLinkedException> {
+        assertFailsWith<ServiceException> {
             anonUser.linkCredentials(creds)
         }.let {
             assertTrue(
