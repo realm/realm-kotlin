@@ -66,8 +66,8 @@ public class BadRequestException internal constructor(message: String) : Service
  * This exception is considered the top-level or "catch-all" for problems related to user account
  * actions. The exact reason for the error can be found in [Throwable.message].
  *
- * Generally, this exception does not need to be caught as more specific subtypes are available.
- * These will be documented for the relevant API methods.
+ * For some error scenarios there are more specific and descriptive subtypes available.
+ * These are documented for the relevant API methods where they can be thrown.
  *
  * @see UserAlreadyConfirmedException
  * @see UserNotFoundException

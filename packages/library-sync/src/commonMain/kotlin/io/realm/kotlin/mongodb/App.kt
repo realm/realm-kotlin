@@ -21,7 +21,6 @@ import io.realm.kotlin.mongodb.annotations.ExperimentalEdgeServerApi
 import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.AuthException
-import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.AppImpl
 import io.realm.kotlin.mongodb.sync.Sync
@@ -115,10 +114,6 @@ public interface App {
      *
      * @param credentials the credentials representing the type of login.
      * @return the logged in [User].
-     * @throws InvalidCredentialsException if the provided credentials were not correct. Note, only
-     * [AuthenticationProvider.EMAIL_PASSWORD], [AuthenticationProvider.API_KEY] and
-     * [AuthenticationProvider.JWT] can throw this exception. Other authentication providers throw
-     * an [AuthException] instead.
      * @throws AuthException if a problem occurred when logging in. See the exception message for
      * further details.
      * @throws io.realm.kotlin.mongodb.exceptions.ServiceException for other failures that can happen when
