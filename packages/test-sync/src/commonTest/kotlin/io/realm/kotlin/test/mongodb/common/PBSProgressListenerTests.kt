@@ -280,7 +280,7 @@ class PBSProgressListenerTests {
                 copyToRealm(
                     SyncObjectWithAllTypes()
                         .apply {
-                            binaryField = Random.nextBytes(1_000_000)
+                            binaryField = Random.nextBytes(100)
                         }
                 )
             }
