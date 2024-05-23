@@ -17,6 +17,7 @@
 
 package io.realm.kotlin.compiler
 
+import com.tschuchort.compiletesting.JvmCompilationResult
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.PluginOption
 import com.tschuchort.compiletesting.SourceFile
@@ -92,9 +93,9 @@ class GenerationExtensionTest {
         ).joinToString(separator = File.separator)
 
         fun assertGeneratedIR() {
-            val outputFile = File("${outputDir()}/main/01_AFTER.ValidateIrBeforeLowering.ir")
+            val outputFile = File("${outputDir()}/main/02_AFTER.ValidateIrBeforeLowering.ir")
             stripInputPath(outputFile, fileMap)
-            val expected = File("${expectedDir()}/01_AFTER.ValidateIrBeforeLowering.ir").readText()
+            val expected = File("${expectedDir()}/02_AFTER.ValidateIrBeforeLowering.ir").readText()
             val actual = outputFile.readText()
             assertEquals(expected, actual)
         }
@@ -387,7 +388,7 @@ class GenerationExtensionTest {
         inputs: Files,
         plugins: List<ComponentRegistrar> = listOf(Registrar()),
         options: List<PluginOption> = emptyList(),
-    ): KotlinCompilation.Result {
+    ): JvmCompilationResult {
         return KotlinCompilation().apply {
             sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
             messageOutputStream = System.out
