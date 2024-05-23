@@ -12,7 +12,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * None.
 
 ### Fixed
-* None.
+* [Sync] Too generic exceptions thrown on authentication errors. (Issue [#1763](https://github.com/realm/realm-kotlin/issues/1763)/[RKOTLIN-1091](https://jira.mongodb.org/browse/RKOTLIN-1091))
 
 ### Known issues
 * Missing initial download progress notification when there is no active downloads. (Issue [realm/realm-core#7627](https://github.com/realm/realm-core/issues/7627), since 1.15.1)
