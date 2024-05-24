@@ -136,8 +136,6 @@ public interface SyncSession {
      *
      * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume the
      * elements in a timely manner the flow will be completed with an [IllegalStateException].
-     *
-     * @throws UnsupportedOperationException if invoked on a realm with Flexible Sync enabled.
      */
     public fun progressAsFlow(
         direction: Direction,

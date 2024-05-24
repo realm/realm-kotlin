@@ -11,13 +11,15 @@ This release will bump the Realm file format 24. Opening a file with an older fo
 * Some authentication related operations will no longer throw specialized `InvalidCredentialsException` and `CredentialsCannotBeLinkedException` but the more general `AuthException` and `ServiceException`. (Issue [#1763](https://github.com/realm/realm-kotlin/issues/1763)/[RKOTLIN-1091](https://jira.mongodb.org/browse/RKOTLIN-1091))
 * [Sync] Removed deprecated methods `User.identity` and `User.provider`, user identities can be accessed with the already existing `User.identities`. (Issue [#1751](https://github.com/realm/realm-kotlin/issues/1751) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1083))
 * [Sync] `App.allUsers` does no longer return a map, but only a list of users known locally. (Issue [#1751](https://github.com/realm/realm-kotlin/issues/1751) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1083))
-* [Sync ]Removed deprecated `DiscardUnsyncedChangesStrategy.onError`. (Issue [#1755](https://github.com/realm/realm-kotlin/issues/1755) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1085))
+* [Sync] Removed deprecated `DiscardUnsyncedChangesStrategy.onError`. (Issue [#1755](https://github.com/realm/realm-kotlin/issues/1755) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1085))
+* [Sync] Sync progress notifications now reports an estimate ranged from `0.0` to `1.0` with `Progress.estimate` instead of `transferredBytes` and `totalBytes`. (Issue [#1744](https://github.com/realm/realm-kotlin/issues/1744) [RKOTLIN-1079](https://jira.mongodb.org/browse/RKOTLIN-1079)).
 
 ### Enhancements
 * Support for RealmLists and RealmDictionaries in `RealmAny`. (Issue [#1434](https://github.com/realm/realm-kotlin/issues/1434))
 * Optimized `RealmList.indexOf()` and `RealmList.contains()` using Core implementation of operations instead of iterating elements and comparing them in Kotlin. (Issue [#1625](https://github.com/realm/realm-kotlin/pull/1666) [RKOTLIN-995](https://jira.mongodb.org/browse/RKOTLIN-995)).
 * Add support for filtering logs by category. (Issue [#1691](https://github.com/realm/realm-kotlin/issues/1691) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1038))
 * [Sync] Add Mongo Client API to access Atlas App Service collections. It can be accessed through `User.mongoClient`. (Issue [#972](https://github.com/realm/realm-kotlin/issues/972)/[RKOTLIN-612](https://jira.mongodb.org/browse/RKOTLIN-612))
+* [Sync] Sync progress notifications is now also supported for flexible sync configurations. (Issue [#1744](https://github.com/realm/realm-kotlin/issues/1744) [RKOTLIN-1079](https://jira.mongodb.org/browse/RKOTLIN-1079)).
 
 ### Fixed
 * Inserting the same typed link to the same key in a dictionary more than once would incorrectly create multiple backlinks to the object. This did not appear to cause any crashes later, but would have affecting explicit backlink count queries (eg: `...@links.@count`) and possibly notifications (Core Issue [realm/realm-core#7676](https://github.com/realm/realm-core/issues/7676) since v1.16.0).

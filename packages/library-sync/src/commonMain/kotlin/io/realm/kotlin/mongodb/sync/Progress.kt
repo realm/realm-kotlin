@@ -21,14 +21,9 @@ package io.realm.kotlin.mongodb.sync
  */
 public data class Progress(
     /**
-     * Total number of bytes that has been transferred by the [SyncSession].
+     * Transfer progress estimation ranged from 0.0 to 1.0.
      */
-    val transferredBytes: ULong,
-    /**
-     * Total number of transferable bytes (bytes that have been transferred + pending bytes not
-     * yet transferred).
-     */
-    val transferableBytes: ULong
+    val estimate: Double,
 ) {
     /**
      * Property indicating if all pending bytes have been transferred.
@@ -40,5 +35,5 @@ public data class Progress(
      * flow can continue to emit events with `isTransferComplete = false` for subsequent events
      * after returning a progress indicator with `isTransferComplete = true`.
      */
-    public val isTransferComplete: Boolean = transferredBytes >= transferableBytes
+    public val isTransferComplete: Boolean = estimate >= 1.0
 }

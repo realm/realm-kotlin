@@ -270,6 +270,7 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
     set(memScope, this@toRString)
 }
 
+@OptIn(ExperimentalForeignApi::class)
 @Suppress("LargeClass", "FunctionNaming")
 actual object RealmInterop {
 
@@ -2813,10 +2814,9 @@ actual object RealmInterop {
         return CPointerWrapper(
             realm_wrapper.realm_sync_session_register_progress_notifier(
                 syncSession.cptr(),
-                staticCFunction<COpaquePointer?, ULong, ULong, Double, Unit> { userData, transferred_bytes, total_bytes, _ ->
+                staticCFunction<COpaquePointer?, ULong, ULong, Double, Unit> { userData, _, _, progress_estimate ->
                     safeUserData<ProgressCallback>(userData).run {
-                        // TODO Progress ignored until https://github.com/realm/realm-kotlin/pull/1575
-                        onChange(transferred_bytes.toLong(), total_bytes.toLong())
+                        onChange(progress_estimate)
                     }
                 },
                 direction.nativeValue,
