@@ -35,7 +35,7 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 // Common Kotlin configuration
 kotlin {
     jvm()
-    androidTarget("android") {
+    androidTarget {
         // Changing this will also requires an update to the publishCIPackages task
         // in /packages/build.gradle.kts
         publishLibraryVariants("release")

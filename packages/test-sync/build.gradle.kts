@@ -172,7 +172,7 @@ android {
 }
 
 kotlin {
-    android("android")
+    androidTarget()
     sourceSets {
         val androidMain by getting {
             dependencies {

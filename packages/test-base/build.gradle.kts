@@ -159,7 +159,7 @@ android {
 }
 
 kotlin {
-    android("android")
+    androidTarget()
     sourceSets {
         val commonTest by getting
         val androidMain by getting {
