@@ -123,20 +123,21 @@ val nativeLibraryIncludesIosSimulatorArm64Release =
 
 kotlin {
     jvm()
-    android("android") {
+    androidTarget {
         // Changing this will also requires an update to the publishCIPackages task
         // in /packages/build.gradle.kts
         publishLibraryVariants("release")
     }
+
     // Cinterops seems sharable across architectures (x86_64/arm) with option of differentiation in
     // the def, but not across platforms in the current target "hierarchy"
     // (https://kotlinlang.org/docs/reference/mpp-dsl-reference.html#targets)
     // FIXME MPP-BUILD Relative paths in def-file resolves differently dependent of task entry point.
     //  https://youtrack.jetbrains.com/issue/KT-43439
-    ios { // Shortcut for both iosArm64 and iosX64
+    iosX64 { // Shortcut for both iosArm64 and iosX64
         compilations.getByName("main") {
             cinterops.create("realm_wrapper") {
-                defFile = project.file("src/native/realm.def")
+                definitionFile.set(project.file("src/native/realm.def"))
                 packageName = "realm_wrapper"
                 includeDirs("$absoluteCorePath/src/")
             }
@@ -147,23 +148,16 @@ kotlin {
             // ... and def file does not support using environment variables
             // https://github.com/JetBrains/kotlin-native/issues/3631
             // so resolving paths through gradle
-            kotlinOptions.freeCompilerArgs += if (this.konanTarget == KonanTarget.IOS_ARM64) {
-                when (buildType) {
-                    BuildType.DEBUG -> nativeLibraryIncludesIosArm64Debug
-                    BuildType.RELEASE -> nativeLibraryIncludesIosArm64Release
-                }
-            } else {
-                when (buildType) {
-                    BuildType.DEBUG -> nativeLibraryIncludesIosSimulatorX86Debug
-                    BuildType.RELEASE -> nativeLibraryIncludesIosSimulatorX86Release
-                }
+            kotlinOptions.freeCompilerArgs += when (buildType) {
+                BuildType.DEBUG -> nativeLibraryIncludesIosSimulatorX86Debug
+                BuildType.RELEASE -> nativeLibraryIncludesIosSimulatorX86Release
             }
         }
     }
     iosSimulatorArm64 {
         compilations.getByName("main") {
             cinterops.create("realm_wrapper") {
-                defFile = project.file("src/native/realm.def")
+                definitionFile.set(project.file("src/native/realm.def"))
                 packageName = "realm_wrapper"
                 includeDirs("$absoluteCorePath/src/")
             }
@@ -173,11 +167,30 @@ kotlin {
             }
         }
     }
-
+    iosArm64 {
+        compilations.getByName("main") {
+            cinterops.create("realm_wrapper") {
+                definitionFile.set(project.file("src/native/realm.def"))
+                packageName = "realm_wrapper"
+                includeDirs("$absoluteCorePath/src/")
+            }
+            // Relative paths in def file depends are resolved differently dependent on execution
+            // location
+            // https://youtrack.jetbrains.com/issue/KT-43439
+            // https://github.com/JetBrains/kotlin-native/issues/2314
+            // ... and def file does not support using environment variables
+            // https://github.com/JetBrains/kotlin-native/issues/3631
+            // so resolving paths through gradle
+            kotlinOptions.freeCompilerArgs += when (buildType) {
+                BuildType.DEBUG -> nativeLibraryIncludesIosArm64Debug
+                BuildType.RELEASE -> nativeLibraryIncludesIosArm64Release
+            }
+        }
+    }
     macosX64 {
         compilations.getByName("main") {
             cinterops.create("realm_wrapper") {
-                defFile = project.file("src/native/realm.def")
+                definitionFile.set(project.file("src/native/realm.def"))
                 packageName = "realm_wrapper"
                 includeDirs("$absoluteCorePath/src/")
             }
@@ -197,7 +210,7 @@ kotlin {
     macosArm64 {
         compilations.getByName("main") {
             cinterops.create("realm_wrapper") {
-                defFile = project.file("src/native/realm.def")
+                definitionFile.set(project.file("src/native/realm.def"))
                 packageName = "realm_wrapper"
                 includeDirs("$absoluteCorePath/src/")
             }
@@ -251,19 +264,24 @@ kotlin {
         val nativeDarwinTest by creating {
             dependsOn(commonTest)
         }
-        val iosMain by getting {
+        val iosArm64Main by getting {
             dependsOn(nativeDarwin)
+        }
+        val iosArm64Test by getting {
+            dependsOn(nativeDarwinTest)
+        }
+        val iosX64Main by getting {
+            dependsOn(nativeDarwin)
+        }
+        val iosX64Test by getting {
+            dependsOn(nativeDarwinTest)
         }
         val iosSimulatorArm64Main by getting {
             dependsOn(nativeDarwin)
         }
-        val iosTest by getting {
-            dependsOn(nativeDarwinTest)
-        }
         val iosSimulatorArm64Test by getting {
             dependsOn(nativeDarwinTest)
         }
-
         val macosX64Main by getting {
             dependsOn(nativeDarwin)
         }
@@ -374,7 +392,6 @@ if (HOST_OS.isMacOs()) {
         checkIfBuildingNativeLibs(this) {
             dependsOn(capiSimulatorX64)
         }
-
     }
 
     tasks.named("cinteropRealm_wrapperIosSimulatorArm64") {
@@ -616,7 +633,7 @@ fun Task.build_C_API_Simulator(arch: String, buildType: BuildType) {
                 "-sdk",
                 "iphonesimulator",
                 "-configuration",
-                "${buildType.type}",
+                buildType.type,
                 "-target",
                 "install",
                 "-UseModernBuildSystem=NO" // TODO remove flag when https://github.com/realm/realm-kotlin/issues/141 is fixed
