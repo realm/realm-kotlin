@@ -78,7 +78,7 @@ public val MISSING_PLUGIN: Throwable = IllegalStateException(MISSING_PLUGIN_MESS
  * Add a check and error message for code that never be reached because it should have been
  * replaced by the Compiler Plugin.
  */
-@Suppress("FunctionNaming", "NOTHING_TO_INLINE")
+@Suppress("FunctionNaming")
 public inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
         "Has the `realm-kotlin` Gradle plugin been applied to the project?"
@@ -91,7 +91,7 @@ internal fun checkRealmClosed(realm: RealmReference) {
 }
 
 internal fun <T : BaseRealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>): T =
-    create(mediator, realm, type, realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`)
+    create(mediator, realm, type, realmObjectCompanionOrThrow(type).io_realm_kotlin_className)
 
 internal fun <T : BaseRealmObject> create(
     mediator: Mediator,
@@ -153,6 +153,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
         throw IllegalArgumentException("Cannot copy an invalid managed object to Realm.")
     }
 
+    @Suppress("UNCHECKED_CAST")
     return cache[element] as T? ?: element.runIfManaged {
         if (owner == realmReference) {
             element
@@ -161,7 +162,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
         }
     } ?: run {
         // Create a new object if it wasn't managed
-        var className: String?
+        val className: String?
         var hasPrimaryKey: Boolean = false
         var primaryKey: Any? = null
         if (element is DynamicUnmanagedRealmObject) {
@@ -179,7 +180,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
             primaryKey = primaryKeyName?.let {
                 val properties = element.properties
                 if (properties.containsKey(primaryKeyName)) {
-                    properties.get(primaryKeyName)
+                    properties[primaryKeyName]
                 } else {
                     throw IllegalArgumentException("Cannot create object of type '$className' without primary key property '$primaryKeyName'")
                 }
@@ -190,7 +191,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
             if (companion.io_realm_kotlin_classKind == RealmClassKind.EMBEDDED) {
                 throw IllegalArgumentException("Cannot create embedded object without a parent")
             }
-            companion.`io_realm_kotlin_primaryKey`?.let {
+            companion.io_realm_kotlin_primaryKey?.let {
                 hasPrimaryKey = true
                 primaryKey = (it as KProperty1<BaseRealmObject, Any?>).get(element)
             }
@@ -219,7 +220,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
         cache[element] = target
         assign(target, element, updatePolicy, cache)
         target
-    } as T
+    }
 }
 
 /**
@@ -241,6 +242,7 @@ public fun <T : BaseRealm> TypedRealmObject.getRealm(): T? {
     if (!this.isManaged()) {
         return null
     }
+    @Suppress("UNCHECKED_CAST")
     return if (this is RealmObjectInternal) {
         val objRef: RealmObjectReference<out BaseRealmObject> = io_realm_kotlin_objectReference!!
         objRef.owner.owner as T
@@ -252,6 +254,7 @@ public fun <T : BaseRealm> RealmList<*>.getRealm(): T? {
     return when (this) {
         is UnmanagedRealmList -> null
         is ManagedRealmList -> {
+            @Suppress("UNCHECKED_CAST")
             return this.operator.realmReference.owner as T
         }
         else -> {
@@ -263,6 +266,7 @@ public fun <T : BaseRealm> RealmSet<*>.getRealm(): T? {
     return when (this) {
         is UnmanagedRealmSet -> null
         is ManagedRealmSet -> {
+            @Suppress("UNCHECKED_CAST")
             return this.operator.realmReference.owner as T
         }
         else -> {
@@ -274,6 +278,7 @@ public fun <T : BaseRealm> RealmDictionary<*>.getRealm(): T? {
     return when (this) {
         is UnmanagedRealmDictionary -> null
         is ManagedRealmDictionary -> {
+            @Suppress("UNCHECKED_CAST")
             return this.operator.realmReference.owner as T
         }
         else -> {
@@ -283,6 +288,7 @@ public fun <T : BaseRealm> RealmDictionary<*>.getRealm(): T? {
 }
 public fun <T : BaseRealm> RealmResults<*>.getRealm(): T {
     if (this is RealmResultsImpl) {
+        @Suppress("UNCHECKED_CAST")
         return this.realm.owner as T
     } else {
         throw IllegalStateException("Unsupported results type: $this::class")
@@ -291,6 +297,7 @@ public fun <T : BaseRealm> RealmResults<*>.getRealm(): T {
 
 public fun <T : BaseRealm> RealmQuery<*>.getRealm(): T {
     if (this is ObjectQuery) {
+        @Suppress("UNCHECKED_CAST")
         return this.realmReference.owner as T
     } else {
         throw IllegalStateException("Unsupported query type: $this::class")

@@ -29,7 +29,6 @@ import io.realm.kotlin.test.mongodb.util.AppServicesClient
 import io.realm.kotlin.test.mongodb.util.BaasApp
 import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer.initialize
 import io.realm.kotlin.test.mongodb.util.Service
-import io.realm.kotlin.test.mongodb.util.TEST_METHODS
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.trySendOrFail
@@ -39,6 +38,14 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+
+val TEST_METHODS = listOf(
+    HttpMethod.Get,
+    HttpMethod.Post,
+    HttpMethod.Patch,
+    HttpMethod.Put,
+    HttpMethod.Delete,
+)
 
 internal class KtorNetworkTransportTest {
     private lateinit var transport: KtorNetworkTransport

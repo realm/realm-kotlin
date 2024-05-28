@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.internal.util
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -25,6 +26,7 @@ import kotlinx.coroutines.selects.whileSelect
  * Flow wrapper that will terminate the flow once the [completionFlow] emits an element that
  * satisfies the [completionPredicate].
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 internal fun <T, S> Flow<T>.terminateWhen(
     completionFlow: Flow<S>,
     completionPredicate: (S) -> Boolean

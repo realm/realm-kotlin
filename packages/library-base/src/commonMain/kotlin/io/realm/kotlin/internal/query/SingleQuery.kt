@@ -20,6 +20,7 @@ import io.realm.kotlin.notifications.internal.DeletedObjectImpl
 import io.realm.kotlin.notifications.internal.PendingObjectImpl
 import io.realm.kotlin.query.RealmSingleQuery
 import io.realm.kotlin.types.BaseRealmObject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
@@ -56,6 +57,7 @@ internal class SingleQuery<E : BaseRealmObject> constructor(
      * new head if any.
      * If there is an update, we ignore it, as the object flow would automatically emit the event.
      */
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun asFlow(keyPaths: List<String>?): Flow<SingleQueryChange<E>> {
         var oldHead: E? = null
         val keyPathInfo = keyPaths?.let {

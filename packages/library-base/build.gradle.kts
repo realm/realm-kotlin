@@ -122,6 +122,7 @@ kotlin {
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     kotlinOptions {
         freeCompilerArgs += listOf("-module-name", "io.realm.kotlin.library")
+        freeCompilerArgs += listOf("-Xexpect-actual-classes")
     }
 }
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().all {

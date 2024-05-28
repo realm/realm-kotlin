@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:OptIn(UnsafeDuringIrConstructionAPI::class)
+
 package io.realm.kotlin.compiler
 
 import io.realm.kotlin.compiler.ClassIds.ASYMMETRIC_OBJECT_INTERFACE
@@ -89,6 +91,7 @@ import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
+import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
@@ -309,6 +312,7 @@ internal fun IrPluginContext.lookupConstructorInClass(
 internal fun <T> IrClass.lookupCompanionDeclaration(
     name: Name
 ): T {
+    @Suppress("UNCHECKED_CAST")
     return this.companionObject()?.declarations?.first {
         it is IrDeclarationWithName && it.name == name
     } as T

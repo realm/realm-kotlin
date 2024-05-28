@@ -91,10 +91,11 @@ internal class RealmAnyImpl<T : Any> constructor(
         val getValue = getValue(RealmAny.Type.OBJECT)
         return clazz.cast(getValue)
     }
-
+    @Suppress("UNCHECKED_CAST")
     override fun asList(): RealmList<RealmAny?> =
         getValue(RealmAny.Type.LIST) as RealmList<RealmAny?>
 
+    @Suppress("UNCHECKED_CAST")
     override fun asDictionary(): RealmDictionary<RealmAny?> =
         getValue(RealmAny.Type.DICTIONARY) as RealmDictionary<RealmAny?>
 

@@ -167,6 +167,10 @@ public abstract class MutableRealmInt : Comparable<MutableRealmInt>, Number() {
 
     override fun toByte(): Byte = get().toByte()
 
+    @Deprecated(
+        "Direct conversion to Char is deprecated. Use toInt().toChar() or Char constructor instead.\nSee https://youtrack.jetbrains.com/issue/KT-46465 for details about the migration",
+        replaceWith = ReplaceWith("this.toInt().toChar()")
+    )
     override fun toChar(): Char = get().toInt().toChar()
 
     override fun toDouble(): Double = get().toDouble()

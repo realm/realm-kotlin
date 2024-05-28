@@ -142,9 +142,8 @@ import realm_wrapper.realm_work_queue_t
 import kotlin.collections.set
 import kotlin.native.internal.createCleaner
 
-@SharedImmutable
 actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realm_wrapper.RLM_INVALID_CLASS_KEY.toLong()) }
-@SharedImmutable
+
 actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realm_wrapper.RLM_INVALID_PROPERTY_KEY) }
 
 private fun throwOnError() {
@@ -224,6 +223,7 @@ class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean 
 
 // Convenience type cast
 inline fun <S : CapiT, T : CPointed> NativePointer<out S>.cptr(): CPointer<T> {
+    @Suppress("UNCHECKED_CAST")
     return (this as CPointerWrapper<out S>).ptr as CPointer<T>
 }
 
@@ -3458,7 +3458,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_subscriptionset_insert_or_assign(
-        mutatableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         query: RealmQueryPointer,
         name: String?
     ): Pair<RealmSubscriptionPointer, Boolean> {
@@ -3466,7 +3466,7 @@ actual object RealmInterop {
             val outIndex = alloc<size_tVar>()
             val outInserted = alloc<BooleanVar>()
             realm_wrapper.realm_sync_subscription_set_insert_or_assign_query(
-                mutatableSubscriptionSet.cptr(),
+                mutableSubscriptionSet.cptr(),
                 query.cptr(),
                 name,
                 outIndex.ptr,
@@ -3474,7 +3474,7 @@ actual object RealmInterop {
             )
             return Pair(
                 realm_sync_subscription_at(
-                    mutatableSubscriptionSet as RealmSubscriptionSetPointer,
+                    mutableSubscriptionSet as RealmSubscriptionSetPointer,
                     outIndex.value.toLong()
                 ),
                 outInserted.value
