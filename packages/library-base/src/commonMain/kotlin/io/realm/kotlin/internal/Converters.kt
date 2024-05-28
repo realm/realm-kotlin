@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("NOTHING_TO_INLINE")
 
 package io.realm.kotlin.internal
 
@@ -270,72 +271,72 @@ internal interface CoreIntConverter : StorageTypeConverter<Long> {
 }
 
 internal object ByteConverter : CoreIntConverter, CompositeConverter<Byte, Long>() {
-    override inline fun fromPublic(value: Byte?): Long? = byteToLong(value)
-    override inline fun toPublic(value: Long?): Byte? = longToByte(value)
+    override fun fromPublic(value: Byte?): Long? = byteToLong(value)
+    override fun toPublic(value: Long?): Byte? = longToByte(value)
 }
 // Top level methods to allow inlining from compiler plugin
 public inline fun byteToLong(value: Byte?): Long? = value?.toLong()
 public inline fun longToByte(value: Long?): Byte? = value?.toByte()
 
 internal object CharConverter : CoreIntConverter, CompositeConverter<Char, Long>() {
-    override inline fun fromPublic(value: Char?): Long? = charToLong(value)
-    override inline fun toPublic(value: Long?): Char? = longToChar(value)
+    override fun fromPublic(value: Char?): Long? = charToLong(value)
+    override fun toPublic(value: Long?): Char? = longToChar(value)
 }
 // Top level methods to allow inlining from compiler plugin
 public inline fun charToLong(value: Char?): Long? = value?.code?.toLong()
 public inline fun longToChar(value: Long?): Char? = value?.toInt()?.toChar()
 
 internal object ShortConverter : CoreIntConverter, CompositeConverter<Short, Long>() {
-    override inline fun fromPublic(value: Short?): Long? = shortToLong(value)
-    override inline fun toPublic(value: Long?): Short? = longToShort(value)
+    override fun fromPublic(value: Short?): Long? = shortToLong(value)
+    override fun toPublic(value: Long?): Short? = longToShort(value)
 }
 // Top level methods to allow inlining from compiler plugin
 public inline fun shortToLong(value: Short?): Long? = value?.toLong()
 public inline fun longToShort(value: Long?): Short? = value?.toShort()
 
 internal object IntConverter : CoreIntConverter, CompositeConverter<Int, Long>() {
-    override inline fun fromPublic(value: Int?): Long? = intToLong(value)
-    override inline fun toPublic(value: Long?): Int? = longToInt(value)
+    override  fun fromPublic(value: Int?): Long? = intToLong(value)
+    override fun toPublic(value: Long?): Int? = longToInt(value)
 }
 // Top level methods to allow inlining from compiler plugin
 public inline fun intToLong(value: Int?): Long? = value?.toLong()
 public inline fun longToInt(value: Long?): Int? = value?.toInt()
 
 internal object RealmInstantConverter : PassThroughPublicConverter<RealmInstant>() {
-    override inline fun fromRealmValue(realmValue: RealmValue): RealmInstant? =
+    override fun fromRealmValue(realmValue: RealmValue): RealmInstant? =
         if (realmValue.isNull()) null else realmValueToRealmInstant(realmValue)
-    override inline fun MemTrackingAllocator.toRealmValue(value: RealmInstant?): RealmValue =
+    override fun MemTrackingAllocator.toRealmValue(value: RealmInstant?): RealmValue =
         timestampTransport(value?.let { it as Timestamp })
 }
 
 internal object ObjectIdConverter : PassThroughPublicConverter<BsonObjectId>() {
-    override inline fun fromRealmValue(realmValue: RealmValue): BsonObjectId? =
+    override fun fromRealmValue(realmValue: RealmValue): BsonObjectId? =
         if (realmValue.isNull()) null else realmValueToObjectId(realmValue)
 
-    override inline fun MemTrackingAllocator.toRealmValue(value: BsonObjectId?): RealmValue =
+    override fun MemTrackingAllocator.toRealmValue(value: BsonObjectId?): RealmValue =
         objectIdTransport(value?.toByteArray())
 }
 // Top level methods to allow inlining from compiler plugin
 
 internal object RealmUUIDConverter : PassThroughPublicConverter<RealmUUID>() {
-    override inline fun fromRealmValue(realmValue: RealmValue): RealmUUID? =
+    override fun fromRealmValue(realmValue: RealmValue): RealmUUID? =
         if (realmValue.isNull()) null else realmValueToRealmUUID(realmValue)
-    override inline fun MemTrackingAllocator.toRealmValue(value: RealmUUID?): RealmValue =
+    override fun MemTrackingAllocator.toRealmValue(value: RealmUUID?): RealmValue =
         uuidTransport(value?.bytes)
 }
 
 internal object ByteArrayConverter : PassThroughPublicConverter<ByteArray>() {
-    override inline fun fromRealmValue(realmValue: RealmValue): ByteArray? =
+    override fun fromRealmValue(realmValue: RealmValue): ByteArray? =
         if (realmValue.isNull()) null else realmValueToByteArray(realmValue)
-    override inline fun MemTrackingAllocator.toRealmValue(value: ByteArray?): RealmValue =
+    override fun MemTrackingAllocator.toRealmValue(value: ByteArray?): RealmValue =
         byteArrayTransport(value)
 }
 
 internal object Decimal128Converter : PassThroughPublicConverter<Decimal128>() {
-    override inline fun fromRealmValue(realmValue: RealmValue): Decimal128? =
+    override fun fromRealmValue(realmValue: RealmValue): Decimal128? =
         if (realmValue.isNull()) null else realmValueToDecimal128(realmValue)
 
-    override inline fun MemTrackingAllocator.toRealmValue(value: Decimal128?): RealmValue =
+    override fun MemTrackingAllocator.toRealmValue(value: Decimal128?): RealmValue =
         decimal128Transport(value)
 }
 

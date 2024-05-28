@@ -23,6 +23,7 @@ import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.ProducerScope
 
 // Conventional try-with-resource wrapper for channels
+@Suppress("NOTHING_TO_INLINE")
 public inline fun <T : Channel<*>, R> T.use(block: (channel: T) -> R): R {
     try {
         return block(this)
@@ -32,6 +33,7 @@ public inline fun <T : Channel<*>, R> T.use(block: (channel: T) -> R): R {
 }
 
 // Public to be accessible from sync progress listeners
+@Suppress("NOTHING_TO_INLINE")
 public inline fun <T> ProducerScope<T>.trySendWithBufferOverflowCheck(value: T) {
     trySend(value).checkForBufferOverFlow()?.let { cancel(it) }
 }

@@ -46,6 +46,8 @@ public fun <T> realmSetOf(vararg elements: T): RealmSet<T> =
  * @returns an in-memory copy of all input objects.
  * @throws IllegalArgumentException if depth < 0 or, or the list is not valid to copy.
  */
+
+@Suppress("NOTHING_TO_INLINE")
 public inline fun <T : RealmObject> RealmSet<T>.copyFromRealm(
     depth: UInt = UInt.MAX_VALUE
 ): Set<T> {

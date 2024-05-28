@@ -78,7 +78,7 @@ public val MISSING_PLUGIN: Throwable = IllegalStateException(MISSING_PLUGIN_MESS
  * Add a check and error message for code that never be reached because it should have been
  * replaced by the Compiler Plugin.
  */
-@Suppress("FunctionNaming")
+@Suppress("FunctionNaming", "NOTHING_TO_INLINE")
 public inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
         "Has the `realm-kotlin` Gradle plugin been applied to the project?"

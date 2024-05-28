@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-@file:OptIn(UnsafeDuringIrConstructionAPI::class)
+@file:OptIn(UnsafeDuringIrConstructionAPI::class, UnsafeDuringIrConstructionAPI::class)
 
 package io.realm.kotlin.compiler
 
@@ -153,6 +153,7 @@ val anyRealmObjectInterfacesFqNames = realmObjectInterfaceFqNames + realmEmbedde
 
 fun IrType.classIdOrFail(): ClassId = getClass()?.classId ?: error("Can't get classId of ${render()}")
 
+@Suppress("NOTHING_TO_INLINE")
 inline fun PsiElement.hasInterface(interfaces: Set<String>): Boolean {
     var hasRealmObjectAsSuperType = false
     this.acceptChildren(object : PsiElementVisitor() {
@@ -180,6 +181,8 @@ inline fun PsiElement.hasInterface(interfaces: Set<String>): Boolean {
 
     return hasRealmObjectAsSuperType
 }
+
+@Suppress("NOTHING_TO_INLINE")
 inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     // Using PSI to find super types to avoid cyclic reference (see https://github.com/realm/realm-kotlin/issues/339)
     return this.findPsi()?.hasInterface(interfaces) ?: false
