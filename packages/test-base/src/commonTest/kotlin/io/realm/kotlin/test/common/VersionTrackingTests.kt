@@ -34,6 +34,7 @@ import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.launchIn
@@ -135,6 +136,7 @@ class VersionTrackingTests {
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     @Test
     fun realmAsFlow_doesNotTrackVersions() = runBlocking {
         realm.activeVersions().run {

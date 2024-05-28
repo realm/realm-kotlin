@@ -32,6 +32,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.types.RealmSet
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
@@ -226,6 +227,7 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
 
             // Check channel 1 didn't receive the update
             assertEquals(SET_OBJECT_VALUES.size + 1, channel2.receiveOrFail().set.size)
+            @OptIn(ExperimentalCoroutinesApi::class)
             assertTrue(channel1.isEmpty)
 
             observer2.cancel()
@@ -376,14 +378,9 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { setChange ->
             assertIs<UpdatedSet<RealmSetContainer>>(setChange)
-            when (setChange) {
-                is UpdatedSet -> {
-                    assertEquals(0, setChange.deletions)
-                    assertEquals(0, setChange.insertions)
-                    assertNotNull(setChange.set.firstOrNull { it.stringField == "Foo" })
-                }
-                else -> fail("Unexpected change: $setChange")
-            }
+            assertEquals(0, setChange.deletions)
+            assertEquals(0, setChange.insertions)
+            assertNotNull(setChange.set.firstOrNull { it.stringField == "Foo" })
         }
         observer.cancel()
         c.close()
@@ -424,14 +421,9 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { setChange ->
             assertIs<UpdatedSet<RealmSetContainer>>(setChange)
-            when (setChange) {
-                is UpdatedSet -> {
-                    assertEquals(0, setChange.insertions)
-                    assertEquals(0, setChange.deletions)
-                    assertEquals("Bar", setChange.set.first().objectSetField.first().stringField)
-                }
-                else -> fail("Unexpected change: $setChange")
-            }
+            assertEquals(0, setChange.insertions)
+            assertEquals(0, setChange.deletions)
+            assertEquals("Bar", setChange.set.first().objectSetField.first().stringField)
         }
         observer.cancel()
         c.close()
@@ -497,17 +489,12 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { setChange ->
             assertIs<UpdatedSet<RealmSetContainer>>(setChange)
-            when (setChange) {
-                is SetChange -> {
-                    // Core will only report something changed to the top-level property.
-                    assertEquals(0, setChange.insertions)
-                    assertEquals(0, setChange.deletions)
-                    // Default value is Realm, so if this event is triggered by the first write
-                    // this assert will fail
-                    assertEquals("Bar", setChange.set.first().stringField)
-                }
-                else -> fail("Unexpected change: $setChange")
-            }
+            // Core will only report something changed to the top-level property.
+            assertEquals(0, setChange.insertions)
+            assertEquals(0, setChange.deletions)
+            // Default value is Realm, so if this event is triggered by the first write
+            // this assert will fail
+            assertEquals("Bar", setChange.set.first().stringField)
         }
         observer.cancel()
         c.close()
@@ -571,24 +558,19 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { setChange ->
             assertIs<UpdatedSet<RealmSetContainer>>(setChange)
-            when (setChange) {
-                is SetChange -> {
-                    // Core will only report something changed to the top-level property.
-                    assertEquals(0, setChange.insertions)
-                    assertEquals(0, setChange.deletions)
-                    assertEquals(
-                        "Bar",
-                        setChange.set.first()
-                            .objectSetField.first()
-                            .objectSetField.first()
-                            .objectSetField.first()
-                            .objectSetField.first()
-                            .objectSetField.first()
-                            .stringField
-                    )
-                }
-                else -> fail("Unexpected change: $setChange")
-            }
+            // Core will only report something changed to the top-level property.
+            assertEquals(0, setChange.insertions)
+            assertEquals(0, setChange.deletions)
+            assertEquals(
+                "Bar",
+                setChange.set.first()
+                    .objectSetField.first()
+                    .objectSetField.first()
+                    .objectSetField.first()
+                    .objectSetField.first()
+                    .objectSetField.first()
+                    .stringField
+            )
         }
         observer.cancel()
         c.close()

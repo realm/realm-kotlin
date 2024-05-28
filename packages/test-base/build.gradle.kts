@@ -100,6 +100,7 @@ kotlin {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
+                implementation(kotlin("reflect"))
             }
         }
     }
@@ -274,6 +275,12 @@ kotlin {
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().all {
     kotlinOptions {
         freeCompilerArgs += listOf("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs += listOf("-Xexpect-actual-classes")
     }
 }
 

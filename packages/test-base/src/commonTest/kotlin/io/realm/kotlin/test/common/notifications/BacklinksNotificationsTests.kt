@@ -28,6 +28,7 @@ import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -269,6 +270,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     assertIs<UpdatedResults<*>>(resultsChange)
                     assertEquals(0, resultsChange.list.size)
                 }
+                @OptIn(ExperimentalCoroutinesApi::class)
                 assertTrue(c1.isEmpty)
                 observer2.cancel()
                 c1.close()
@@ -445,15 +447,11 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { resultsChange ->
             assertIs<UpdatedResults<Sample>>(resultsChange)
-            when (resultsChange) {
-                is UpdatedResults -> {
-                    assertEquals(0, resultsChange.insertions.size)
-                    assertEquals(1, resultsChange.changes.size)
-                    assertEquals(0, resultsChange.deletions.size)
-                    assertEquals(2, resultsChange.list.first().objectBacklinks.size)
-                }
-                else -> fail("Unexpected change: $resultsChange")
-            }
+
+            assertEquals(0, resultsChange.insertions.size)
+            assertEquals(1, resultsChange.changes.size)
+            assertEquals(0, resultsChange.deletions.size)
+            assertEquals(2, resultsChange.list.first().objectBacklinks.size)
         }
         observer.cancel()
         c.close()
@@ -489,18 +487,14 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { resultsChange ->
             assertIs<UpdatedResults<Sample>>(resultsChange)
-            when (resultsChange) {
-                is UpdatedResults -> {
-                    assertEquals(0, resultsChange.insertions.size)
-                    assertEquals(1, resultsChange.changes.size)
-                    assertEquals(0, resultsChange.deletions.size)
-                    assertEquals(1, resultsChange.list.first().objectBacklinks.size)
-                    // This starts at 42, if the first write triggers a change event, it will
-                    // catch it here.
-                    assertEquals(resultsChange.list.first().objectBacklinks.first().intField, 1)
-                }
-                else -> fail("Unexpected change: $resultsChange")
-            }
+
+            assertEquals(0, resultsChange.insertions.size)
+            assertEquals(1, resultsChange.changes.size)
+            assertEquals(0, resultsChange.deletions.size)
+            assertEquals(1, resultsChange.list.first().objectBacklinks.size)
+            // This starts at 42, if the first write triggers a change event, it will
+            // catch it here.
+            assertEquals(resultsChange.list.first().objectBacklinks.first().intField, 1)
         }
         observer.cancel()
         c.close()
@@ -556,14 +550,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { resultsChange ->
             assertIs<UpdatedResults<Sample>>(resultsChange)
-            when (resultsChange) {
-                is ResultsChange<*> -> {
-                    // Default value is 42, so if this event is triggered by the first write
-                    // this assert will fail
-                    assertEquals(1, resultsChange.list.first().intField)
-                }
-                else -> fail("Unexpected change: $resultsChange")
-            }
+            assertEquals(1, resultsChange.list.first().intField)
         }
         observer.cancel()
         c.close()
@@ -618,15 +605,10 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { resultsChange ->
             assertIs<UpdatedResults<Sample>>(resultsChange)
-            when (resultsChange) {
-                is ResultsChange<*> -> {
-                    assertEquals(0, resultsChange.insertions.size)
-                    assertEquals(1, resultsChange.changes.size)
-                    assertEquals(0, resultsChange.deletions.size)
-                    assertEquals(1, resultsChange.list.first().objectBacklinks.size)
-                }
-                else -> fail("Unexpected change: $resultsChange")
-            }
+            assertEquals(0, resultsChange.insertions.size)
+            assertEquals(1, resultsChange.changes.size)
+            assertEquals(0, resultsChange.deletions.size)
+            assertEquals(1, resultsChange.list.first().objectBacklinks.size)
         }
         observer.cancel()
         c.close()

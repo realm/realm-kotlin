@@ -711,6 +711,7 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
     private val managedTesters: List<ListApiTester<*, RealmListContainer>> by lazy {
         descriptors.map {
             val elementType = it.elementType
+            @Suppress("UNCHECKED_CAST")
             when (val classifier = elementType.classifier) {
                 RealmObject::class -> RealmObjectListTester(
                     realm = realm,
