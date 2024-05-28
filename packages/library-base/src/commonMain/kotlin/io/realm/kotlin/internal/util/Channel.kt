@@ -38,6 +38,7 @@ public inline fun <T> ProducerScope<T>.trySendWithBufferOverflowCheck(value: T) 
     trySend(value).checkForBufferOverFlow()?.let { cancel(it) }
 }
 
+@Suppress("NOTHING_TO_INLINE")
 public inline fun <T> ChannelResult<T>.checkForBufferOverFlow(): CancellationException? =
     if (!isClosed && isFailure) {
         CancellationException(

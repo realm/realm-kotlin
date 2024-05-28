@@ -122,6 +122,12 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
     }
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs += listOf("-Xexpect-actual-classes")
+    }
+}
+
 // Android configuration
 android {
     compileSdkVersion(Versions.Android.compileSdkVersion)

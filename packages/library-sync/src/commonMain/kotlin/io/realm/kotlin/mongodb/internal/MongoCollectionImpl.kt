@@ -232,6 +232,7 @@ internal inline fun <reified R> MongoCollectionImpl<*>.decodeFromBsonValue(bsonV
 @PublishedApi
 internal inline fun <reified R> MongoCollectionImpl<*>.decodeFromBsonValueList(bsonValues: List<BsonValue>): List<R> {
     return if (R::class == BsonValue::class) {
+        @Suppress("UNCHECKED_CAST")
         bsonValues as List<R>
     } else {
         bsonValues.map { eJson.decodeFromBsonValue(it) }
