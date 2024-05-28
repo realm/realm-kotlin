@@ -301,6 +301,7 @@ kotlin {
             kotlinOptions {
                 freeCompilerArgs += listOf("-opt-in=kotlin.ExperimentalUnsignedTypes")
                 freeCompilerArgs += listOf("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
+                freeCompilerArgs += listOf("-Xexpect-actual-classes")
             }
         }
     }
@@ -595,7 +596,8 @@ fun Task.build_C_API_Macos_Universal(buildVariant: BuildType) {
                 "macosx",
                 "-configuration",
                 "${buildVariant.type}",
-                "-UseModernBuildSystem=NO" // TODO remove flag when https://github.com/realm/realm-kotlin/issues/141 is fixed
+                "-UseModernBuildSystem=NO", // TODO remove flag when https://github.com/realm/realm-kotlin/issues/141 is fixed
+                "DISABLE_MANUAL_TARGET_ORDER_BUILD_WARNING=YES",
             )
         }
     }
@@ -636,7 +638,8 @@ fun Task.build_C_API_Simulator(arch: String, buildType: BuildType) {
                 buildType.type,
                 "-target",
                 "install",
-                "-UseModernBuildSystem=NO" // TODO remove flag when https://github.com/realm/realm-kotlin/issues/141 is fixed
+                "-UseModernBuildSystem=NO", // TODO remove flag when https://github.com/realm/realm-kotlin/issues/141 is fixed
+                "DISABLE_MANUAL_TARGET_ORDER_BUILD_WARNING=YES",
             )
         }
     }
@@ -678,7 +681,8 @@ fun Task.build_C_API_iOS_Arm64(buildType: BuildType) {
                 "-arch",
                 "arm64",
                 "ONLY_ACTIVE_ARCH=NO",
-                "-UseModernBuildSystem=NO"
+                "-UseModernBuildSystem=NO",
+                "DISABLE_MANUAL_TARGET_ORDER_BUILD_WARNING=YES",
             )
         }
     }

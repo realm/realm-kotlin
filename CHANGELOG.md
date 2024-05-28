@@ -44,6 +44,7 @@ This release will bump the Realm file format 24. Opening a file with an older fo
 ### Internal
 * Updated to Realm Core 14.7.0 commit c280bdb17522323d5c30dc32a2b9efc9dc80ca3b.
 * Changed Kotlin compiler testing framework to https://github.com/zacsweers/kotlin-compile-testing
+* Updated to Detekt 1.23.6.
 
 
 ## 1.16.0 (2024-05-01)

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import io.realm.kotlin.getPropertyValue
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.library") apply false
@@ -28,8 +29,10 @@ allprojects {
     group = Realm.group
 
     // Define JVM bytecode target for all Kotlin targets
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "${Versions.kotlinJvmTarget}"
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile> {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.fromTarget(Versions.kotlinJvmTarget))
+        }
     }
 }
 

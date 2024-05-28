@@ -115,7 +115,7 @@ object Versions {
     const val buildkonfig = "0.13.3" // https://github.com/yshrsmz/BuildKonfig
     const val coroutines = "1.7.0" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
     const val datetime = "0.4.0" // https://github.com/Kotlin/kotlinx-datetime
-    const val detektPlugin = "1.22.0-RC2" // https://github.com/detekt/detekt
+    const val detektPlugin = "1.23.6" // https://github.com/detekt/detekt
     const val dokka = "1.9.0" // https://github.com/Kotlin/dokka
     const val gradlePluginPublishPlugin = "0.15.0" // https://plugins.gradle.org/plugin/com.gradle.plugin-publish
     const val jmh = "1.34" // https://github.com/openjdk/jmh
