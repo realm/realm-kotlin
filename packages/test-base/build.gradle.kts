@@ -16,6 +16,8 @@
  */
 
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTests
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -272,15 +274,15 @@ kotlin {
     }
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().all {
-    kotlinOptions {
-        freeCompilerArgs += listOf("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
+tasks.withType<KotlinCompilationTask<*>>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    kotlinOptions {
-        freeCompilerArgs += listOf("-Xexpect-actual-classes")
+tasks.withType<KotlinNativeCompile>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
     }
 }
 

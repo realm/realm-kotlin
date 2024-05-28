@@ -15,7 +15,6 @@
  */
 // TODO https://github.com/realm/realm-kotlin/issues/889
 @file:Suppress("TooGenericExceptionThrown", "TooGenericExceptionCaught")
-@file:OptIn(ExperimentalForeignApi::class)
 
 package io.realm.kotlin.internal.interop
 
@@ -55,7 +54,6 @@ import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CPointerVarOf
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.CVariable
-import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
@@ -270,7 +268,6 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
     set(memScope, this@toRString)
 }
 
-@OptIn(ExperimentalForeignApi::class)
 @Suppress("LargeClass", "FunctionNaming")
 actual object RealmInterop {
 

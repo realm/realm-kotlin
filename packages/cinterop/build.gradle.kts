@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import org.jetbrains.kotlin.konan.target.KonanTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import java.io.ByteArrayOutputStream
 import java.nio.charset.Charset
 
@@ -295,15 +296,18 @@ kotlin {
             dependsOn(nativeDarwinTest)
         }
     }
+}
 
-    targets.all {
-        compilations.all {
-            kotlinOptions {
-                freeCompilerArgs += listOf("-opt-in=kotlin.ExperimentalUnsignedTypes")
-                freeCompilerArgs += listOf("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
-                freeCompilerArgs += listOf("-Xexpect-actual-classes")
-            }
-        }
+tasks.withType<KotlinCompilationTask<*>>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=kotlin.ExperimentalUnsignedTypes")
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+}
+
+tasks.withType<KotlinNativeCompile>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
     }
 }
 

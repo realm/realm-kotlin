@@ -295,7 +295,7 @@ public inline fun shortToLong(value: Short?): Long? = value?.toLong()
 public inline fun longToShort(value: Long?): Short? = value?.toShort()
 
 internal object IntConverter : CoreIntConverter, CompositeConverter<Int, Long>() {
-    override  fun fromPublic(value: Int?): Long? = intToLong(value)
+    override fun fromPublic(value: Int?): Long? = intToLong(value)
     override fun toPublic(value: Long?): Int? = longToInt(value)
 }
 // Top level methods to allow inlining from compiler plugin
