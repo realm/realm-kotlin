@@ -36,7 +36,6 @@ import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.exceptions.SyncException
-import io.realm.kotlin.mongodb.exceptions.UnrecoverableSyncException
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.InitialSubscriptionsCallback
 import io.realm.kotlin.mongodb.sync.SubscriptionSetState
@@ -332,13 +331,12 @@ class SyncedRealmTests {
                 Realm.open(config).use {
                     // Make sure that the test eventually fail. Coroutines can cancel a delay
                     // so this doesn't always block the test for 10 seconds.
-                    delay(10 * 1000)
+                    delay(10_000)
                     channel.send(AssertionError("Realm was successfully opened"))
                 }
             }
 
             val error = channel.receiveOrFail()
-            assertTrue(error is UnrecoverableSyncException, "Was $error")
             val message = error.message
             assertNotNull(message)
             assertTrue(

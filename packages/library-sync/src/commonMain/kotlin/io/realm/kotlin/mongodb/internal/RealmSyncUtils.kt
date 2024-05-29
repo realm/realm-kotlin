@@ -78,26 +78,27 @@ internal fun <T, R> channelResultCallback(
 internal fun convertSyncError(syncError: SyncError): SyncException {
     val errorCode = syncError.errorCode
     val message = createMessageFromSyncError(errorCode)
-    return when (errorCode.errorCode) {
-        ErrorCode.RLM_ERR_WRONG_SYNC_TYPE -> WrongSyncTypeException(message)
+    return if (syncError.isFatal) {
+        // An unrecoverable exception happened
+        UnrecoverableSyncException(message)
+    } else {
+        when (errorCode.errorCode) {
+            ErrorCode.RLM_ERR_WRONG_SYNC_TYPE -> WrongSyncTypeException(message)
 
-        ErrorCode.RLM_ERR_INVALID_SUBSCRIPTION_QUERY -> {
-            // Flexible Sync Query was rejected by the server
-            BadFlexibleSyncQueryException(message)
-        }
-        ErrorCode.RLM_ERR_SYNC_COMPENSATING_WRITE -> CompensatingWriteException(message, syncError.compensatingWrites)
+            ErrorCode.RLM_ERR_INVALID_SUBSCRIPTION_QUERY -> {
+                // Flexible Sync Query was rejected by the server
+                BadFlexibleSyncQueryException(message)
+            }
 
-        ErrorCode.RLM_ERR_SYNC_PROTOCOL_INVARIANT_FAILED,
-        ErrorCode.RLM_ERR_SYNC_PROTOCOL_NEGOTIATION_FAILED,
-        ErrorCode.RLM_ERR_SYNC_PERMISSION_DENIED -> {
-            // Permission denied errors should be unrecoverable according to Core, i.e. the
-            // client will disconnect sync and transition to the "inactive" state
-            UnrecoverableSyncException(message)
-        }
-        else -> {
-            // An error happened we are not sure how to handle. Just report as a generic
-            // SyncException.
-            SyncException(message)
+            ErrorCode.RLM_ERR_SYNC_COMPENSATING_WRITE -> CompensatingWriteException(
+                message,
+                syncError.compensatingWrites
+            )
+            else -> {
+                // An error happened we are not sure how to handle. Just report as a generic
+                // SyncException.
+                SyncException(message)
+            }
         }
     }
 }

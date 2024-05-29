@@ -1,4 +1,4 @@
-## 1.16.1-SNAPSHOT (2024-05-01)
+## 1.16.1-SNAPSHOT (YYYY-MM-DD)
 
 [!NOTE]
 This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
@@ -10,7 +10,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * None.
 
 ### Fixed
-* None.
+* [Sync] Fatal sync exceptions are now thrown as `UnrecoverableSyncException`. (Issue [#1767](https://github.com/realm/realm-kotlin/issues/1767) [RKOTLIN-1096](https://jira.mongodb.org/browse/RKOTLIN-1096)).
 
 ### Known issues
 * Missing initial download progress notification when there is no active downloads. (Issue [realm/realm-core#7627](https://github.com/realm/realm-core/issues/7627), since 1.15.1)
