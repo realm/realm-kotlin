@@ -28,14 +28,19 @@ import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.internal.interop.ErrorCode
+import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.App
+import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.exceptions.SyncException
+import io.realm.kotlin.mongodb.exceptions.UnrecoverableSyncException
+import io.realm.kotlin.mongodb.internal.SyncSessionImpl
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.InitialSubscriptionsCallback
 import io.realm.kotlin.mongodb.sync.SubscriptionSetState
@@ -306,6 +311,56 @@ class SyncedRealmTests {
         realm1.close()
         realm2.close()
         realm3.close()
+    }
+
+    @Test
+    fun errorHandlerProcessFatalSyncErrors() {
+        val channel = TestChannel<Throwable>()
+        val user = runBlocking {
+            app.login(Credentials.anonymous())
+        }
+
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        ).errorHandler { _, error ->
+            channel.trySendOrFail(error)
+        }.build()
+
+        runBlocking {
+            val deferred = async {
+                Realm.open(config).use { realm ->
+                    RealmInterop.realm_sync_session_handle_error_for_testing(
+                        syncSession = (realm.syncSession as SyncSessionImpl).nativePointer,
+                        error = ErrorCode.RLM_ERR_ACCOUNT_NAME_IN_USE,
+                        errorMessage = "Non fatal error",
+                        isFatal = true, // flipped https://jira.mongodb.org/browse/RCORE-2146
+                    )
+
+                    RealmInterop.realm_sync_session_handle_error_for_testing(
+                        syncSession = (realm.syncSession as SyncSessionImpl).nativePointer,
+                        error = ErrorCode.RLM_ERR_INTERNAL_SERVER_ERROR,
+                        errorMessage = "Fatal error",
+                        isFatal = false, // flipped https://jira.mongodb.org/browse/RCORE-2146
+                    )
+                }
+            }
+
+            // First error
+            channel.receiveOrFail().let { error ->
+                assertNotNull(error.message)
+                assertIs<SyncException>(error)
+            }
+
+            // Second
+            channel.receiveOrFail().let { error ->
+                assertNotNull(error.message)
+                assertIs<UnrecoverableSyncException>(error)
+            }
+
+            deferred.cancel()
+        }
     }
 
     @Test
