@@ -94,6 +94,13 @@ internal fun convertSyncError(syncError: SyncError): SyncException {
                 message,
                 syncError.compensatingWrites
             )
+            ErrorCode.RLM_ERR_SYNC_PROTOCOL_INVARIANT_FAILED,
+            ErrorCode.RLM_ERR_SYNC_PROTOCOL_NEGOTIATION_FAILED,
+            ErrorCode.RLM_ERR_SYNC_PERMISSION_DENIED -> {
+                // Permission denied errors should be unrecoverable according to Core, i.e. the
+                // client will disconnect sync and transition to the "inactive" state
+                UnrecoverableSyncException(message)
+            }
             else -> {
                 // An error happened we are not sure how to handle. Just report as a generic
                 // SyncException.

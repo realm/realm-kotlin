@@ -394,6 +394,7 @@ class SyncedRealmTests {
             val error = channel.receiveOrFail()
             val message = error.message
             assertNotNull(message)
+            assertTrue(error is UnrecoverableSyncException, "Was $error")
             assertTrue(
                 message.lowercase().contains("permission denied"),
                 "The error should be 'PermissionDenied' but it was: $message"
