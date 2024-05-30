@@ -51,7 +51,6 @@ tasks.create("realmWrapperJvm") {
 }
 
 tasks.withType(JavaCompile::class) {
-    options.isWarnings = false // Removes plenty of warnings on swig-generated code
     dependsOn("realmWrapperJvm")
 }
 
