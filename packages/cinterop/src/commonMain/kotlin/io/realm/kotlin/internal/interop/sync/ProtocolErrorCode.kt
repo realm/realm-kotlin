@@ -41,10 +41,6 @@ expect enum class SyncConnectionErrorCode : CodeDescription {
 
     override val nativeValue: Int
     override val description: String?
-
-    companion object {
-        internal fun of(nativeValue: Int): SyncConnectionErrorCode?
-    }
 }
 
 /**
@@ -91,10 +87,6 @@ expect enum class SyncSessionErrorCode : CodeDescription {
 
     override val nativeValue: Int
     override val description: String?
-
-    companion object {
-        internal fun of(nativeValue: Int): SyncSessionErrorCode?
-    }
 }
 
 /**
@@ -130,10 +122,6 @@ expect enum class WebsocketErrorCode : CodeDescription {
 
     override val nativeValue: Int
     override val description: String?
-
-    companion object {
-        fun of(nativeValue: Int): WebsocketErrorCode?
-    }
 }
 
 /**
@@ -152,8 +140,4 @@ expect enum class WebsocketCallbackResult : CodeDescription {
 
     override val nativeValue: Int
     override val description: String?
-
-    companion object {
-        fun of(nativeValue: Int): WebsocketCallbackResult?
-    }
 }

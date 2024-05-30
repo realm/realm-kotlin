@@ -18,8 +18,8 @@ package io.realm.kotlin.internal.interop.sync
 
 import realm_wrapper.realm_sync_client_metadata_mode_e
 
-actual enum class MetadataMode(val metadataValue: Int) {
-    RLM_SYNC_CLIENT_METADATA_MODE_DISABLED(realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_DISABLED.value.toInt()),
-    RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT(realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT.value.toInt()),
-    RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED(realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED.value.toInt())
+actual enum class MetadataMode(val metadataValue: realm_sync_client_metadata_mode_e) {
+    RLM_SYNC_CLIENT_METADATA_MODE_DISABLED(realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_DISABLED),
+    RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT(realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT),
+    RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED(realm_sync_client_metadata_mode_e.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED)
 }

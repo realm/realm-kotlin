@@ -20,8 +20,4 @@ expect enum class CoreConnectionState {
     RLM_SYNC_CONNECTION_STATE_DISCONNECTED,
     RLM_SYNC_CONNECTION_STATE_CONNECTING,
     RLM_SYNC_CONNECTION_STATE_CONNECTED;
-
-    companion object {
-        fun of(nativeValue: Int): CoreConnectionState
-    }
 }

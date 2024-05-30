@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.internal.util.Exceptions
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.RealmInstant
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ObjCObjectVar
 import kotlinx.cinterop.ULongVar
@@ -141,6 +142,7 @@ public actual fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>
     return field.returnType
 }
 
+@OptIn(BetaInteropApi::class)
 private fun preparePath(directoryPath: String, dir: NSURL) {
     val fm = NSFileManager.defaultManager
     memScoped {

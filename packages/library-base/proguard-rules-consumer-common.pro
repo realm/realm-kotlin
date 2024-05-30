@@ -52,6 +52,10 @@
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
+-keep class io.realm.kotlin.internal.interop.sync.CoreConnectionState {
+    # TODO OPTIMIZE Only keep actually required symbols
+    *;
+}
 -keep class io.realm.kotlin.internal.interop.sync.SyncError {
     # TODO OPTIMIZE Only keep actually required symbols
     *;

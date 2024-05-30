@@ -253,6 +253,7 @@ class RealmAnyNestedListNotificationTest : FlowableTests, DeletableEntityNotific
         TODO("Not yet implemented")
     }
 
+    @Test
     @Ignore
     override fun closeRealmInsideFlowThrows() {
         TODO("Not yet implemented")

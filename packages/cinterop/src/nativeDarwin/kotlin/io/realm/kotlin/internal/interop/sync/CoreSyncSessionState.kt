@@ -30,7 +30,7 @@ actual enum class CoreSyncSessionState(
 
     companion object {
         fun of(state: realm_sync_session_state_e): CoreSyncSessionState {
-            for (value in values()) {
+            for (value in entries) {
                 if (value.nativeValue == state) {
                     return value
                 }

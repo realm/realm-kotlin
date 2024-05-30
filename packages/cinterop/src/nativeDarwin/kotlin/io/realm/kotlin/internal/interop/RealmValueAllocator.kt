@@ -42,8 +42,12 @@ class NativeMemAllocator : MemTrackingAllocator {
 
     val scope = Arena()
 
+    @Suppress("NOTHING_TO_INLINE")
     override inline fun allocRealmValueT(): RealmValueT = scope.alloc()
-    override inline fun allocRealmValueList(count: Int): RealmValueList = RealmValueList(count, scope.allocArray(count))
+
+    @Suppress("NOTHING_TO_INLINE")
+    override inline fun allocRealmValueList(count: Int): RealmValueList =
+        RealmValueList(count, scope.allocArray(count))
 
     override fun nullTransport(): RealmValue =
         createTransport(null, realm_value_type.RLM_TYPE_NULL)
@@ -136,6 +140,7 @@ class NativeMemAllocator : MemTrackingAllocator {
                         is_list = true
                         this.arg = arg.arguments.head
                     }
+
                     is RealmQuerySingleArgument -> {
                         nb_args = 1U
                         is_list = false
@@ -154,7 +159,7 @@ class NativeMemAllocator : MemTrackingAllocator {
     private inline fun <T> createTransport(
         value: T?,
         type: realm_value_type,
-        block: (RealmValueT.(value: T) -> Unit) = {}
+        block: (RealmValueT.(value: T) -> Unit) = {},
     ): RealmValue {
         val struct: realm_value_t = allocRealmValueT()
         struct.type = when (value) {
@@ -170,12 +175,14 @@ class NativeMemAllocator : MemTrackingAllocator {
  * We always need to track and free native resources in K/N so all allocators return a
  * [MemTrackingAllocator].
  */
+@Suppress("NOTHING_TO_INLINE")
 actual inline fun realmValueAllocator(): MemAllocator = NativeMemAllocator()
 
 /**
  * We always need to track and free native resources in K/N so all allocators return a
  * [MemTrackingAllocator].
  */
+@Suppress("NOTHING_TO_INLINE")
 actual inline fun trackingRealmValueAllocator(): MemTrackingAllocator = NativeMemAllocator()
 
 /**

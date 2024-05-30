@@ -479,6 +479,7 @@ class AppConfigurationTests {
         assertNotEquals(config, otherConfig)
     }
 
+    @Test
     @Ignore // TODO
     fun dispatcher() {
     }

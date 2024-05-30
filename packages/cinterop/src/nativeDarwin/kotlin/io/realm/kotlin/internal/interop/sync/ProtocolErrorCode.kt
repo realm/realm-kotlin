@@ -42,13 +42,6 @@ actual enum class SyncConnectionErrorCode(
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS("SwitchToPbs", realm_sync_errno_connection.RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS);
 
     actual override val nativeValue: Int = errorCode.value.toInt()
-
-    actual companion object {
-        internal actual fun of(nativeValue: Int): SyncConnectionErrorCode? =
-            values().firstOrNull { value ->
-                value.nativeValue == nativeValue
-            }
-    }
 }
 
 actual enum class SyncSessionErrorCode(
@@ -93,13 +86,6 @@ actual enum class SyncSessionErrorCode(
     RLM_SYNC_ERR_SESSION_SCHEMA_VERSION_CHANGED("SchemaVersionChanged", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_SCHEMA_VERSION_CHANGED);
 
     actual override val nativeValue: Int = errorCode.value.toInt()
-
-    actual companion object {
-        internal actual fun of(nativeValue: Int): SyncSessionErrorCode? =
-            values().firstOrNull { value ->
-                value.nativeValue == nativeValue
-            }
-    }
 }
 
 actual enum class WebsocketErrorCode(
@@ -135,13 +121,6 @@ actual enum class WebsocketErrorCode(
     actual override val nativeValue: Int = errorCode.value.toInt()
 
     val asNativeEnum: realm_web_socket_errno = errorCode
-
-    actual companion object {
-        actual fun of(nativeValue: Int): WebsocketErrorCode? =
-            values().firstOrNull { value ->
-                value.nativeValue == nativeValue
-            }
-    }
 }
 
 actual enum class WebsocketCallbackResult(
@@ -184,11 +163,4 @@ actual enum class WebsocketCallbackResult(
 
     actual override val nativeValue: Int = nativeError.value.toInt()
     val asNativeEnum: realm_sync_socket_callback_result = nativeError
-
-    actual companion object {
-        actual fun of(nativeValue: Int): WebsocketCallbackResult? =
-            values().firstOrNull { value ->
-                value.nativeValue == nativeValue
-            }
-    }
 }

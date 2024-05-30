@@ -47,6 +47,8 @@ import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.value
+import platform.Foundation.NSFileManager
+import platform.Foundation.temporaryDirectory
 import realm_wrapper.RLM_CLASS_NORMAL
 import realm_wrapper.RLM_COLLECTION_TYPE_NONE
 import realm_wrapper.RLM_PROPERTY_NORMAL
@@ -70,7 +72,8 @@ import realm_wrapper.realm_schema_t
 import realm_wrapper.realm_schema_validate
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_t
-import kotlin.native.internal.GC
+import kotlin.native.runtime.GC
+import kotlin.native.runtime.NativeRuntimeApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -81,6 +84,7 @@ import kotlin.test.assertTrue
 // Direct tests of the 'cinterop' low level C-API wrapper for Darwin platforms.
 // These test are not thought as being exhaustive, but is more to provide a playground for
 // experiments and maybe more relevant for reproduction of C-API issues.
+@OptIn(NativeRuntimeApi::class)
 class CinteropTest {
     /**
      * Tests whether our autorelease pointer wrapper releases native memory.
@@ -153,8 +157,9 @@ class CinteropTest {
                 )
             )
 
+            val path = NSFileManager.defaultManager.temporaryDirectory().path + "/c_api_test.realm"
             val config = realm_config_new()
-            realm_config_set_path(config, "c_api_test.realm")
+            realm_config_set_path(config, path)
             realm_config_set_schema(config, realmSchemaNew)
             realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
             realm_config_set_schema_version(config, 1UL)

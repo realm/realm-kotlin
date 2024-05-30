@@ -16,17 +16,16 @@
 
 package io.realm.kotlin.internal.interop.sync
 
-import io.realm.kotlin.internal.interop.NativeEnumerated
 import io.realm.kotlin.internal.interop.realm_sync_connection_state_e
 
-actual enum class CoreConnectionState(override val nativeValue: Int) : NativeEnumerated {
+actual enum class CoreConnectionState(val value: Int) {
     RLM_SYNC_CONNECTION_STATE_DISCONNECTED(realm_sync_connection_state_e.RLM_SYNC_CONNECTION_STATE_DISCONNECTED),
     RLM_SYNC_CONNECTION_STATE_CONNECTING(realm_sync_connection_state_e.RLM_SYNC_CONNECTION_STATE_CONNECTING),
     RLM_SYNC_CONNECTION_STATE_CONNECTED(realm_sync_connection_state_e.RLM_SYNC_CONNECTION_STATE_CONNECTED);
 
-    actual companion object {
-        actual fun of(nativeValue: Int): CoreConnectionState =
-            values().find { it.nativeValue == nativeValue }
-                ?: error("Unknown connection state: $nativeValue")
+    companion object {
+        fun of(value: Int): CoreConnectionState =
+            entries.find { it.value == value }
+                ?: error("Unknown connection state: $value")
     }
 }
