@@ -34,6 +34,7 @@ import io.realm.kotlin.internal.interop.use
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVarOf
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
@@ -74,6 +75,7 @@ import realm_wrapper.realm_string_t
 import realm_wrapper.realm_t
 import kotlin.native.runtime.GC
 import kotlin.native.runtime.NativeRuntimeApi
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -86,6 +88,13 @@ import kotlin.test.assertTrue
 // experiments and maybe more relevant for reproduction of C-API issues.
 @OptIn(NativeRuntimeApi::class)
 class CinteropTest {
+    private val tmpDir = NSFileManager.defaultManager.temporaryDirectory().path!!
+
+    @OptIn(ExperimentalForeignApi::class)
+    @AfterTest
+    fun tearDown() {
+        NSFileManager.defaultManager.removeItemAtPath(tmpDir, null)
+    }
     /**
      * Tests whether our autorelease pointer wrapper releases native memory.
      *
@@ -156,8 +165,7 @@ class CinteropTest {
                     SchemaValidationMode.RLM_SCHEMA_VALIDATION_BASIC.nativeValue.toULong()
                 )
             )
-
-            val path = NSFileManager.defaultManager.temporaryDirectory().path + "/c_api_test.realm"
+            val path = "${tmpDir}/c_api_test.realm"
             val config = realm_config_new()
             realm_config_set_path(config, path)
             realm_config_set_schema(config, realmSchemaNew)
@@ -214,8 +222,7 @@ class CinteropTest {
 
         memScoped {
             val nativeConfig = RealmInterop.realm_config_new()
-
-            RealmInterop.realm_config_set_path(nativeConfig, "default.realm")
+            RealmInterop.realm_config_set_path(nativeConfig, "${tmpDir}/default.realm")
             RealmInterop.realm_config_set_schema(nativeConfig, schema)
             RealmInterop.realm_config_set_schema_mode(
                 nativeConfig,

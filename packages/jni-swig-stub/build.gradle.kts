@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import org.gradle.api.tasks.compile.JavaCompile
 
 plugins {
     id("java-library")
@@ -27,7 +28,7 @@ java {
     withSourcesJar()
     sourceSets {
         main {
-            this.java.srcDir("$generatedSourceRoot/java")
+            java.srcDir("$generatedSourceRoot/java")
         }
     }
 }
@@ -49,7 +50,8 @@ tasks.create("realmWrapperJvm") {
     outputs.dir("$generatedSourceRoot/jni")
 }
 
-tasks.named("compileJava") {
+tasks.withType(JavaCompile::class) {
+    options.isWarnings = false // Removes plenty of warnings on swig-generated code
     dependsOn("realmWrapperJvm")
 }
 
