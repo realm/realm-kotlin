@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="io.realm.kotlin.benchmarks.android.test">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!--
       Important: disable debugging for accurate performance results
@@ -13,5 +12,5 @@
         android:debuggable="false"
         android:requestLegacyExternalStorage="true"
         tools:ignore="HardcodedDebugMode"
-        tools:replace="android:debuggable" />
+        />
 </manifest>
