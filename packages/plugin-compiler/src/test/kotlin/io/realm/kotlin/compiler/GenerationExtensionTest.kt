@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:OptIn(ExperimentalCompilerApi::class)
+@file:Suppress("deprecation")
 
 package io.realm.kotlin.compiler
 

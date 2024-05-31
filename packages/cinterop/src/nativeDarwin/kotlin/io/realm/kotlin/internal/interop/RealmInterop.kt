@@ -3827,7 +3827,6 @@ private fun printlnWithTid(s: String) {
 
 private fun tid(): ULong {
     memScoped {
-        initRuntimeIfNeeded()
         val tidVar = alloc<ULongVar>()
         pthread_threadid_np(null, tidVar.ptr).ensureUnixCallResult("pthread_threadid_np")
         return tidVar.value

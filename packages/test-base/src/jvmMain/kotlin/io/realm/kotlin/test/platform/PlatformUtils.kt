@@ -83,6 +83,7 @@ actual object PlatformUtils {
             allocGarbage(0)
             Thread.sleep(100)
             System.gc()
+            @Suppress("deprecation")
             System.runFinalization()
         }
         Thread.sleep(5000) // 5 seconds to give the GC some time to process
