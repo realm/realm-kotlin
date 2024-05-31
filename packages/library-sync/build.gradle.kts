@@ -132,6 +132,7 @@ tasks.withType<KotlinCompile>().configureEach {
 
 // Android configuration
 android {
+    namespace = "io.realm.kotlin.mongodb"
     compileSdkVersion(Versions.Android.compileSdkVersion)
     buildToolsVersion = Versions.Android.buildToolsVersion
 

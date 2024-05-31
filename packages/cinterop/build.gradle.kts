@@ -312,6 +312,7 @@ tasks.withType<KotlinNativeCompile>().configureEach {
 }
 
 android {
+    namespace = "io.realm.kotlin.internal.interop"
     compileSdk = Versions.Android.compileSdkVersion
     buildToolsVersion = Versions.Android.buildToolsVersion
     ndkVersion = Versions.Android.ndkVersion
@@ -760,7 +761,7 @@ realmPublish {
 }
 
 // Generate code with version constant
-tasks.create("generateSdkVersionConstant") {
+val generateSdkVersionConstant: Task = tasks.create("generateSdkVersionConstant") {
     val outputDir = file(versionDirectory)
 
     inputs.property("version", project.version)
@@ -779,7 +780,7 @@ tasks.create("generateSdkVersionConstant") {
     }
 }
 tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
-    dependsOn("generateSdkVersionConstant")
+    dependsOn(generateSdkVersionConstant)
 }
 
 tasks.named("clean") {

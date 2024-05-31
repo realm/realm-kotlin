@@ -83,6 +83,7 @@ actual object PlatformUtils {
             allocGarbage(0)
             Thread.sleep(100)
             System.gc()
+            // runFinalization is deprecated, could we invoke our finalizers manually?
             @Suppress("deprecation")
             System.runFinalization()
         }

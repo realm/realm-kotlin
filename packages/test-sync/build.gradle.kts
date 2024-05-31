@@ -17,6 +17,7 @@
 
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTests
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type
+import kotlin.math.min
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -127,14 +128,15 @@ kotlin {
 
 // Android configuration
 android {
-    compileSdkVersion(Versions.Android.compileSdkVersion)
+    namespace = "io.realm.sync.testapp"
+    compileSdk = Versions.Android.compileSdkVersion
     buildToolsVersion = Versions.Android.buildToolsVersion
 
     testBuildType = (properties["testBuildType"] ?: "debug") as String
 
     defaultConfig {
-        minSdkVersion(Versions.Android.minSdk)
-        targetSdkVersion(Versions.Android.targetSdk)
+        minSdk = Versions.Android.minSdk
+        targetSdk = Versions.Android.targetSdk
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
 

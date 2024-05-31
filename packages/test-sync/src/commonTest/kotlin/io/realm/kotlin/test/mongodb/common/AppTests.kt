@@ -18,7 +18,6 @@ package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
@@ -387,7 +386,7 @@ class AppTests {
             builder = {
                 it
                     .encryptionKey(key)
-                    .syncRootDirectory("${tempDir}/foo")
+                    .syncRootDirectory("$tempDir/foo")
             }
         ).use { app ->
             // Create Realm in order to create the sync metadata Realm
@@ -426,7 +425,7 @@ class AppTests {
             builder = {
                 it
                     .encryptionKey(correctKey)
-                    .syncRootDirectory("${tempDir}/foo")
+                    .syncRootDirectory("$tempDir/foo")
             }
         ).use { app ->
             // Create Realm in order to create the sync metadata Realm
@@ -466,7 +465,7 @@ class AppTests {
             builder = {
                 it
                     .encryptionKey(TestHelper.getRandomKey())
-                    .syncRootDirectory("${tempDir}/foo")
+                    .syncRootDirectory("$tempDir/foo")
             }
         ).use { app ->
             // Create Realm in order to create the sync metadata Realm

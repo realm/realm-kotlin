@@ -31,9 +31,12 @@ java {
             java.srcDir("$generatedSourceRoot/java")
         }
     }
+
+    sourceCompatibility = Versions.sourceCompatibilityVersion
+    targetCompatibility = Versions.targetCompatibilityVersion
 }
 
-tasks.create("realmWrapperJvm") {
+val realmWrapperJvm: Task = tasks.create("realmWrapperJvm") {
     doLast {
         // If task is actually triggered (not up to date) then we should clean up the old stuff
         delete(fileTree(generatedSourceRoot))
@@ -50,9 +53,15 @@ tasks.create("realmWrapperJvm") {
     outputs.dir("$generatedSourceRoot/jni")
 }
 
-tasks.withType(JavaCompile::class) {
-    dependsOn("realmWrapperJvm")
+tasks.named("javadoc") {
+    enabled = false
 }
+
+tasks.withType(JavaCompile::class) {
+    dependsOn(realmWrapperJvm)
+}
+
+tasks.getByName("sourcesJar").dependsOn(realmWrapperJvm)
 
 realmPublish {
     pom {
@@ -61,13 +70,6 @@ realmPublish {
             "supposed to be consumed directly, but through " +
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
-}
-
-java {
-    withSourcesJar()
-    withJavadocJar()
-    sourceCompatibility = Versions.sourceCompatibilityVersion
-    targetCompatibility = Versions.targetCompatibilityVersion
 }
 
 publishing {

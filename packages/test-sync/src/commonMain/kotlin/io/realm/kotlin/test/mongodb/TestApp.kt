@@ -92,7 +92,7 @@ open class TestApp private constructor(
      * @param debug enable trace of command server and rest api calls in the test app.
      **/
     @Suppress("LongParameterList")
-    @OptIn(ExperimentalKBsonSerializerApi::class)
+    @OptIn(ExperimentalKBsonSerializerApi::class, ExperimentalCoroutinesApi::class)
     constructor(
         testId: String?,
         appName: String = TEST_APP_PARTITION,
