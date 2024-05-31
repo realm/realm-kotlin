@@ -39,7 +39,7 @@ This release will bump the Realm file format 24. Opening a file with an older fo
 * Minimum Gradle version: 7.2.
 * Minimum Android Gradle Plugin version: 7.1.3.
 * Minimum Android SDK: 16.
-* Minimum R8: 8.0.34.
+* Minimum R8: 8.3.37.
 
 ### Internal
 * Updated to Realm Core 14.7.0 commit c280bdb17522323d5c30dc32a2b9efc9dc80ca3b.

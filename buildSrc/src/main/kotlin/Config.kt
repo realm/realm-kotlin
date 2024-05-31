@@ -103,7 +103,7 @@ object Versions {
         const val buildToolsVersion = "33.0.0"
         const val buildTools = "7.3.1" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
         const val ndkVersion = "23.2.8568313"
-        const val r8 = "8.0.34" // See https://developer.android.com/build/kotlin-support
+        const val r8 = "8.3.37" // See https://developer.android.com/build/kotlin-support
     }
     const val androidxBenchmarkPlugin = "1.2.0-alpha12" // https://maven.google.com/web/index.html#androidx.benchmark:androidx.benchmark.gradle.plugin
     const val androidxStartup = "1.1.1" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
