@@ -51,7 +51,6 @@ tasks.create("realmWrapperJvm") {
 }
 
 tasks.withType(JavaCompile::class) {
-    options.compilerArgs.add("-Xlint:-removal")
     dependsOn("realmWrapperJvm")
 }
 
