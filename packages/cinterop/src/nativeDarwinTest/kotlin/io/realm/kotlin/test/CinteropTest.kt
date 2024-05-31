@@ -90,11 +90,6 @@ import kotlin.test.assertTrue
 class CinteropTest {
     private val tmpDir = NSFileManager.defaultManager.temporaryDirectory().path!!
 
-    @OptIn(ExperimentalForeignApi::class)
-    @AfterTest
-    fun tearDown() {
-        NSFileManager.defaultManager.removeItemAtPath(tmpDir, null)
-    }
     /**
      * Tests whether our autorelease pointer wrapper releases native memory.
      *
