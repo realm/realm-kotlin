@@ -24,6 +24,7 @@ actual enum class CoreConnectionState(val value: Int) {
     RLM_SYNC_CONNECTION_STATE_CONNECTED(realm_sync_connection_state_e.RLM_SYNC_CONNECTION_STATE_CONNECTED);
 
     companion object {
+        @JvmStatic
         fun of(value: Int): CoreConnectionState =
             entries.find { it.value == value }
                 ?: error("Unknown connection state: $value")
