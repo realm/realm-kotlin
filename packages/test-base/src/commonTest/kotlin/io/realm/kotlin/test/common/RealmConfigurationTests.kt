@@ -32,7 +32,6 @@ import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.platform.platformFileSystem
-import io.realm.kotlin.test.util.TestLogger
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.newSingleThreadContext
@@ -240,38 +239,6 @@ class RealmConfigurationTests {
         assertEquals(pathOf(tmpDir, name), config.path)
         // Just verifying that we can open the realm
         Realm.open(config).use { }
-    }
-
-    @Test
-    fun defaultLogLevel() {
-        val config: RealmConfiguration = RealmConfiguration.Builder(schema = setOf(Sample::class))
-            .build()
-        assertEquals(LogLevel.WARN, config.log.level)
-    }
-
-    @Test
-    fun logLevel() {
-        val config: RealmConfiguration = RealmConfiguration.Builder(schema = setOf(Sample::class))
-            .log(LogLevel.NONE)
-            .build()
-        assertEquals(LogLevel.NONE, config.log.level)
-    }
-
-    @Test
-    fun defaultCustomLoggers() {
-        val config: RealmConfiguration =
-            RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
-        assertEquals(1, config.log.loggers.size)
-    }
-
-    @Test
-    fun customLoggers() {
-        val logger = TestLogger()
-        val config: RealmConfiguration = RealmConfiguration.Builder(schema = setOf(Sample::class))
-            .log(customLoggers = listOf(logger))
-            .build()
-        assertEquals(2, config.log.loggers.size)
-        assertEquals(logger, config.log.loggers.last())
     }
 
     @Test
@@ -483,12 +450,14 @@ class RealmConfigurationTests {
     @Test
     fun logLevelDoesNotGetOverwrittenByConfig() {
         val expectedLogLevel = LogLevel.ALL
-        RealmLog.level = expectedLogLevel
+        RealmLog.setLevel(expectedLogLevel)
+
+        assertEquals(expectedLogLevel, RealmLog.getLevel())
 
         RealmConfiguration.Builder(setOf(Sample::class))
             .build()
 
-        assertEquals(expectedLogLevel, RealmLog.level)
+        assertEquals(expectedLogLevel, RealmLog.getLevel())
 
         RealmLog.reset()
     }

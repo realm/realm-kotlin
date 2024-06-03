@@ -4,7 +4,6 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.internal.RealmInstantImpl
 import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.internal.util.Exceptions
-import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.RealmInstant
 import java.io.InputStream
@@ -28,8 +27,8 @@ public actual fun assetFileAsStream(assetFilename: String): InputStream {
     return resource.openStream()
 }
 
-public actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
-    StdOutLogger(tag, logLevel)
+public actual fun createDefaultSystemLogger(tag: String): RealmLogger =
+    StdOutLogger(tag)
 
 /**
  * Since internalNow() should only logically return a value after the Unix epoch, it is safe to create a RealmInstant

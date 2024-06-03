@@ -16,34 +16,20 @@
 
 package io.realm.kotlin.log
 
-import io.realm.kotlin.Configuration
-
 /**
  * Interface describing a logger implementation.
  *
- * @see Configuration.SharedBuilder.log
+ * @see RealmLog
  */
 public interface RealmLogger {
-
-    /**
-     * The [LogLevel] used in this logger.
-     */
-    public val level: LogLevel
-
-    /**
-     * Tag that can be used to describe the output.
-     */
-    public val tag: String
-
     /**
      * Log an event.
      */
-    public fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)
-
-    /**
-     * Log an event.
-     */
-    public fun log(level: LogLevel, message: String) {
-        log(level, null, message)
-    }
+    public fun log(
+        category: LogCategory,
+        level: LogLevel,
+        throwable: Throwable?,
+        message: String?,
+        vararg args: Any?,
+    )
 }

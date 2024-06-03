@@ -34,7 +34,6 @@ import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.use
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -54,7 +53,6 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 private val bsonObjectId = BsonObjectId("507f191e810c19729de860ea")
-private val objectId = ObjectId.from("507f191e810c19729de860ea")
 
 class PersistedNameTests {
 
@@ -144,12 +142,6 @@ class PersistedNameTests {
         )
 
         assertCanQuerySingle(
-            property = PersistedNameSample::publicNameObjectIdField,
-            nameToQueryBy = "persistedNameObjectIdField",
-            value = objectId
-        )
-
-        assertCanQuerySingle(
             property = PersistedNameSample::publicNameBsonObjectIdField,
             nameToQueryBy = "persistedNameBsonObjectIdField",
             value = bsonObjectId
@@ -166,12 +158,6 @@ class PersistedNameTests {
             property = PersistedNameSample::publicNameStringField,
             nameToQueryBy = "publicNameStringField",
             value = "Realm"
-        )
-
-        assertCanQuerySingle(
-            property = PersistedNameSample::publicNameObjectIdField,
-            nameToQueryBy = "publicNameObjectIdField",
-            value = objectId
         )
 
         assertCanQuerySingle(
@@ -501,9 +487,6 @@ class PersistedNameSample : RealmObject {
 
     @PersistedName("persistedNameTimestampField")
     var publicNameTimestampField: RealmInstant = RealmInstant.from(100, 1000)
-
-    @PersistedName("persistedNameObjectIdField")
-    var publicNameObjectIdField: ObjectId = objectId
 
     @PersistedName("persistedNameBsonObjectIdField")
     var publicNameBsonObjectIdField: BsonObjectId = bsonObjectId

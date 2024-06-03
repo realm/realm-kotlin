@@ -960,8 +960,8 @@ realm_sync_socket_t* realm_sync_websocket_new(int64_t sync_client_config_ptr, jo
 // *** END - WebSocket Client (Platform Networking) *** //
 
 void set_log_callback(jobject log_callback) {
-auto jenv = get_env(true);
-realm_set_log_callback([](void *userdata, const char* category, realm_log_level_e level, const char *message) {
+auto jenv = get_env(false);
+realm_set_log_callback([](void *userdata, const char *category, realm_log_level_e level, const char *message) {
                                auto log_callback = static_cast<jobject>(userdata);
                                auto jenv = get_env(true);
 
@@ -970,7 +970,7 @@ realm_set_log_callback([](void *userdata, const char* category, realm_log_level_
                                static JavaMethod log_method(jenv,
                                                             JavaClassGlobalDef::log_callback(),
                                                             "log",
-                                                            "(SLjava/lang/String;Ljava/lang/String;)V");
+                                                    "(SLjava/lang/String;Ljava/lang/String;)V");
 
                                push_local_frame(jenv, 2);
                                jenv->CallVoidMethod(log_callback, log_method, java_level, to_jstring(jenv, category), to_jstring(jenv, message));
@@ -1244,14 +1244,13 @@ sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handl
 }
 
 void
-realm_sync_session_progress_notifier_callback(void *userdata, uint64_t transferred_bytes, uint64_t total_bytes, double progress) {
+realm_sync_session_progress_notifier_callback(void *userdata, uint64_t, uint64_t, double progress_estimate) {
     auto env = get_env(true);
 
-    // TODO Progress ignored until https://github.com/realm/realm-kotlin/pull/1575
-    static JavaMethod java_callback_method(env, JavaClassGlobalDef::progress_callback(), "onChange", "(JJ)V");
+    static JavaMethod java_callback_method(env, JavaClassGlobalDef::progress_callback(), "onChange", "(D)V");
 
     jni_check_exception(env);
-    env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method, jlong(transferred_bytes), jlong(total_bytes));
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method, jdouble(progress_estimate));
     jni_check_exception(env);
 }
 
@@ -1369,4 +1368,24 @@ void
 realm_class_info_t_cleanup(realm_class_info_t * value) {
     delete[] value->primary_key;
     delete[] value->name;
+}
+
+jobjectArray realm_get_log_category_names() {
+    JNIEnv* env = get_env(true);
+
+    size_t namesCount = realm_get_category_names(0, nullptr);
+
+    const char** category_names = new const char*[namesCount];
+    realm_get_category_names(namesCount, category_names);
+
+    auto array = env->NewObjectArray(namesCount, JavaClassGlobalDef::java_lang_string(), nullptr);
+
+    for(size_t i = 0; i < namesCount; i++) {
+        jstring string = env->NewStringUTF(category_names[i]);
+        env->SetObjectArrayElement(array, i, string);
+    }
+
+    delete[] category_names;
+
+    return array;
 }

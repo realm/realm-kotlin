@@ -26,6 +26,9 @@ import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmDictionaryOf
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.InitialObject
@@ -486,6 +489,9 @@ class RealmAnyTests {
                     // Different objects of same type are not equal
                     assertNotEquals(RealmAny.create(Sample()), RealmAny.create(realmObject))
                 }
+                // Collections in RealmAny are tested in RealmAnyNestedCollections.kt
+                RealmAny.Type.LIST,
+                RealmAny.Type.DICTIONARY -> {}
             }
         }
     }
@@ -505,6 +511,23 @@ class RealmAnyTests {
         }
         assertEquals(1, realm.query<EmbeddedParent>().count().find())
         assertEquals(1, realm.query<EmbeddedChild>().count().find())
+    }
+
+    @Test
+    fun importWithDuplicateReference() = runBlocking {
+        val child = realm.write {
+            Sample().apply { stringField = "CHILD" }
+        }
+        realm.write {
+            val parent = Sample().apply {
+                nullableRealmAnyField = RealmAny.create(child)
+                nullableRealmAnySetField = realmSetOf(RealmAny.create(child))
+                nullableRealmAnyListField = realmListOf(RealmAny.create(child))
+                nullableRealmAnyDictionaryField = realmDictionaryOf("key" to RealmAny.create(child))
+            }
+            copyToRealm(parent)
+        }
+        assertEquals(1, realm.query<Sample>("stringField = 'CHILD'").find().size)
     }
 
     private fun assertCoreIntValuesAreTheSame(

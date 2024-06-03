@@ -1,7 +1,7 @@
-## 1.16.1-SNAPSHOT (YYYY-MM-DD)
+## 2.0.1 (YYYY-MM-DD)
 
-[!NOTE]
-This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
+> [!NOTE]
+> This release will bump the Realm file format 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
 
 ### Breaking changes
 * None.
@@ -12,32 +12,74 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 ### Fixed
 * [Sync] Fatal sync exceptions are now thrown as `UnrecoverableSyncException`. (Issue [#1767](https://github.com/realm/realm-kotlin/issues/1767) [RKOTLIN-1096](https://jira.mongodb.org/browse/RKOTLIN-1096)).
 
-### Known issues
-* Missing initial download progress notification when there is no active downloads. (Issue [realm/realm-core#7627](https://github.com/realm/realm-core/issues/7627), since 1.15.1)
+### Compatibility
+* File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
+* Realm Studio 15.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 2.0.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.4.0.
+* Minimum Gradle version: 7.2.
+* Minimum Android Gradle Plugin version: 7.1.3.
+* Minimum Android SDK: 16.
+* Minimum R8: 8.0.34.
+
+
+## 2.0.0 (2024-06-03)
+
+> [!NOTE]
+> This release will bump the Realm file format 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
+
+### Breaking changes
+* Removed property `RealmLog.level`. Log levels can be set with `RealmLog.setLevel`. (Issue [#1691](https://github.com/realm/realm-kotlin/issues/1691) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1038))
+* Removed `LogConfiguration`. Log levels and custom loggers can be set with `RealmLog`. (Issue [#1691](https://github.com/realm/realm-kotlin/issues/1691) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1038))
+* Removed deprecated `io.realm.kotlin.types.ObjectId`. Use `org.mongodb.kbson.BsonObjectId` or its type alias `org.mongodb.kbson.ObjectId` instead. (Issue [#1749](https://github.com/realm/realm-kotlin/issues/1749) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1082))
+* Removed deprecated `RealmClass.isEmbedded`. Class embeddeness can be check with `RealmClassKind.EMBEDDED`. (Issue [#1753](https://github.com/realm/realm-kotlin/issues/1753) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1080))
+* Some authentication related operations will no longer throw specialized `InvalidCredentialsException` and `CredentialsCannotBeLinkedException` but the more general `AuthException` and `ServiceException`. (Issue [#1763](https://github.com/realm/realm-kotlin/issues/1763)/[RKOTLIN-1091](https://jira.mongodb.org/browse/RKOTLIN-1091))
+* [Sync] Removed deprecated methods `User.identity` and `User.provider`, user identities can be accessed with the already existing `User.identities`. (Issue [#1751](https://github.com/realm/realm-kotlin/issues/1751) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1083))
+* [Sync] `App.allUsers` does no longer return a map, but only a list of users known locally. (Issue [#1751](https://github.com/realm/realm-kotlin/issues/1751) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1083))
+* [Sync] Removed deprecated `DiscardUnsyncedChangesStrategy.onError`. (Issue [#1755](https://github.com/realm/realm-kotlin/issues/1755) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1085))
+* [Sync] Sync progress notifications now reports an estimate ranged from `0.0` to `1.0` with `Progress.estimate` instead of `transferredBytes` and `totalBytes`. (Issue [#1744](https://github.com/realm/realm-kotlin/issues/1744)/[RKOTLIN-1079](https://jira.mongodb.org/browse/RKOTLIN-1079)).
+
+### Enhancements
+* Support for RealmLists and RealmDictionaries in `RealmAny`. (Issue [#1434](https://github.com/realm/realm-kotlin/issues/1434))
+* Optimized `RealmList.indexOf()` and `RealmList.contains()` using Core implementation of operations instead of iterating elements and comparing them in Kotlin. (Issue [#1625](https://github.com/realm/realm-kotlin/pull/1666) [RKOTLIN-995](https://jira.mongodb.org/browse/RKOTLIN-995)).
+* Add support for filtering logs by category. (Issue [#1691](https://github.com/realm/realm-kotlin/issues/1691) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1038))
+* [Sync] Add Mongo Client API to access Atlas App Service collections. It can be accessed through `User.mongoClient`. (Issue [#972](https://github.com/realm/realm-kotlin/issues/972)/[RKOTLIN-612](https://jira.mongodb.org/browse/RKOTLIN-612))
+* [Sync] Sync progress notifications is now also supported for flexible sync configurations. (Issue [#1744](https://github.com/realm/realm-kotlin/issues/1744) [RKOTLIN-1079](https://jira.mongodb.org/browse/RKOTLIN-1079)).
+
+### Fixed
+* Inserting the same typed link to the same key in a dictionary more than once would incorrectly create multiple backlinks to the object. This did not appear to cause any crashes later, but would have affecting explicit backlink count queries (eg: `...@links.@count`) and possibly notifications (Core Issue [realm/realm-core#7676](https://github.com/realm/realm-core/issues/7676) since v1.16.0).
+* [Sync] Automatic client reset recovery would crash when recovering AddInteger instructions on a Mixed property if its type was changed to non-integer (Core issue [realm/realm-core#7683](https://github.com/realm/realm-core/pull/7683), since v0.11.0).
+* [Sync] Typos [SubscriptionSetState.SUPERSEDED], [SyncTimeoutOptions.pingKeepalivePeriod] and [SyncTimeoutOptions.pongKeepalivePeriod]. (Issue [#1754](https://github.com/realm/realm-kotlin/pull/1754)
 
 ### Compatibility
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
 * Realm Studio 15.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
-  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Kotlin 2.0.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
   * Ktor 2.1.2 and above.
   * Coroutines 1.7.0 and above.
   * AtomicFu 0.18.3 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
-* Minimum Kbson 0.3.0.
-* Minimum Gradle version: 6.8.3.
-* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Kbson 0.4.0.
+* Minimum Gradle version: 7.2.
+* Minimum Android Gradle Plugin version: 7.1.3.
 * Minimum Android SDK: 16.
 * Minimum R8: 8.0.34.
 
 ### Internal
-* None.
+* Updated to Realm Core 14.7.0 commit c280bdb17522323d5c30dc32a2b9efc9dc80ca3b.
+* Changed Kotlin compiler testing framework to https://github.com/zacsweers/kotlin-compile-testing
 
 
 ## 1.16.0 (2024-05-01)
 
-[!NOTE]
-This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
+> [!NOTE]
+> This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
 
 ### Breaking changes
 * None.
@@ -77,8 +119,8 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 
 ## 1.15.0 (2024-04-17)
 
-[!NOTE]
-This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
+> [!NOTE]
+> This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
 
 ### Breaking changes
 * If you want to query using `@type` operation, you must use 'objectlink' to match links to objects. 'object' is reserved for dictionary types.
@@ -93,7 +135,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Index on list of strings property now supported (Core issue [realm/realm-core#7142](https://github.com/realm/realm-core/pull/7142))
 * Improved performance of RQL (parsed) queries on a non-linked string property using: >, >=, <, <=, operators and fixed behaviour that a null string should be evaulated as less than everything, previously nulls were not matched. (Core issue [realm/realm-core#3939](https://github.com/realm/realm-core/issues/3939).
 * Updated bundled OpenSSL version to 3.2.0 (Core issue [realm/realm-core#7303](https://github.com/realm/realm-core/pull/7303))
-* The default base url in `AppConfiguration` has been updated to point to `services.cloud.mongodb.com`. See https://www.mongodb.com/docs/atlas/app-services/domain-migration/ for more information. (Issue [#1685](https://github.com/realm/realm-kotlin/issues/1685))
+* [Sync] The default base url in `AppConfiguration` has been updated to point to `services.cloud.mongodb.com`. See https://www.mongodb.com/docs/atlas/app-services/domain-migration/ for more information. (Issue [#1685](https://github.com/realm/realm-kotlin/issues/1685))
 
 ### Fixed
 * Sorting order of strings has changed to use standard unicode codepoint order instead of grouping similar english letters together. A noticeable change will be from "aAbBzZ" to "ABZabz". (Core issue [realm/realm-core#2573](https://github.com/realm/realm-core/issues/2573))
@@ -170,9 +212,9 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * None.
 
 ### Enhancements
-* [Sync] Added option to use managed WebSockets via OkHttp instead of Realm's built-in WebSocket client for Sync traffic (Only Android and JVM targets for now). Managed WebSockets offer improved support for proxies and firewalls that require authentication. This feature is currently opt-in and can be enabled by using `AppConfiguration.usePlatformNetworking()`. Managed WebSockets will become the default in a future version. (PR [#1528](https://github.com/realm/realm-kotlin/pull/1528)).
-* `AutoClientResetFailed` exception now reports as the throwable cause any user exceptions that might occur during a client reset. (Issue [#1580](https://github.com/realm/realm-kotlin/issues/1580))
 * The Unpacking of JVM native library will use the current library version instead of a calculated hash for the path. (Issue [#1617](https://github.com/realm/realm-kotlin/issues/1617)).
+* [Sync] Added option to use managed WebSockets via OkHttp instead of Realm's built-in WebSocket client for Sync traffic (Only Android and JVM targets for now). Managed WebSockets offer improved support for proxies and firewalls that require authentication. This feature is currently opt-in and can be enabled by using `AppConfiguration.usePlatformNetworking()`. Managed WebSockets will become the default in a future version. (PR [#1528](https://github.com/realm/realm-kotlin/pull/1528)).
+* [Sync] `AutoClientResetFailed` exception now reports as the throwable cause any user exceptions that might occur during a client reset. (Issue [#1580](https://github.com/realm/realm-kotlin/issues/1580))
 
 ### Fixed
 * Cache notification callback JNI references at startup to ensure that symbols can be resolved in core callbacks. (Issue [#1577](https://github.com/realm/realm-kotlin/issues/1577))

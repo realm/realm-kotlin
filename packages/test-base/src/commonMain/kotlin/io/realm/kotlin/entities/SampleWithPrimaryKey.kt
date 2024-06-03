@@ -19,7 +19,6 @@ package io.realm.kotlin.entities
 
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -68,7 +67,6 @@ class SampleWithPrimaryKey : RealmObject {
     var floatListField: RealmList<Float> = realmListOf()
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
-    var objectIdListField: RealmList<ObjectId> = realmListOf()
     var bsonObjectIdListField: RealmList<BsonObjectId> = realmListOf()
     var binaryListField: RealmList<ByteArray> = realmListOf()
     var objectListField: RealmList<SampleWithPrimaryKey> = realmListOf()
@@ -83,7 +81,6 @@ class SampleWithPrimaryKey : RealmObject {
     var nullableFloatListField: RealmList<Float?> = realmListOf()
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
-    var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
     var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
 
@@ -97,7 +94,6 @@ class SampleWithPrimaryKey : RealmObject {
     var floatSetField: RealmSet<Float> = realmSetOf()
     var doubleSetField: RealmSet<Double> = realmSetOf()
     var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
-    var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
     var bsonObjectIdSetField: RealmSet<BsonObjectId> = realmSetOf()
     var binarySetField: RealmSet<ByteArray> = realmSetOf()
     var objectSetField: RealmSet<SampleWithPrimaryKey> = realmSetOf()
@@ -112,7 +108,6 @@ class SampleWithPrimaryKey : RealmObject {
     var nullableFloatSetField: RealmSet<Float?> = realmSetOf()
     var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
     var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
-    var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
     var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
 

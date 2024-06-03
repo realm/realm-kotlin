@@ -17,7 +17,6 @@
 
 package io.realm.kotlin.test.mongodb.common
 
-import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.VersionId
@@ -34,7 +33,7 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
@@ -59,7 +58,6 @@ import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.schema.ValuePropertyType
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
-import io.realm.kotlin.test.mongodb.common.utils.CustomLogCollector
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -71,6 +69,8 @@ import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.trySendOrFail
 import io.realm.kotlin.test.util.use
+import io.realm.kotlin.types.BaseRealmObject
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -86,6 +86,7 @@ import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.ObjectId
 import kotlin.random.Random
 import kotlin.random.nextULong
+import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -141,6 +142,8 @@ class SyncedRealmTests {
         if (this::app.isInitialized) {
             app.asTestApp.close()
         }
+
+        RealmLog.reset()
     }
 
     @Test
@@ -1121,7 +1124,6 @@ class SyncedRealmTests {
     fun writeCopyTo_flexibleSyncToFlexibleSync() = runBlocking {
         TestApp(
             "writeCopyTo_flexibleSyncToFlexibleSync",
-            logLevel = io.realm.kotlin.log.LogLevel.ALL,
             appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
@@ -1290,44 +1292,6 @@ class SyncedRealmTests {
         }
     }
 
-    @Test
-    fun customLoggersReceiveSyncLogs() = runBlocking {
-        val customLogger = CustomLogCollector("CUSTOM", LogLevel.ALL)
-        val section = Random.nextInt()
-        TestApp(
-            "customLoggersReceiveSyncLogs",
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
-            builder = {
-                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
-                it.log(level = LogLevel.ALL, listOf(customLogger))
-                it.appName("MyCustomApp")
-                it.appVersion("1.0.0")
-            }
-        ).use { flexApp ->
-            val (email, password) = randomEmail() to "password1234"
-            val user = flexApp.createUserAndLogIn(email, password)
-            val syncConfig = createFlexibleSyncConfig(
-                user = user,
-                name = "flex.realm",
-                initialSubscriptions = { realm: Realm ->
-                    realm.query<FlexParentObject>("section = $0", section).subscribe()
-                }
-            )
-            Realm.open(syncConfig).use { flexSyncRealm: Realm ->
-                flexSyncRealm.writeBlocking {
-                    copyToRealm(
-                        FlexParentObject().apply {
-                            name = "local object"
-                        }
-                    )
-                }
-                flexSyncRealm.syncSession.uploadAllLocalChangesOrFail()
-            }
-            assertTrue(customLogger.logs.isNotEmpty())
-            assertTrue(customLogger.logs.any { it.contains("Connection[1]: Negotiated protocol version:") }, "Missing Connection[1]")
-        }
-    }
-
     // This test verifies that the user facing Realm instance is actually advanced on an on-needed
     // basis even though there is no actual listener or explicit await download/upload calls.
     @Test
@@ -1393,6 +1357,8 @@ class SyncedRealmTests {
         println("Partition based sync bundled realm is in ${config2.path}")
     }
 
+    // This test cannot run multiple times on the same server instance as the primary
+    // key of the objects from asset-pbs.realm will not be unique on secondary runs.
     @Test
     fun initialRealm_partitionBasedSync() {
         val (email, password) = randomEmail() to "password1234"
@@ -1422,26 +1388,24 @@ class SyncedRealmTests {
             }
         }
 
+        val initialDataVerified = atomic(false)
         val config2 = createPartitionSyncConfig(
-            user = user, partitionValue = partitionValue, name = "db1",
+            user = user, partitionValue = partitionValue, name = "db2",
             errorHandler = object : SyncSession.ErrorHandler {
                 override fun onError(session: SyncSession, error: SyncException) {
-                    fail("Realm 1: $error")
+                    fail("Realm 2: $error")
                 }
             }
         ) {
             waitForInitialRemoteData(30.seconds)
             initialData {
-                // Verify that initial data is running before data is synced
-                assertEquals(0, query<ParentPk>().find().size)
+                // Verify that initial data is running after data is synced
+                assertEquals(4, query<ParentPk>().find().size)
+                initialDataVerified.value = true
             }
         }
-        Realm.open(config2).use {
-            runBlocking {
-                it.syncSession.downloadAllServerChanges(30.seconds)
-                assertEquals(4, it.query<ParentPk>().find().size)
-            }
-        }
+        Realm.open(config2).use { }
+        assertTrue { initialDataVerified.value }
     }
 
     @Test
@@ -1454,7 +1418,6 @@ class SyncedRealmTests {
     fun createInitialRealmFx() = runBlocking {
         TestApp(
             "createInitialRealmFx",
-            logLevel = LogLevel.ALL,
             appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
@@ -1555,6 +1518,7 @@ class SyncedRealmTests {
 
     @Test
     fun flexibleSync_throwsWithLocalInitialRealmFile() {
+
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -1916,17 +1880,16 @@ class SyncedRealmTests {
         partitionValue: String,
         name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,
-        log: LogConfiguration? = null,
         errorHandler: ErrorHandler? = null,
+        schema: Set<KClass<out BaseRealmObject>> = PARTITION_BASED_SCHEMA,
         block: SyncConfiguration.Builder.() -> Unit = {}
     ): SyncConfiguration = SyncConfiguration.Builder(
-        schema = PARTITION_BASED_SCHEMA,
+        schema = schema,
         user = user,
         partitionValue = partitionValue
     ).name(name).also { builder ->
         if (encryptionKey != null) builder.encryptionKey(encryptionKey)
         if (errorHandler != null) builder.errorHandler(errorHandler)
-        if (log != null) builder.log(log.level, log.loggers)
         block(builder)
     }.build()
 
@@ -1935,17 +1898,16 @@ class SyncedRealmTests {
         user: User,
         name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,
-        log: LogConfiguration? = null,
         errorHandler: ErrorHandler? = null,
+        schema: Set<KClass<out BaseRealmObject>> = FLEXIBLE_SYNC_SCHEMA,
         initialSubscriptions: InitialSubscriptionsCallback? = null,
         block: SyncConfiguration.Builder.() -> Unit = {},
     ): SyncConfiguration = SyncConfiguration.Builder(
         user = user,
-        schema = FLEXIBLE_SYNC_SCHEMA
+        schema = schema
     ).name(name).also { builder ->
         if (encryptionKey != null) builder.encryptionKey(encryptionKey)
         if (errorHandler != null) builder.errorHandler(errorHandler)
-        if (log != null) builder.log(log.level, log.loggers)
         if (initialSubscriptions != null) builder.initialSubscriptions(false, initialSubscriptions)
         block(builder)
     }.build()

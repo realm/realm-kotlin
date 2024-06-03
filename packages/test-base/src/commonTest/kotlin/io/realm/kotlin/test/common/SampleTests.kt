@@ -27,7 +27,6 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.internal.RealmObjectCompanion
-import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.realmObjectCompanionOrThrow
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -69,7 +68,13 @@ class SampleTests {
     @Test
     fun realmObjectCompanion() {
         assertIs<RealmObjectCompanion>(Sample::class.realmObjectCompanionOrThrow())
-        assertIs<RealmObjectCompanion>(realmObjectCompanionOrThrow(Sample::class))
+        // Needs fully qualified reference otherwise it will somehow overlap with the above and
+        // generated the following compilation error:
+        //   Caused by: java.lang.AssertionError: Unexpected IR element found during code generation. Either code generation for it is not implemented, or it should have been lowered:
+        //   ERROR_CALL 'Cannot bind 1 arguments to 'FUN IR_EXTERNAL_DECLARATION_STUB name:realmObjectCompanionOrThrow visibility:internal modality:FINAL <T> ($receiver:kotlin.reflect.KClass<T of io.realm.kotlin.internal.realmObjectCompanionOrThrow>) returnType:io.realm.kotlin.internal.RealmObjectCompanion [inline]' call with 0 parameters' type=io.realm.kotlin.internal.RealmObjectCompanion
+        // The issue goes away if the symbols are publicly available from the library, so related
+        // to accessing invisible members/references, thus didn't investigate further
+        assertIs<RealmObjectCompanion>(io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow(Sample::class))
     }
 
     @Test
@@ -179,6 +184,7 @@ class SampleTests {
     @Test
     @Suppress("LongMethod")
     fun primitiveTypes() {
+        val oid = org.mongodb.kbson.ObjectId()
         realm.writeBlocking {
             copyToRealm(Sample()).apply {
                 stringField = "Realm Kotlin"
@@ -192,6 +198,7 @@ class SampleTests {
                 doubleField = 1.19851106
                 decimal128Field = Decimal128("2.155544073709551618E-6157")
                 timestampField = RealmInstant.from(42, 420)
+                bsonObjectIdField = oid
             }
         }
 
@@ -210,6 +217,7 @@ class SampleTests {
                 assertEquals(1.19851106, objects[0].doubleField)
                 assertEquals(Decimal128("2.155544073709551618E-6157"), objects[0].decimal128Field)
                 assertEquals(RealmInstant.from(42, 420), objects[0].timestampField)
+                assertEquals(oid, objects[0].bsonObjectIdField)
             }
 
         // querying on each type

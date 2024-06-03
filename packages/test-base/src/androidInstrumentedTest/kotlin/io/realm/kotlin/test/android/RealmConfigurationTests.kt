@@ -22,6 +22,7 @@ import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.use
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -40,9 +41,10 @@ class RealmConfigurationTests {
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    @Suppress("invisible_member")
     fun testDispatcherAsWriteDispatcher() {
+        @Suppress("invisible_member", "invisible_reference")
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(tmpDir)
             .writeDispatcher(singleThreadDispatcher("foo"))

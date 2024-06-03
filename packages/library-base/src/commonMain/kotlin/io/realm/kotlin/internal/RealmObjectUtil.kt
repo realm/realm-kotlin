@@ -107,6 +107,7 @@ internal fun <T : BaseRealmObject> RealmObjectReference<T>.toRealmObject(): T =
  * Returns the [RealmObjectCompanion] associated with a given [BaseRealmObject]'s [KClass].
  */
 internal inline fun KClass<*>.realmObjectCompanionOrNull(): RealmObjectCompanion? {
+    @Suppress("invisible_reference", "invisible_member")
     return realmObjectCompanionOrNull(this)
 }
 
@@ -114,6 +115,7 @@ internal inline fun KClass<*>.realmObjectCompanionOrNull(): RealmObjectCompanion
  * Returns the [RealmObjectCompanion] associated with a given [BaseRealmObject]'s [KClass].
  */
 internal inline fun <reified T : BaseRealmObject> KClass<T>.realmObjectCompanionOrThrow(): RealmObjectCompanion {
+    @Suppress("invisible_reference", "invisible_member")
     return realmObjectCompanionOrThrow(this)
 }
 

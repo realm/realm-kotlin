@@ -17,6 +17,7 @@
 
 package io.realm.kotlin.compiler
 
+import com.tschuchort.compiletesting.JvmCompilationResult
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.PluginOption
 import com.tschuchort.compiletesting.SourceFile
@@ -92,9 +93,9 @@ class GenerationExtensionTest {
         ).joinToString(separator = File.separator)
 
         fun assertGeneratedIR() {
-            val outputFile = File("${outputDir()}/main/01_AFTER.ValidateIrBeforeLowering.ir")
+            val outputFile = File("${outputDir()}/main/02_AFTER.ValidateIrBeforeLowering.ir")
             stripInputPath(outputFile, fileMap)
-            val expected = File("${expectedDir()}/01_AFTER.ValidateIrBeforeLowering.ir").readText()
+            val expected = File("${expectedDir()}/02_AFTER.ValidateIrBeforeLowering.ir").readText()
             val actual = outputFile.readText()
             assertEquals(expected, actual)
         }
@@ -191,7 +192,6 @@ class GenerationExtensionTest {
             "doubleField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "decimal128Field" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
             "timestampField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
-            "objectIdField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "bsonObjectIdField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "uuidField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "byteArrayField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
@@ -212,7 +212,6 @@ class GenerationExtensionTest {
             "floatListField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "doubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "timestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
-            "objectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "bsonObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "uuidListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -231,7 +230,6 @@ class GenerationExtensionTest {
             "nullableFloatListField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "nullableDoubleListField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "nullableTimestampListField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
-            "nullableObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableBsonObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
@@ -249,7 +247,6 @@ class GenerationExtensionTest {
             "floatSetField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "doubleSetField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "timestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
-            "objectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "bsonObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "uuidSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "objectSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -267,7 +264,6 @@ class GenerationExtensionTest {
             "nullableFloatSetField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "nullableDoubleSetField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "nullableTimestampSetField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
-            "nullableObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableBsonObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
@@ -285,7 +281,6 @@ class GenerationExtensionTest {
             "floatDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "doubleDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "timestampDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
-            "objectIdDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "bsonObjectIdDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "uuidDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "binaryDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
@@ -302,7 +297,6 @@ class GenerationExtensionTest {
             "nullableFloatDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "nullableDoubleDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
             "nullableTimestampDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
-            "nullableObjectIdDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableBsonObjectIdDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinaryDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
@@ -394,7 +388,7 @@ class GenerationExtensionTest {
         inputs: Files,
         plugins: List<ComponentRegistrar> = listOf(Registrar()),
         options: List<PluginOption> = emptyList(),
-    ): KotlinCompilation.Result {
+    ): JvmCompilationResult {
         return KotlinCompilation().apply {
             sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
             messageOutputStream = System.out

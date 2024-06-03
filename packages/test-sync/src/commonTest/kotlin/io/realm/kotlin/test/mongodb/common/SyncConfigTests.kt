@@ -29,11 +29,9 @@ import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
-import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
@@ -54,11 +52,11 @@ import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.getRandomKey
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.use
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import org.mongodb.kbson.BsonObjectId
 import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.test.AfterTest
@@ -97,22 +95,6 @@ class SyncConfigTests {
             app.asTestApp.close()
         }
         RealmLog.reset()
-    }
-
-    @Test
-    fun logConfiguration() {
-        val user = createTestUser()
-        val logger = createDefaultSystemLogger("TEST", LogLevel.DEBUG)
-        val customLoggers = listOf(logger)
-        val config = SyncConfiguration.Builder(
-            schema = PARTITION_BASED_SCHEMA,
-            user = user,
-            partitionValue = partitionValue
-        ).also { builder ->
-            builder.log(LogLevel.DEBUG, customLoggers)
-        }.build()
-        assertEquals(LogLevel.DEBUG, config.log.level)
-        assertEquals(logger, config.log.loggers[1]) // Additional logger placed after default logger
     }
 
     @Test
@@ -435,8 +417,8 @@ class SyncConfigTests {
                     )
 
                     ValueType.OBJECT_ID -> listOf(
-                        ObjectId.from("62aafc72b9c357695ac489a7") to "o_62aafc72b9c357695ac489a7",
-                        null as ObjectId? to "null",
+                        BsonObjectId("62aafc72b9c357695ac489a7") to "o_62aafc72b9c357695ac489a7",
+                        null as BsonObjectId? to "null",
                     )
 
                     ValueType.UUID -> listOf(
@@ -472,7 +454,7 @@ class SyncConfigTests {
         is String? -> SyncConfiguration.create(user, partitionValue, schema)
         is Int? -> SyncConfiguration.create(user, partitionValue, schema)
         is Long? -> SyncConfiguration.create(user, partitionValue, schema)
-        is ObjectId? -> SyncConfiguration.create(user, partitionValue, schema)
+        is BsonObjectId? -> SyncConfiguration.create(user, partitionValue, schema)
         is RealmUUID? -> SyncConfiguration.create(user, partitionValue, schema)
         else -> TODO("Undefined partition type")
     }
@@ -485,7 +467,7 @@ class SyncConfigTests {
         is String? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
         is Int? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
         is Long? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
-        is ObjectId? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
+        is BsonObjectId? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
         is RealmUUID? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
         else -> TODO("Undefined partition type")
     }
@@ -684,8 +666,8 @@ class SyncConfigTests {
                     validateConfig(SyncConfiguration.Builder(user, 1L, supportedSchemaTypes).build())
                 }
                 ValueType.OBJECT_ID -> {
-                    validateConfig(SyncConfiguration.create(user, ObjectId.create(), supportedSchemaTypes))
-                    validateConfig(SyncConfiguration.Builder(user, ObjectId.create(), supportedSchemaTypes).build())
+                    validateConfig(SyncConfiguration.create(user, BsonObjectId(), supportedSchemaTypes))
+                    validateConfig(SyncConfiguration.Builder(user, BsonObjectId(), supportedSchemaTypes).build())
                 }
                 ValueType.UUID -> {
                     validateConfig(SyncConfiguration.create(user, RealmUUID.random(), supportedSchemaTypes))
@@ -1068,10 +1050,6 @@ class SyncConfigTests {
                 fail("Should not be called")
             }
 
-            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
-                fail("Should not be called")
-            }
-
             override fun onManualResetFallback(
                 session: SyncSession,
                 exception: ClientResetRequiredException
@@ -1225,30 +1203,6 @@ class SyncConfigTests {
             })
             .build()
         assertTrue(config.syncClientResetStrategy is RecoverOrDiscardUnsyncedChangesStrategy)
-    }
-
-    @Test
-    fun logLevelDoesNotGetOverwrittenByConfig() {
-        app.asTestApp.close()
-        // Prevent AppConfiguration to set a log level
-        app = TestApp("logLevelDoesNotGetOverwrittenByConfig", logLevel = null)
-
-        val expectedLogLevel = LogLevel.ALL
-
-        RealmLog.level = expectedLogLevel
-
-        val (email, password) = randomEmail() to "password1234"
-        val user = runBlocking {
-            app.createUserAndLogIn(email, password)
-        }
-
-        SyncConfiguration.Builder(
-            schema = FLEXIBLE_SYNC_SCHEMA,
-            user = user,
-            partitionValue = partitionValue
-        ).build()
-
-        assertEquals(expectedLogLevel, RealmLog.level)
     }
 
     private fun createTestUser(): User = runBlocking {

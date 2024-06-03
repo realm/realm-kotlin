@@ -1,11 +1,28 @@
+/*
+ * Copyright 2023 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.realm.kotlin.log
 
 import io.realm.kotlin.Realm
+import io.realm.kotlin.internal.fromCoreLogLevel
 import io.realm.kotlin.internal.interop.CoreLogLevel
 import io.realm.kotlin.internal.interop.LogCallback
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
+import io.realm.kotlin.internal.toCoreLogLevel
 import io.realm.kotlin.log.RealmLog.add
 import io.realm.kotlin.log.RealmLog.addDefaultSystemLogger
 
@@ -23,20 +40,11 @@ import io.realm.kotlin.log.RealmLog.addDefaultSystemLogger
  */
 public object RealmLog {
 
-    /**
-     * The current [LogLevel]. Changing this will affect all registered loggers.
-     */
-    public var level: LogLevel = LogLevel.WARN
-        set(value) {
-            RealmInterop.realm_set_log_level(value.toCoreLogLevel())
-            field = value
-        }
-
     // Lock preventing multiple threads modifying the list of loggers.
     private val loggersMutex = SynchronizableObject()
     // Reference to the currently installed system logger (if any)
     // `internal` until we can remove the old log API
-    internal var systemLoggerInstalled: RealmLogger? = null
+    private var systemLoggerInstalled: RealmLogger? = null
     // Kotlin Multiplatform is currently lacking primitives like CopyOnWriteArrayList. We could
     // use `io.realm.kotlin.internal.interop.SynchronizableObject`, but it would require locking
     // when reporting a log statement which feel a bit heavy, so instead we have added locks around
@@ -44,19 +52,50 @@ public object RealmLog {
     // copy this reference before using it.
     private var loggers: MutableList<RealmLogger> = mutableListOf()
 
+    // Log level that would be set by default
+    private val defaultLogLevel = LogLevel.WARN
+
+    // Cached value of the SDK log level
+    internal var sdkLogLevel = defaultLogLevel
+
+    /**
+     * Sets the log level of a log category. By setting the log level of a category all its subcategories
+     * would also be updated to match its level.
+     *
+     * @param level target log level.
+     * @param category target log category, [LogCategory.Realm] by default.
+     */
+    public fun setLevel(level: LogLevel, category: LogCategory = LogCategory.Realm) {
+        RealmInterop.realm_set_log_level_category(category.toString(), level.toCoreLogLevel())
+        sdkLogLevel = getLevel(SdkLogCategory)
+    }
+
+    /**
+     * Gets the current log level of a log category.
+     *
+     * @param category target log category.
+     * @return current [category] log level.
+     */
+    public fun getLevel(category: LogCategory = LogCategory.Realm): LogLevel {
+        return RealmInterop.realm_get_log_level_category(category.toString()).fromCoreLogLevel()
+    }
+
     init {
         addDefaultSystemLogger()
+        setLevel(level = defaultLogLevel) // Set the log level to the SDKs (might be different from cores default INFO)
         RealmInterop.realm_set_log_callback(
             object : LogCallback {
-                override fun log(logLevel: Short, category: String?, message: String?) {
+                override fun log(logLevel: Short, categoryValue: String, message: String?) {
                     // Create concatenated up front, since Core should already filter messages
                     // not within the log range.
-                    val level: LogLevel = fromCoreLogLevel(CoreLogLevel.valueFromPriority(logLevel))
-                    // TODO Add category - Will come with https://github.com/realm/realm-kotlin/pull/1692
+                    val category: LogCategory = LogCategory.fromCoreValue(categoryValue)
+                    val level: LogLevel = CoreLogLevel.valueFromPriority(logLevel).fromCoreLogLevel()
+
                     doLog(
+                        category,
                         level,
                         null,
-                        if (message.isNullOrBlank()) { null } else { "[Core] $message" }
+                        message,
                     )
                 }
             }
@@ -133,223 +172,22 @@ public object RealmLog {
     }
 
     /**
-     * Logs a [LogLevel.TRACE] event.
-     *
-     * @param throwable optional exception to log.
-     */
-    internal fun trace(throwable: Throwable?) {
-        doLog(LogLevel.TRACE, throwable, null)
-    }
-
-    /**
-     * Logs a [LogLevel.TRACE] event.
-     *
-     * @param throwable optional exception to log.
-     * @param message optional message.
-     * @param args optional args used to format the message using a subset of `String.format`
-     * options. Only `%s`, `%d` and `%f` are supported.
-     */
-    internal fun trace(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.TRACE, throwable, message, *args)
-    }
-
-    /**
-     * Logs a [LogLevel.TRACE] event.
-     *
-     * @param message optional message.
-     * @param args optional args used to format the message using a subset of `String.format`
-     * options. Only `%s`, `%d` and `%f` are supported.
-     */
-    internal fun trace(message: String, vararg args: Any?) {
-        doLog(LogLevel.TRACE, null, message, *args)
-    }
-
-    /**
-     * Logs a [LogLevel.DEBUG] event.
-     *
-     * @param throwable optional exception to log.
-     */
-    internal fun debug(throwable: Throwable?) {
-        doLog(LogLevel.DEBUG, throwable, null)
-    }
-
-    /**
-     * Logs a [LogLevel.DEBUG] event.
-     *
-     * @param throwable optional exception to log.
-     * @param message optional message.
-     * @param args optional args used to format the message using a subset of `String.format`
-     * options. Only `%s`, `%d` and `%f` are supported.
-     */
-    internal fun debug(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.DEBUG, throwable, message, *args)
-    }
-
-    /**
-     * Logs a [LogLevel.DEBUG] event.
-     *
-     * @param message optional message.
-     * @param args optional args used to format the message using a subset of `String.format`
-     * options. Only `%s`, `%d` and `%f` are supported.
-     */
-    internal fun debug(message: String, vararg args: Any?) {
-        doLog(LogLevel.DEBUG, null, message, *args)
-    }
-
-    /**
-     * Logs a [LogLevel.INFO] event.
-     *
-     * @param throwable optional exception to log.
-     */
-    internal fun info(throwable: Throwable?) {
-        doLog(LogLevel.INFO, throwable, null)
-    }
-
-    /**
-     * Logs a [LogLevel.INFO] event.
-     *
-     * @param throwable optional exception to log.
-     * @param message optional message.
-     * @param args optional args used to format the message using a subset of `String.format`
-     * options. Only `%s`, `%d` and `%f` are supported.
-     */
-    internal fun info(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.INFO, throwable, message, *args)
-    }
-
-    /**
-     * Logs a [LogLevel.INFO] event.
-     *
-     * @param message optional message.
-     * @param args optional args used to format the message using a subset of `String.format`
-     * options. Only `%s`, `%d` and `%f` are supported.
-     */
-    internal fun info(message: String, vararg args: Any?) {
-        doLog(LogLevel.INFO, null, message, *args)
-    }
-
-    /**
-     * Logs a [LogLevel.WARN] event.
-     *
-     * @param throwable optional exception to log.
-     */
-    internal fun warn(throwable: Throwable?) {
-        doLog(LogLevel.WARN, throwable, null)
-    }
-
-    /**
-     * Logs a [LogLevel.WARN] event.
-     *
-     * @param throwable optional exception to log.
-     * @param message optional message.
-     * @param args optional args used to format the message using a subset of `String.format`
-     * options. Only `%s`, `%d` and `%f` are supported.
-     */
-    internal fun warn(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.WARN, throwable, message, *args)
-    }
-
-    /**
-     * Logs a [LogLevel.INFO] event.
-     *
-     * @param message optional message.
-     * @param args optional args used to format the message using a subset of `String.format`
-     * options. Only `%s`, `%d` and `%f` are supported.
-     */
-    internal fun warn(message: String, vararg args: Any?) {
-        doLog(LogLevel.WARN, null, message, *args)
-    }
-
-    /**
-     * Logs a [LogLevel.ERROR] event.
-     *
-     * @param throwable optional exception to log.
-     */
-    internal fun error(throwable: Throwable?) {
-        doLog(LogLevel.ERROR, throwable, null)
-    }
-
-    /**
-     * Logs a [LogLevel.ERROR] event.
-     *
-     * @param throwable optional exception to log.
-     * @param message optional message.
-     * @param args optional args used to format the message using a subset of `String.format`
-     * options. Only `%s`, `%d` and `%f` are supported.
-     */
-    internal fun error(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.ERROR, throwable, message, *args)
-    }
-
-    /**
-     * Logs a [LogLevel.ERROR] event.
-     *
-     * @param message optional message.
-     * @param args optional args used to format the message using a subset of `String.format`
-     * options. Only `%s`, `%d` and `%f` are supported.
-     */
-    internal fun error(message: String, vararg args: Any?) {
-        doLog(LogLevel.ERROR, null, message, *args)
-    }
-
-    /**
-     * Logs a [LogLevel.WTF] event.
-     *
-     * @param throwable optional exception to log.
-     */
-    internal fun wtf(throwable: Throwable?) {
-        doLog(LogLevel.WTF, throwable, null)
-    }
-
-    /**
-     * Logs a [LogLevel.WTF] event.
-     *
-     * @param throwable optional exception to log.
-     * @param message optional message.
-     * @param args optional args used to format the message using a subset of `String.format`
-     * options. Only `%s`, `%d` and `%f` are supported.
-     */
-    internal fun wtf(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.WTF, throwable, message, *args)
-    }
-
-    /**
-     * Logs a [LogLevel.WTF] event.
-     *
-     * @param message optional message.
-     * @param args optional args used to format the message using a subset of `String.format`
-     * options. Only `%s`, `%d` and `%f` are supported.
-     */
-    internal fun wtf(message: String, vararg args: Any?) {
-        doLog(LogLevel.WTF, null, message, *args)
-    }
-
-    /**
      * Log a message.
      */
-    internal fun doLog(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
-        if (level.priority >= this.level.priority) {
-            // Copy the reference to loggers so they are stable while iterating them.
-            val loggers = this.loggers
-            loggers.forEach {
-                it.log(level, throwable, message, *args)
-            }
-        }
-    }
-
-    /***
-     * Internal method used to optimize logging from internal components. See
-     * [io.realm.kotlin.internal.ContextLogger] for more details.
-     */
-    internal inline fun doLog(level: LogLevel, throwable: Throwable?, message: () -> String?, vararg args: Any?) {
-        if (level.priority >= this.level.priority) {
-            // Copy the reference to loggers so they are stable while iterating them.
-            val loggers = this.loggers
-            val msg = message()
-            loggers.forEach {
-                it.log(level, throwable, msg, *args)
-            }
-        }
+    internal inline fun doLog(
+        category: LogCategory,
+        level: LogLevel,
+        throwable: Throwable?,
+        message: String?,
+        vararg args: Any?,
+    ) = loggers.forEach {
+        it.log(
+            category = category,
+            level = level,
+            throwable = throwable,
+            message = message,
+            args = *args
+        )
     }
 
     /**
@@ -358,34 +196,6 @@ public object RealmLog {
     internal fun reset() {
         removeAll()
         addDefaultSystemLogger()
-        level = LogLevel.WARN
-    }
-
-    private fun LogLevel.toCoreLogLevel(): CoreLogLevel {
-        return when (this) {
-            LogLevel.ALL -> CoreLogLevel.RLM_LOG_LEVEL_ALL
-            LogLevel.TRACE -> CoreLogLevel.RLM_LOG_LEVEL_TRACE
-            LogLevel.DEBUG -> CoreLogLevel.RLM_LOG_LEVEL_DEBUG
-            LogLevel.INFO -> CoreLogLevel.RLM_LOG_LEVEL_INFO
-            LogLevel.WARN -> CoreLogLevel.RLM_LOG_LEVEL_WARNING
-            LogLevel.ERROR -> CoreLogLevel.RLM_LOG_LEVEL_ERROR
-            LogLevel.WTF -> CoreLogLevel.RLM_LOG_LEVEL_FATAL
-            LogLevel.NONE -> CoreLogLevel.RLM_LOG_LEVEL_OFF
-        }
-    }
-
-    private fun fromCoreLogLevel(level: CoreLogLevel): LogLevel {
-        return when (level) {
-            CoreLogLevel.RLM_LOG_LEVEL_ALL,
-            CoreLogLevel.RLM_LOG_LEVEL_TRACE -> LogLevel.TRACE
-            CoreLogLevel.RLM_LOG_LEVEL_DEBUG,
-            CoreLogLevel.RLM_LOG_LEVEL_DETAIL -> LogLevel.DEBUG
-            CoreLogLevel.RLM_LOG_LEVEL_INFO -> LogLevel.INFO
-            CoreLogLevel.RLM_LOG_LEVEL_WARNING -> LogLevel.WARN
-            CoreLogLevel.RLM_LOG_LEVEL_ERROR -> LogLevel.ERROR
-            CoreLogLevel.RLM_LOG_LEVEL_FATAL -> LogLevel.WTF
-            CoreLogLevel.RLM_LOG_LEVEL_OFF -> LogLevel.NONE
-            else -> throw IllegalArgumentException("Invalid core log level: $level")
-        }
+        setLevel(LogLevel.WARN)
     }
 }

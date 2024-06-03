@@ -15,6 +15,7 @@
  */
 // TODO https://github.com/realm/realm-kotlin/issues/889
 @file:Suppress("TooGenericExceptionThrown", "TooGenericExceptionCaught")
+@file:OptIn(ExperimentalForeignApi::class)
 
 package io.realm.kotlin.internal.interop
 
@@ -54,6 +55,7 @@ import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CPointerVarOf
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.CVariable
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
@@ -268,6 +270,7 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
     set(memScope, this@toRString)
 }
 
+@OptIn(ExperimentalForeignApi::class)
 @Suppress("LargeClass", "FunctionNaming")
 actual object RealmInterop {
 
@@ -976,6 +979,13 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_set_embedded(obj.cptr(), key.key))
     }
 
+    actual fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
+        return CPointerWrapper(realm_wrapper.realm_set_list(obj.cptr(), key.key))
+    }
+    actual fun realm_set_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer {
+        return CPointerWrapper(realm_wrapper.realm_set_dictionary(obj.cptr(), key.key))
+    }
+
     actual fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long) {
         checkedBooleanResult(realm_wrapper.realm_object_add_int(obj.cptr(), key.key, value))
     }
@@ -1028,6 +1038,25 @@ actual object RealmInterop {
         return RealmValue(struct)
     }
 
+    actual fun realm_list_find(list: RealmListPointer, value: RealmValue): Long {
+        memScoped {
+            val index = alloc<ULongVar>()
+            val found = alloc<BooleanVar>()
+            checkedBooleanResult(realm_wrapper.realm_list_find(list.cptr(), value.value.readValue(), index.ptr, found.ptr))
+            return if (found.value) {
+                index.value.toLong()
+            } else {
+                INDEX_NOT_FOUND
+            }
+        }
+    }
+
+    actual fun realm_list_get_list(list: RealmListPointer, index: Long): RealmListPointer =
+        CPointerWrapper(realm_wrapper.realm_list_get_list(list.cptr(), index.toULong()))
+
+    actual fun realm_list_get_dictionary(list: RealmListPointer, index: Long): RealmMapPointer =
+        CPointerWrapper(realm_wrapper.realm_list_get_dictionary(list.cptr(), index.toULong()))
+
     actual fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue) {
         checkedBooleanResult(
             realm_wrapper.realm_list_insert(
@@ -1036,6 +1065,18 @@ actual object RealmInterop {
                 transport.value.readValue()
             )
         )
+    }
+    actual fun realm_list_insert_list(list: RealmListPointer, index: Long): RealmListPointer {
+        return CPointerWrapper(realm_wrapper.realm_list_insert_list(list.cptr(), index.toULong()))
+    }
+    actual fun realm_list_insert_dictionary(list: RealmListPointer, index: Long): RealmMapPointer {
+        return CPointerWrapper(realm_wrapper.realm_list_insert_dictionary(list.cptr(), index.toULong()))
+    }
+    actual fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer {
+        return CPointerWrapper(realm_wrapper.realm_list_set_list(list.cptr(), index.toULong()))
+    }
+    actual fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer {
+        return CPointerWrapper(realm_wrapper.realm_list_set_dictionary(list.cptr(), index.toULong()))
     }
 
     actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
@@ -1252,6 +1293,19 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_dictionary_find_list(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmListPointer {
+        return CPointerWrapper(realm_wrapper.realm_dictionary_get_list(dictionary.cptr(), mapKey.value.readValue()))
+    }
+    actual fun realm_dictionary_find_dictionary(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmMapPointer {
+        return CPointerWrapper(realm_wrapper.realm_dictionary_get_dictionary(dictionary.cptr(), mapKey.value.readValue()))
+    }
+
     actual fun MemAllocator.realm_dictionary_get(
         dictionary: RealmMapPointer,
         pos: Int
@@ -1371,6 +1425,14 @@ actual object RealmInterop {
             struct
         }
         return RealmValue(outputStruct)
+    }
+
+    actual fun realm_dictionary_insert_list(dictionary: RealmMapPointer, mapKey: RealmValue): RealmListPointer {
+        return CPointerWrapper(realm_wrapper.realm_dictionary_insert_list(dictionary.cptr(), mapKey.value.readValue()))
+    }
+
+    actual fun realm_dictionary_insert_dictionary(dictionary: RealmMapPointer, mapKey: RealmValue): RealmMapPointer {
+        return CPointerWrapper(realm_wrapper.realm_dictionary_insert_dictionary(dictionary.cptr(), mapKey.value.readValue()))
     }
 
     actual fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer {
@@ -1627,6 +1689,12 @@ actual object RealmInterop {
         )
         return RealmValue(value)
     }
+
+    actual fun realm_results_get_list(results: RealmResultsPointer, index: Long): RealmListPointer =
+        CPointerWrapper(realm_wrapper.realm_results_get_list(results.cptr(), index.toULong()))
+
+    actual fun realm_results_get_dictionary(results: RealmResultsPointer, index: Long): RealmMapPointer =
+        CPointerWrapper(realm_wrapper.realm_results_get_dictionary(results.cptr(), index.toULong()))
 
     actual fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer {
         val ptr = checkedPointerResult(
@@ -1960,7 +2028,7 @@ actual object RealmInterop {
                 deletions,
                 insertions,
                 modifications,
-                collectionWasDeleted.ptr
+                collectionWasDeleted.ptr,
             )
             val deletionStructs = allocArray<realm_value_t>(deletions[0].toInt())
             val insertionStructs = allocArray<realm_value_t>(insertions[0].toInt())
@@ -1974,7 +2042,7 @@ actual object RealmInterop {
                 insertions,
                 modificationStructs,
                 modifications,
-                collectionWasCleared.ptr
+                collectionWasCleared.ptr,
             )
 
             val deletedKeys = (0 until deletions[0].toInt()).map {
@@ -2446,7 +2514,7 @@ actual object RealmInterop {
         realm_wrapper.realm_set_log_callback(
             staticCFunction { userData, category, logLevel, message ->
                 val userDataLogCallback = safeUserData<LogCallback>(userData)
-                userDataLogCallback.log(logLevel.toShort(), category?.toKString(), message?.toKString())
+                userDataLogCallback.log(logLevel.toShort(), category!!.toKString(), message?.toKString())
             },
             StableRef.create(callback).asCPointer(),
             staticCFunction { userData -> disposeUserData<() -> LogCallback>(userData) }
@@ -2457,9 +2525,28 @@ actual object RealmInterop {
         realm_wrapper.realm_set_log_level(level.priority.toUInt())
     }
 
+    actual fun realm_set_log_level_category(category: String, level: CoreLogLevel) {
+        realm_wrapper.realm_set_log_level_category(category, level.priority.toUInt())
+    }
+
+    actual fun realm_get_log_level_category(category: String): CoreLogLevel =
+        CoreLogLevel.valueFromPriority(realm_wrapper.realm_get_log_level_category(category).toShort())
+
+    actual fun realm_get_category_names(): List<String> {
+        memScoped {
+            val namesCount = realm_wrapper.realm_get_category_names(0u, null)
+            val namesBuffer = allocArray<CPointerVar<ByteVar>>(namesCount.toInt())
+            realm_wrapper.realm_get_category_names(namesCount, namesBuffer)
+
+            return List(namesCount.toInt()) {
+                namesBuffer[it].safeKString()
+            }
+        }
+    }
+
     actual fun realm_app_config_set_metadata_mode(
         appConfig: RealmAppConfigurationPointer,
-        metadataMode: MetadataMode
+        metadataMode: MetadataMode,
     ) {
         realm_wrapper.realm_app_config_set_metadata_mode(
             appConfig.cptr(),
@@ -2727,10 +2814,9 @@ actual object RealmInterop {
         return CPointerWrapper(
             realm_wrapper.realm_sync_session_register_progress_notifier(
                 syncSession.cptr(),
-                staticCFunction<COpaquePointer?, ULong, ULong, Double, Unit> { userData, transferred_bytes, total_bytes, _ ->
+                staticCFunction<COpaquePointer?, ULong, ULong, Double, Unit> { userData, _, _, progress_estimate ->
                     safeUserData<ProgressCallback>(userData).run {
-                        // TODO Progress ignored until https://github.com/realm/realm-kotlin/pull/1575
-                        onChange(transferred_bytes.toLong(), total_bytes.toLong())
+                        onChange(progress_estimate)
                     }
                 },
                 direction.nativeValue,
@@ -3176,6 +3262,7 @@ actual object RealmInterop {
         app: RealmAppPointer,
         user: RealmUserPointer,
         name: String,
+        serviceName: String?,
         serializedEjsonArgs: String,
         callback: AppCallback<String>
     ) {
@@ -3184,7 +3271,7 @@ actual object RealmInterop {
             user.cptr(),
             name,
             serializedEjsonArgs,
-            null,
+            serviceName,
             staticCFunction { userData: CPointer<out CPointed>?, data: CPointer<ByteVarOf<Byte>>?, error: CPointer<realm_app_error_t>? ->
                 handleAppCallback(userData, error) {
                     data.safeKString()

@@ -46,7 +46,6 @@ import io.realm.kotlin.schema.ValuePropertyType
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
@@ -55,6 +54,7 @@ import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
+import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
@@ -99,13 +99,13 @@ class CopyFromRealmTests {
     fun primitiveValues() { // This also checks that any default values set in the class are being overridden correctly.
         val type = Sample::class
         val schemaProperties = type.realmObjectCompanionOrThrow().io_realm_kotlin_schema().properties
-        val fields: Map<String, KProperty1<*, *>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
+        val fields: Map<String, Pair<KClass<*>, KProperty1<BaseRealmObject, Any?>>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
 
         // Dynamically set data on the Sample object
         val originalObject = Sample()
         schemaProperties.forEach { prop: RealmProperty ->
             if (prop.type is ValuePropertyType) {
-                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
+                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name]!!.second as KMutableProperty1<BaseRealmObject, Any?>
                 val fieldValue: Any? = createPrimitiveValueData(accessor)
                 accessor.set(originalObject, fieldValue)
             }
@@ -122,7 +122,7 @@ class CopyFromRealmTests {
         // Validate that all primitive list fields were round-tripped correctly.
         schemaProperties.forEach { prop: RealmProperty ->
             if (prop.type is ValuePropertyType) {
-                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
+                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name]!!.second as KMutableProperty1<BaseRealmObject, Any?>
                 val value: Any? = createPrimitiveValueData(accessor)
 
                 if (prop.type.storageType == RealmStorageType.BINARY) {
@@ -301,13 +301,13 @@ class CopyFromRealmTests {
     fun primitiveLists() {
         val type = Sample::class
         val schemaProperties = type.realmObjectCompanionOrThrow().io_realm_kotlin_schema().properties
-        val fields: Map<String, KProperty1<*, *>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
+        val fields: Map<String, Pair<KClass<*>, KProperty1<BaseRealmObject, Any?>>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
 
         // Dynamically set data on the Sample object
         val originalObject = Sample()
         schemaProperties.forEach { prop: RealmProperty ->
             if (prop.type is ListPropertyType && !(prop.type as ListPropertyType).isComputed) {
-                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
+                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name]!!.second as KMutableProperty1<BaseRealmObject, Any?>
                 val list: List<Any?> = createPrimitiveListData(prop, accessor)
                 accessor.set(originalObject, list)
             }
@@ -324,7 +324,7 @@ class CopyFromRealmTests {
         // Validate that all primitive list fields were round-tripped correctly.
         schemaProperties.forEach { prop: RealmProperty ->
             if (prop.type is ListPropertyType && !(prop.type as ListPropertyType).isComputed) {
-                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
+                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name]!!.second as KMutableProperty1<BaseRealmObject, Any?>
                 val list: List<Any?> = createPrimitiveListData(prop, accessor)
 
                 if (prop.type.storageType == RealmStorageType.BINARY) {
@@ -395,13 +395,13 @@ class CopyFromRealmTests {
     fun primitiveSets() {
         val type = Sample::class
         val schemaProperties = type.realmObjectCompanionOrThrow().io_realm_kotlin_schema().properties
-        val fields: Map<String, KProperty1<*, *>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
+        val fields: Map<String, Pair<KClass<*>, KProperty1<BaseRealmObject, Any?>>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
 
         // Dynamically set data on the Sample object
         val originalObject = Sample()
         schemaProperties.forEach { prop: RealmProperty ->
             if (prop.type is SetPropertyType) {
-                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
+                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name]!!.second as KMutableProperty1<BaseRealmObject, Any?>
                 val set: Set<Any?> = createPrimitiveSetData(prop, accessor)
                 accessor.set(originalObject, set)
             }
@@ -418,7 +418,7 @@ class CopyFromRealmTests {
         // Validate that all primitive list fields were round-tripped correctly.
         schemaProperties.forEach { prop: RealmProperty ->
             if (prop.type is SetPropertyType) {
-                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
+                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name]!!.second as KMutableProperty1<BaseRealmObject, Any?>
                 val set: Set<Any?> = createPrimitiveSetData(prop, accessor)
 
                 if (prop.type.storageType == RealmStorageType.BINARY) {
@@ -487,13 +487,13 @@ class CopyFromRealmTests {
     fun primitiveDictionaries() {
         val type = Sample::class
         val schemaProperties = type.realmObjectCompanionOrThrow().io_realm_kotlin_schema().properties
-        val fields: Map<String, KProperty1<*, *>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
+        val fields: Map<String, Pair<KClass<*>, KProperty1<BaseRealmObject, Any?>>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
 
         // Dynamically set data on the Sample object
         val originalObject = Sample()
         schemaProperties.forEach { prop: RealmProperty ->
             if (prop.type is MapPropertyType) {
-                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
+                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name]!!.second as KMutableProperty1<BaseRealmObject, Any?>
                 val dictionary: RealmDictionary<Any?> = createPrimitiveDictionaryData(prop, accessor)
                 accessor.set(originalObject, dictionary)
             }
@@ -510,7 +510,7 @@ class CopyFromRealmTests {
         // Validate that all primitive list fields were round-tripped correctly.
         schemaProperties.forEach { prop: RealmProperty ->
             if (prop.type is MapPropertyType) {
-                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
+                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name]!!.second as KMutableProperty1<BaseRealmObject, Any?>
                 val dictionary: RealmDictionary<Any?> = createPrimitiveDictionaryData(prop, accessor)
 
                 if (prop.type.storageType == RealmStorageType.BINARY) {
@@ -932,7 +932,6 @@ class CopyFromRealmTests {
                 Double::class -> 1.234
                 ByteArray::class -> byteArrayOf(43)
                 RealmInstant::class -> RealmInstant.from(1, 100)
-                ObjectId::class -> ObjectId.from("635a1a95184a200db8a07bfc")
                 RealmUUID::class -> RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a")
                 MutableRealmInt::class -> MutableRealmInt.create(7)
                 RealmAny::class -> RealmAny.create(1)
@@ -964,7 +963,6 @@ class CopyFromRealmTests {
             Double::class -> realmListOf(1.234, 1.345)
             ByteArray::class -> realmListOf(byteArrayOf(42), byteArrayOf(43))
             RealmInstant::class -> realmListOf(RealmInstant.from(1, 0), RealmInstant.from(1, 1))
-            ObjectId::class -> realmListOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
             RealmUUID::class -> realmListOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
             BsonObjectId::class -> realmListOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
             Decimal128::class -> realmListOf(Decimal128("1.8446744073709551618E-615"), Decimal128("2.8446744073709551618E-6151"))
@@ -997,7 +995,6 @@ class CopyFromRealmTests {
             Double::class -> realmSetOf(1.234, 1.345)
             ByteArray::class -> realmSetOf(byteArrayOf(42), byteArrayOf(43))
             RealmInstant::class -> realmSetOf(RealmInstant.from(1, 0), RealmInstant.from(1, 1))
-            ObjectId::class -> realmSetOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
             RealmUUID::class -> realmSetOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
             BsonObjectId::class -> realmSetOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
             Decimal128::class -> realmSetOf(Decimal128("1.8446744073709551618E-615"), Decimal128("2.8446744073709551618E-6151"))
@@ -1032,7 +1029,6 @@ class CopyFromRealmTests {
             Double::class -> realmDictionaryOf("A" to 1.234, "B" to 1.345)
             ByteArray::class -> realmDictionaryOf("A" to byteArrayOf(42), "B" to byteArrayOf(43))
             RealmInstant::class -> realmDictionaryOf("A" to RealmInstant.from(1, 0), "B" to RealmInstant.from(1, 1))
-            ObjectId::class -> realmDictionaryOf("A" to ObjectId.from("635a1a95184a200db8a07bfc"), "B" to ObjectId.from("735a1a95184a200db8a07bfc"))
             RealmUUID::class -> realmDictionaryOf("A" to RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), "B" to RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
             BsonObjectId::class -> realmDictionaryOf("A" to BsonObjectId("635a1a95184a200db8a07bfc"), "B" to BsonObjectId("735a1a95184a200db8a07bfc"))
             Decimal128::class -> realmDictionaryOf("A" to Decimal128("1.8446744073709551618E-615"), "B" to Decimal128("2.8446744073709551618E-6151"))

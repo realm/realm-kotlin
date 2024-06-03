@@ -2,13 +2,13 @@
 
 package io.realm.kotlin.test.compiler
 
-import com.tschuchort.compiletesting.KotlinCompilation
+import com.tschuchort.compiletesting.JvmCompilationResult
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.compiler.CollectionType
 import io.realm.kotlin.test.util.Compiler
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 
-fun createFileAndCompile(fileName: String, code: String): KotlinCompilation.Result =
+fun createFileAndCompile(fileName: String, code: String): JvmCompilationResult =
     Compiler.compileFromSource(SourceFile.kotlin(fileName, code))
 
 /**
@@ -47,7 +47,6 @@ internal const val OBJECT_CLASS = "SampleClass"
 
 private val COLLECTION_CODE = """
 import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant

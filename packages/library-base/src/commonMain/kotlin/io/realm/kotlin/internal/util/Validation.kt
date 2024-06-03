@@ -38,7 +38,7 @@ public object Validation {
      * to that type, otherwise an IllegalArgumentException is thrown with the provided error message.
      */
     @OptIn(ExperimentalContracts::class)
-    public inline fun <reified T : Any?> isType(arg: Any?, errorMessage: String) {
+    public inline fun <reified T : Any?> isType(arg: Any?, errorMessage: String = "Object '$arg' is not of type ${T::class.qualifiedName}") {
         contract {
             returns() implies (arg is T)
         }

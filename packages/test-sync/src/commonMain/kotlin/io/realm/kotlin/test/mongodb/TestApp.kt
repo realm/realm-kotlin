@@ -26,13 +26,11 @@ import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
-import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLog
-import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.common.FLEXIBLE_SYNC_SCHEMA
 import io.realm.kotlin.test.mongodb.util.AppAdmin
@@ -98,12 +96,10 @@ open class TestApp private constructor(
         testId: String?,
         appName: String = TEST_APP_PARTITION,
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("$testId-dispatcher"),
-        logLevel: LogLevel? = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = {
             it.syncRootDirectory(PlatformUtils.createTempDir("$appName-$testId"))
         },
         debug: Boolean = false,
-        customLogger: RealmLogger? = null,
         networkTransport: NetworkTransport? = null,
         ejson: EJson = EJson,
         initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit = { app: BaasApp, service: Service ->
@@ -114,8 +110,6 @@ open class TestApp private constructor(
         build(
             debug = debug,
             appName = appName,
-            logLevel = logLevel,
-            customLogger = customLogger,
             dispatcher = dispatcher,
             builder = builder,
             networkTransport = networkTransport,
@@ -173,7 +167,7 @@ open class TestApp private constructor(
                     // Some tests might render the server inaccessible, preventing us from
                     // deleting users. Assume those tests know what they are doing and
                     // ignore errors here.
-                    RealmLog.warn("Server side users could not be deleted: $ex")
+                    (configuration as AppConfigurationImpl).logger.warn("Server side users could not be deleted: $ex")
                 }
             }
 
@@ -203,8 +197,6 @@ open class TestApp private constructor(
         fun build(
             debug: Boolean,
             appName: String,
-            logLevel: LogLevel?,
-            customLogger: RealmLogger?,
             dispatcher: CoroutineDispatcher,
             builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
             networkTransport: NetworkTransport?,
@@ -229,13 +221,6 @@ open class TestApp private constructor(
                 .networkTransport(networkTransport)
                 .ejson(ejson)
                 .apply {
-                    if (logLevel != null) {
-                        log(
-                            logLevel,
-                            if (customLogger == null) emptyList<RealmLogger>()
-                            else listOf<RealmLogger>(customLogger)
-                        )
-                    }
                     if (SyncServerConfig.usePlatformNetworking) {
                         usePlatformNetworking()
                     }

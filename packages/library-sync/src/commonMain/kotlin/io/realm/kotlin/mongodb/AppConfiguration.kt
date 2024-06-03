@@ -16,7 +16,6 @@
 package io.realm.kotlin.mongodb
 
 import io.ktor.client.plugins.logging.Logger
-import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.ContextLogger
@@ -31,9 +30,6 @@ import io.realm.kotlin.internal.platform.prepareRealmDirectoryPath
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation
-import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLog
-import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.ext.customData
 import io.realm.kotlin.mongodb.ext.profile
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
@@ -158,9 +154,7 @@ public interface AppConfiguration {
         private var baseUrl: String = DEFAULT_BASE_URL
         private var dispatcher: CoroutineDispatcher? = null
         private var encryptionKey: ByteArray? = null
-        private var logLevel: LogLevel? = null
         private var syncRootDirectory: String = appFilesDirectory()
-        private var userLoggers: List<RealmLogger> = listOf()
         private var networkTransport: NetworkTransport? = null
         private var websocketTransport: WebSocketTransport? = null
         private var appName: String? = null
@@ -208,25 +202,6 @@ public interface AppConfiguration {
         public fun dispatcher(dispatcher: CoroutineDispatcher): Builder = apply {
             this.dispatcher = dispatcher
         }
-
-        /**
-         * Configures how Realm will report log events for this App.
-         *
-         * @param level all events at this level or higher will be reported.
-         * @param customLoggers any custom loggers to send log events to. A default system logger is
-         * installed by default that will redirect to the common logging framework on the platform, i.e.
-         * LogCat on Android and NSLog on iOS.
-         * @return the Builder instance used.
-         */
-        @Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
-        public fun log(
-            level: LogLevel = LogLevel.WARN,
-            customLoggers: List<RealmLogger> = emptyList(),
-        ): Builder =
-            apply {
-                this.logLevel = level
-                this.userLoggers = customLoggers
-            }
 
         /**
          * Configures the root folder that marks the location of a `mongodb-realm` folder. This
@@ -414,18 +389,6 @@ public interface AppConfiguration {
         // to this method.
         @OptIn(ExperimentalKBsonSerializerApi::class)
         public fun build(bundleId: String): AppConfiguration {
-            // Configure logging during creation of AppConfiguration to keep old behavior for
-            // configuring logging. This should be removed when `LogConfiguration` is removed.
-            val allLoggers = mutableListOf<RealmLogger>()
-            allLoggers.addAll(userLoggers)
-
-            val logConfig = this.logLevel?.let {
-                RealmLog.level = it
-                LogConfiguration(it, allLoggers)
-            }
-
-            userLoggers.forEach { RealmLog.add(it) }
-
             val appNetworkDispatcherFactory = if (dispatcher != null) {
                 CoroutineDispatcherFactory.unmanaged(dispatcher!!)
             } else {
@@ -435,7 +398,7 @@ public interface AppConfiguration {
                 CoroutineDispatcherFactory.managed("app-dispatcher-$appId")
             }
 
-            val appLogger = ContextLogger("Sdk")
+            val appLogger = ContextLogger()
             val networkTransport: (dispatcher: DispatcherHolder) -> NetworkTransport =
                 { dispatcherHolder ->
                     val logger: Logger = object : Logger {
@@ -474,7 +437,6 @@ public interface AppConfiguration {
                 networkTransportFactory = networkTransport,
                 websocketTransport = websocketTransport,
                 syncRootDirectory = syncRootDirectory,
-                logger = logConfig,
                 appName = appName,
                 appVersion = appVersion,
                 bundleId = bundleId,
@@ -484,6 +446,7 @@ public interface AppConfiguration {
                 authorizationHeaderName = authorizationHeaderName,
                 enableSessionMultiplexing = enableSessionMultiplexing,
                 syncTimeoutOptions = syncTimeoutOptions,
+                logger = appLogger
             )
         }
     }

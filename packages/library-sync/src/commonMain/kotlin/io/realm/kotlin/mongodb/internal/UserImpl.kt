@@ -20,15 +20,15 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.util.use
-import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.UserIdentity
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
-import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
-import io.realm.kotlin.mongodb.exceptions.ServiceException
+import io.realm.kotlin.mongodb.mongo.MongoClient
 import kotlinx.coroutines.channels.Channel
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
 public class UserImpl(
@@ -41,16 +41,11 @@ public class UserImpl(
     override val state: User.State
         get() = fromCoreState(RealmInterop.realm_user_get_state(nativePointer))
 
-    // TODO Can maybe fail, but we could also cache the return value?
-    override val identity: String
-        get() = id
     override val id: String
         get() = RealmInterop.realm_user_get_identity(nativePointer)
     override val loggedIn: Boolean
         get() = RealmInterop.realm_user_is_logged_in(nativePointer)
-    @Deprecated("Property not stable, users might have multiple providers.", ReplaceWith("User.identities"))
-    override val provider: AuthenticationProvider
-        get() = identities.first().provider
+
     override val accessToken: String
         get() = RealmInterop.realm_user_get_access_token(nativePointer)
     override val refreshToken: String
@@ -156,30 +151,24 @@ public class UserImpl(
         if (state != User.State.LOGGED_IN) {
             throw IllegalStateException("User must be logged in, in order to link credentials to it.")
         }
-        try {
-            Channel<Result<User>>(1).use { channel ->
-                RealmInterop.realm_app_link_credentials(
-                    app.nativePointer,
-                    nativePointer,
-                    (credentials as CredentialsImpl).nativePointer,
-                    channelResultCallback<RealmUserPointer, User>(channel) { userPointer ->
-                        UserImpl(userPointer, app)
-                    }
-                )
-                channel.receive().getOrThrow()
-                return this
-            }
-        } catch (ex: ServiceException) {
-            // Linking an account with itself throws a different error code than other linking errors:
-            // It is unclear if this error is shared between other error scenarios, so for now,
-            // we remap the exception type here instead of in the generic handler in
-            // `RealmSyncUtils.kt`.
-            if (ex.message?.contains("[Service][InvalidSession(2)] a user already exists with the specified provider.") == true) {
-                throw CredentialsCannotBeLinkedException(ex.message!!)
-            } else {
-                throw ex
-            }
+        Channel<Result<User>>(1).use { channel ->
+            RealmInterop.realm_app_link_credentials(
+                app.nativePointer,
+                nativePointer,
+                (credentials as CredentialsImpl).nativePointer,
+                channelResultCallback<RealmUserPointer, User>(channel) { userPointer ->
+                    UserImpl(userPointer, app)
+                }
+            )
+            channel.receive().getOrThrow()
+            return this
         }
+    }
+
+    @ExperimentalKBsonSerializerApi
+    override fun mongoClient(serviceName: String, eJson: EJson?): MongoClient {
+        if (!loggedIn) throw IllegalStateException("Cannot obtain a MongoClient from a logged out user")
+        return MongoClientImpl(this, serviceName, eJson ?: app.configuration.ejson)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -187,13 +176,13 @@ public class UserImpl(
         if (other == null || this::class != other::class) return false
 
         other as UserImpl
+        if (id != (other.id)) return false
 
-        if (identity != (other.identity)) return false
         return app.configuration == other.app.configuration
     }
 
     override fun hashCode(): Int {
-        var result = identity.hashCode()
+        var result = id.hashCode()
         result = 31 * result + app.configuration.appId.hashCode()
         return result
     }

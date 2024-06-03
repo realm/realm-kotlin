@@ -19,8 +19,8 @@ import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.toRealmDictionary
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.ext.toRealmSet
-import io.realm.kotlin.internal.toDuration
-import io.realm.kotlin.internal.toRealmInstant
+import io.realm.kotlin.internal.asBsonDateTime
+import io.realm.kotlin.internal.asRealmInstant
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmAny.Type
@@ -30,6 +30,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -45,7 +46,6 @@ import org.mongodb.kbson.BsonBinarySubType
 import org.mongodb.kbson.BsonDateTime
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * KSerializer implementation for [RealmList]. Serialization is done as a generic list structure,
@@ -249,12 +249,12 @@ public object RealmInstantKSerializer : KSerializer<RealmInstant> {
     override val descriptor: SerialDescriptor = serializer.descriptor
 
     override fun deserialize(decoder: Decoder): RealmInstant =
-        decoder.decodeSerializableValue(serializer).value.milliseconds.toRealmInstant()
+        decoder.decodeSerializableValue(serializer).asRealmInstant()
 
     override fun serialize(encoder: Encoder, value: RealmInstant) {
         encoder.encodeSerializableValue(
             serializer = serializer,
-            value = BsonDateTime(value.toDuration().inWholeMilliseconds)
+            value = value.asBsonDateTime()
         )
     }
 }
@@ -351,11 +351,19 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
         @Serializable(RealmUUIDKSerializer::class)
         var uuid: RealmUUID? = null
         var realmObject: RealmObject? = null
+
+        @Contextual
+        var set: RealmSet<RealmAny?>? = null
+        @Contextual
+        var list: RealmList<RealmAny?>? = null
+        @Contextual
+        var dictionary: RealmDictionary<RealmAny?>? = null
     }
 
     private val serializer = SerializableRealmAny.serializer()
     override val descriptor: SerialDescriptor = serializer.descriptor
 
+    @Suppress("ComplexMethod")
     override fun deserialize(decoder: Decoder): RealmAny {
         return decoder.decodeSerializableValue(serializer).let {
             when (Type.valueOf(it.type)) {
@@ -370,10 +378,13 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
                 Type.OBJECT_ID -> RealmAny.create(it.objectId!!)
                 Type.UUID -> RealmAny.create(it.uuid!!)
                 Type.OBJECT -> RealmAny.create(it.realmObject!!)
+                Type.LIST -> RealmAny.create(it.list!!)
+                Type.DICTIONARY -> RealmAny.create(it.dictionary!!)
             }
         }
     }
 
+    @Suppress("ComplexMethod")
     override fun serialize(encoder: Encoder, value: RealmAny) {
         encoder.encodeSerializableValue(
             serializer,
@@ -393,6 +404,8 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
                     )
                     Type.UUID -> uuid = value.asRealmUUID()
                     Type.OBJECT -> realmObject = value.asRealmObject()
+                    Type.LIST -> list = value.asList()
+                    Type.DICTIONARY -> dictionary = value.asDictionary()
                 }
             }
         )
