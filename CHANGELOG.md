@@ -1,4 +1,4 @@
-## 2.0.0-SNAPSHOT (YYYY-MM-DD)
+## 2.0.0-SNAPSHOT (2024-06-03)
 
 > [!NOTE]
 > This release will bump the Realm file format 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
