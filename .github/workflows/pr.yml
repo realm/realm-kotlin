@@ -40,9 +40,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: "recursive"
-      - name: Register problem matchers
-        run: |-
-          echo "::add-matcher::.github/problem-matchers/kotlin.json"
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
@@ -514,6 +511,10 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: "recursive"
+
+      - name: Register problem matchers
+        run: |-
+          echo "::add-matcher::.github/problem-matchers/kotlin.json"
 
       - name: Setup Java 11
         uses: actions/setup-java@v3
