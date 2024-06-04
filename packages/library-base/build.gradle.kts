@@ -124,10 +124,7 @@ kotlin {
 // Using a custom name module for internal methods to avoid default name mangling in Kotlin compiler which uses the module
 // name and build type variant as a suffix, this default behaviour can cause mismatch at runtime https://github.com/realm/realm-kotlin/issues/621
 tasks.withType<KotlinCompile>().configureEach {
-    compilerOptions {
-        freeCompilerArgs.add("-module-name")
-        freeCompilerArgs.add("io.realm.kotlin.library")
-    }
+    compilerOptions.moduleName.set("io.realm.kotlin.library")
 }
 
 tasks.withType<KotlinCompilationTask<*>>().configureEach {

@@ -126,19 +126,18 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
 }
 
 tasks.withType<KotlinCompile>().configureEach {
-    compilerOptions.freeCompilerArgs.add("-module-name")
-    compilerOptions.freeCompilerArgs.add("io.realm.kotlin.library")
+    compilerOptions.moduleName.set("io.realm.kotlin.library")
 }
 
 // Android configuration
 android {
     namespace = "io.realm.kotlin.mongodb"
-    compileSdkVersion(Versions.Android.compileSdkVersion)
+    compileSdk = Versions.Android.compileSdkVersion
     buildToolsVersion = Versions.Android.buildToolsVersion
 
     defaultConfig {
-        minSdkVersion(Versions.Android.minSdk)
-        targetSdkVersion(Versions.Android.targetSdk)
+        minSdk = Versions.Android.minSdk
+        targetSdk = Versions.Android.targetSdk
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         sourceSets {
