@@ -6,11 +6,10 @@
             "pattern": [
                 {
                     "regexp": "e:\\s(.+):(\\d+):(\\d+)\\s(.+)",
-                    "file": 2,
-                    "line": 3,
-                    "column": 4,
-                    "severity": 1,
-                    "message": 5
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "message": 4
                 }
             ]
         },
@@ -20,11 +19,10 @@
             "pattern": [
                 {
                     "regexp": "w:\\s(.+):(\\d+):(\\d+)\\s(.+)",
-                    "file": 2,
-                    "line": 3,
-                    "column": 4,
-                    "severity": 1,
-                    "message": 5
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "message": 4
                 }
             ]
         }
