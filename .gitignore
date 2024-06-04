@@ -335,3 +335,5 @@ dynamic_libraries.properties
 **/output
 
 packages/test-sync/mongodb-realm/
+
+packages/m2-buildrepo
