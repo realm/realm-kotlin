@@ -1,7 +1,7 @@
 {
     "problemMatcher": [
         {
-            "owner": "kotlin",
+            "owner": "kotlin-error",
             "severity": "error",
             "pattern": [
                 {
@@ -14,7 +14,7 @@
             ]
         },
         {
-            "owner": "kotlin",
+            "owner": "kotlin-warning",
             "severity": "warning",
             "pattern": [
                 {
