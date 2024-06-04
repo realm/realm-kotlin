@@ -808,3 +808,8 @@ abstract class CmakeVersionProvider : ValueSource<String, ValueSourceParameters.
         return cmakeVersion.value
     }
 }
+
+// enable execution optimizations for generateSdkVersionConstant
+afterEvaluate {
+    tasks.getByName("sourcesJar").dependsOn(generateSdkVersionConstant)
+}
