@@ -34,7 +34,7 @@ jobs:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 

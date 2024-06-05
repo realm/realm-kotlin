@@ -57,7 +57,7 @@ jobs:
           key: jni-swig-stubs-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -113,7 +113,7 @@ jobs:
           key: jni-linux-lib-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -190,7 +190,7 @@ jobs:
           enableCrossOsArchive: true
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -254,7 +254,7 @@ jobs:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -340,7 +340,7 @@ jobs:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -420,7 +420,7 @@ jobs:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -547,7 +547,7 @@ jobs:
         run: brew install jq
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -662,7 +662,7 @@ jobs:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -731,7 +731,7 @@ jobs:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -799,7 +799,7 @@ jobs:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -868,7 +868,7 @@ jobs:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
