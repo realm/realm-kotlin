@@ -57,8 +57,6 @@ jobs:
   check-cache:
     runs-on: ubuntu-latest
     name: Check cache 
-    env:
-      CACHE_SKIP_SAVE: true
     outputs:  
       version-label: ${{ steps.find-library-version.outputs.label }}
       packages-metadata-cache-hit: ${{ steps.kotlin-metadata-cache.outputs.cache-hit }}
@@ -109,25 +107,17 @@ jobs:
     # 
     # 1. Check if a cache is available and download it if it is.
     # 2. If (1), store this cache as an artifact for jobs downstream to use.
-    # 3. Cleanup the build folder. This is required so we can download the next 
-    #    platform into a fresh cache location. It does not look possible to download
-    #    a cache into a different location.  
-    # 
-    # TODO There doesn't seem to be a good way to check if a cache key exists without download it.
-    # https://github.com/actions/cache/issues/321
-    #
-    # TODO Create a custom action for this until we have a work-around?
-    #
 
     #
     # Kotlin Metadata and Gradle/Compiler Plugin
     #
     - name: Check Kotlin Metadata cache 
       id: kotlin-metadata-cache
-      uses: clementetb/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
         key: packages-m2-metadata-${{ steps.packages-cache-key.outputs.sha }}
+        lookup-only: true
 
     - name: Save Kotlin Metadata packages
       uses: actions/upload-artifact@v4
@@ -137,22 +127,16 @@ jobs:
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
-    - name: Delete downloaded JVM cache files
-      id: delete-cache-metadata
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.kotlin-metadata-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/build/m2-buildrepo
-
     #
     # JVM (All platforms)
     #
     - name: Check JVM cache 
       id: jvm-cache
-      uses: clementetb/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
         key: packages-m2-jvm-sync-${{ steps.packages-cache-key.outputs.sha }}
+        lookup-only: true
 
     - name: Save JVM packages
       uses: actions/upload-artifact@v4
@@ -174,10 +158,11 @@ jobs:
     #    
     - name: Check JNI Swig stub cache 
       id: jni-swig-stub-cache
-      uses: clementetb/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/jni-swig-stub/build/generated/sources/jni
         key: jni-swig-stubs-${{ steps.packages-cache-key.outputs.sha }}
+        lookup-only: true
 
     - name: Save JNI Stub packages
       uses: actions/upload-artifact@v4
@@ -199,10 +184,11 @@ jobs:
     #    
     - name: Check JNI MacOS lib cache 
       id: jni-macos-lib-cache
-      uses: clementetb/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/cinterop/build/realmMacOsBuild
         key: jni-macos-lib-${{ steps.packages-cache-key.outputs.sha }}
+        lookup-only: true
 
     - name: Save JNI MacOS lib package
       uses: actions/upload-artifact@v4
@@ -224,10 +210,11 @@ jobs:
     #    
     - name: Check JNI Linux lib cache 
       id: jni-linux-lib-cache
-      uses: clementetb/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/cinterop/build/realmLinuxBuild
         key: jni-linux-lib-${{ steps.packages-cache-key.outputs.sha }}
+        lookup-only: true
 
     - name: Save JNI Linux lib package
       uses: actions/upload-artifact@v4
@@ -249,10 +236,11 @@ jobs:
     #
     - name: Check Android cache
       id: android-cache
-      uses: clementetb/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
         key: packages-m2-android-sync-${{ steps.packages-cache-key.outputs.sha }}
+        lookup-only: true
 
     - name: Save Android packages
       uses: actions/upload-artifact@v4
@@ -274,10 +262,11 @@ jobs:
       #
     - name: Check Android Base Test APK
       id: android-test-base-apk
-      uses: clementetb/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
         key: android-base-test-apk-key-${{ steps.packages-cache-key.outputs.sha }}
+        lookup-only: true
 
     - name: Save Android Base Test APK
       uses: actions/upload-artifact@v4
@@ -299,12 +288,13 @@ jobs:
       #
     - name: Check Android Sync Test APK
       id: android-test-sync-apk
-      uses: clementetb/cache@main
+      uses: actions/cache@v4
       with:
         key: android-sync-test-apk-key-${{ steps.packages-cache-key.outputs.sha }}
         path: |
           ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
           ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
+          lookup-only: true
 
     - name: Save Android Sync Test APK
       uses: actions/upload-artifact@v4
@@ -330,10 +320,11 @@ jobs:
     #
     - name: Check MacOS arm64 cache 
       id: macos-arm64-cache
-      uses: clementetb/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
         key: packages-m2-macos-arm64-sync-${{ steps.packages-cache-key.outputs.sha }}
+        lookup-only: true
 
     - name: Save MacOS arm64 packages
       uses: actions/upload-artifact@v4
@@ -355,10 +346,11 @@ jobs:
     #
     - name: Check MacOS X64 cache 
       id: macos-x64-cache
-      uses: clementetb/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
         key: packages-m2-macos-x64-sync-${{ steps.packages-cache-key.outputs.sha }}
+        lookup-only: true
 
     - name: Save MacOS x64 packages
       uses: actions/upload-artifact@v4
@@ -380,10 +372,11 @@ jobs:
     #
     - name: Check iOS arm64 cache 
       id: ios-arm64-cache
-      uses: clementetb/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
         key: packages-m2-ios-arm64-sync-${{ steps.packages-cache-key.outputs.sha }}
+        lookup-only: true
 
     - name: Save iOS arm64 packages
       uses: actions/upload-artifact@v4
@@ -405,10 +398,11 @@ jobs:
     #
     - name: Check iOS X64 cache 
       id: ios-x64-cache
-      uses: clementetb/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
         key: packages-m2-ios-x64-sync-${{ steps.packages-cache-key.outputs.sha }}
+        lookup-only: true
 
     - name: Save iOS x64 packages
       uses: actions/upload-artifact@v4
@@ -430,11 +424,12 @@ jobs:
     #    
     - name: Check JNI Windows lib cache 
       id: jni-windows-lib-cache
-      uses: clementetb/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/cinterop/build/realmWindowsBuild
         key: jni-windows-lib-${{ steps.packages-cache-key.outputs.sha }}
         enableCrossOsArchive: true
+        lookup-only: true
 
     - name: Save JNI Windows lib package
       uses: actions/upload-artifact@v4
