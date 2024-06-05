@@ -9,17 +9,17 @@ jobs:
     steps:
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false # TODO How to configure caching here?
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
