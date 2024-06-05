@@ -39,7 +39,7 @@ jobs:
       - name: Testing
         id: testing
         run: |
-          echo "::set-output name=cache_hit::💚"
+          echo "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY
       - name: Check JNI Swig stub cache 
         id: jni-swig-stub-cache
         uses: actions/cache@v4
