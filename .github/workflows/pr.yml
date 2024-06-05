@@ -33,7 +33,7 @@ jobs:
   # with SWIG if we compile on each seperate platform. 
   build-jni-swig-stub:
     runs-on: ubuntu-latest
-    needs: jni-stub
+    needs: check-cache
     if: always() && !cancelled() && needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
     steps:
       - name: Checkout code

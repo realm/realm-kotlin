@@ -20,38 +20,39 @@ on:
     outputs:  
       version-label:
         value: ${{ jobs.check-cache.outputs.version-label }}
-      packages-metadata-cache-hit:
-        value: ${{ jobs.check-cache.outputs.packages-metadata-cache-hit }}
-      packages-jvm-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.packages-jvm-cache-hit }}
-      packages-android-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.packages-android-cache-hit }}
-      android-test-base-apk-cache-hit:
-        value: ${{ jobs.check-cache.outputs.android-test-base-apk-cache-hit }}
-      android-test-sync-apk-cache-hit:
-        value: ${{ jobs.check-cache.outputs.android-test-sync-apk-cache-hit }}
-      packages-macos-x64-cache-hit:
-        value: ${{ jobs.check-cache.outputs.packages-macos-x64-cache-hit }}
-      packages-macos-arm64-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.packages-macos-arm64-cache-hit }}
-      packages-ios-x64-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.packages-ios-x64-cache-hit }}
-      packages-ios-arm64-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.packages-ios-arm64-cache-hit }}
-      jni-swig-stub-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.jni-swig-stub-cache-hit }}
-      jni-linux-lib-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.jni-linux-lib-cache-hit }}
-      jni-macos-lib-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.jni-macos-lib-cache-hit }}
-      jni-windows-lib-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.jni-windows-lib-cache-hit }}
       packages-sha: 
         value: ${{ jobs.check-cache.outputs.packages-sha }}
       benchmarks-sha: 
         value: ${{ jobs.check-cache.outputs.benchmarks-sha }}
       core-commit-sha:
         value: ${{ jobs.check-cache.outputs.core-commit-sha }}
+
+      packages-metadata-cache-hit:
+        value: ${{ jobs.metadata-compiler-plugin.outputs.packages-metadata-cache-hit }}
+      packages-jvm-cache-hit: 
+        value: ${{ jobs.jvm-all.outputs.packages-jvm-cache-hit }}
+      packages-android-cache-hit: 
+        value: ${{ jobs.android.outputs.packages-android-cache-hit }}
+      android-test-base-apk-cache-hit:
+        value: ${{ jobs.android-test-base.outputs.android-test-base-apk-cache-hit }}
+      android-test-sync-apk-cache-hit:
+        value: ${{ jobs.android-test-sync.outputs.android-test-sync-apk-cache-hit }}
+      packages-macos-x64-cache-hit:
+        value: ${{ jobs.macos-x64.outputs.packages-macos-x64-cache-hit }}
+      packages-macos-arm64-cache-hit: 
+        value: ${{ jobs.macos-arm.outputs.packages-macos-arm64-cache-hit }}
+      packages-ios-x64-cache-hit: 
+        value: ${{ jobs.ios-x64.outputs.packages-ios-x64-cache-hit }}
+      packages-ios-arm64-cache-hit: 
+        value: ${{ jobs.ios-arm.outputs.packages-ios-arm64-cache-hit }}
+      jni-swig-stub-cache-hit: 
+        value: ${{ jobs.jni-stub.outputs.jni-swig-stub-cache-hit }}
+      jni-linux-lib-cache-hit: 
+        value: ${{ jobs.jni-linux-lib.outputs.jni-linux-lib-cache-hit }}
+      jni-macos-lib-cache-hit: 
+        value: ${{ jobs.jni-macos-lib.outputs.jni-macos-lib-cache-hit }}
+      jni-windows-lib-cache-hit: 
+        value: ${{ jobs.jni-windows-lib.outputs.jni-windows-lib-cache-hit }}
 
 jobs:
   checksum:
