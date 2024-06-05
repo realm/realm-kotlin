@@ -249,7 +249,7 @@ jobs:
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -335,7 +335,7 @@ jobs:
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -415,7 +415,7 @@ jobs:
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -522,7 +522,7 @@ jobs:
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -657,7 +657,7 @@ jobs:
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -726,7 +726,7 @@ jobs:
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -794,7 +794,7 @@ jobs:
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -863,7 +863,7 @@ jobs:
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -975,7 +975,7 @@ jobs:
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -1236,7 +1236,7 @@ jobs:
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -1358,7 +1358,7 @@ jobs:
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -1492,7 +1492,7 @@ jobs:
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
