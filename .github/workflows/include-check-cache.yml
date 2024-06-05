@@ -56,7 +56,7 @@ on:
 jobs:
   checksum:
     runs-on: ubuntu-latest
-    name: Check cache 
+    name: Cache SHA
     outputs:  
       version-label: ${{ steps.find-library-version.outputs.label }}
       packages-sha: ${{ steps.packages-cache-key.outputs.sha }}
@@ -94,7 +94,7 @@ jobs:
   #
   metadata-compiler-plugin:
     runs-on: ubuntu-latest
-    name: Metadata|Compiler
+    name: Metadata & Compiler plugin
     needs: checksum
     outputs:  
       packages-metadata-cache-hit: ${{ steps.kotlin-metadata-cache.outputs.cache-hit }}
@@ -119,7 +119,7 @@ jobs:
   jvm-all:
     runs-on: ubuntu-latest
     needs: checksum
-    name: JVM All
+    name: JVM (All platforms)
     outputs:  
       packages-jvm-cache-hit: ${{ steps.jvm-cache.outputs.cache-hit }}
 
@@ -145,7 +145,7 @@ jobs:
   jni-stub:
     runs-on: ubuntu-latest
     needs: checksum
-    name: Check cache 
+    name: JNI Stub (JVM)
     outputs:  
       jni-swig-stub-cache-hit: ${{ steps.jni-swig-stub-cache.outputs.cache-hit }}
     
@@ -171,7 +171,7 @@ jobs:
   jni-macos-lib:
     runs-on: ubuntu-latest
     needs: checksum
-    name: Check cache 
+    name: JNI MacOS Lib
     outputs:  
       jni-macos-lib-cache-hit: ${{ steps.jni-macos-lib-cache.outputs.cache-hit }}
 
@@ -196,7 +196,7 @@ jobs:
   jni-linux-lib:
     runs-on: ubuntu-latest
     needs: checksum
-    name: Check cache 
+    name: JNI Linux Lib
     outputs:  
       jni-linux-lib-cache-hit: ${{ steps.jni-linux-lib-cache.outputs.cache-hit }}
 
@@ -222,7 +222,7 @@ jobs:
   jni-windows-lib:
     runs-on: ubuntu-latest
     needs: checksum
-    name: Check cache 
+    name: JNI Windows Lib
     outputs:  
       jni-windows-lib-cache-hit: ${{ steps.jni-windows-lib-cache.outputs.cache-hit }}
     steps:
@@ -247,7 +247,7 @@ jobs:
   android:
     runs-on: ubuntu-latest
     needs: checksum
-    name: Check cache 
+    name: Android
     outputs:  
       packages-android-cache-hit: ${{ steps.android-cache.outputs.cache-hit }}
 
@@ -273,7 +273,7 @@ jobs:
   android-test-base:
     runs-on: ubuntu-latest
     needs: checksum
-    name: Check cache 
+    name: Android Base Test APK
     outputs:  
       android-test-base-apk-cache-hit: ${{ steps.android-test-base-apk.outputs.cache-hit }}
 
@@ -298,7 +298,7 @@ jobs:
   android-test-sync:
     runs-on: ubuntu-latest
     needs: checksum
-    name: Check cache 
+    name: Android Sync Test APK
     outputs:  
       android-test-sync-apk-cache-hit: ${{ steps.android-test-sync-apk.outputs.cache-hit }}
 
@@ -322,88 +322,108 @@ jobs:
           ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
           ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
 
-  # check-cache:
-  #   runs-on: ubuntu-latest
-  #   name: Check cache 
-  #   outputs:  
-  #     packages-macos-x64-cache-hit: ${{ steps.macos-x64-cache.outputs.cache-hit }}
-  #     packages-macos-arm64-cache-hit: ${{ steps.macos-arm64-cache.outputs.cache-hit }}
-  #     packages-ios-x64-cache-hit: ${{ steps.ios-x64-cache.outputs.cache-hit }}
-  #     packages-ios-arm64-cache-hit: ${{ steps.ios-arm64-cache.outputs.cache-hit }}
+  #
+  # MacOS arm64
+  #
+  macos-arm:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: MacOS arm64
+    outputs:  
+      packages-macos-arm64-cache-hit: ${{ steps.macos-arm64-cache.outputs.cache-hit }}
 
-  #   steps:
-  #   #
-  #   # MacOS arm64
-  #   #
-  #   - name: Check MacOS arm64 cache 
-  #     id: macos-arm64-cache
-  #     uses: actions/cache@v4
-  #     with:
-  #       path: ./packages/build/m2-buildrepo
-  #       key: packages-m2-macos-arm64-sync-${{ steps.packages-cache-key.outputs.sha }}
-  #       lookup-only: true
+    steps:
+    - name: Check MacOS arm64 cache 
+      id: macos-arm64-cache
+      uses: actions/cache@v4
+      with:
+        path: ./packages/build/m2-buildrepo
+        key: packages-m2-macos-arm64-sync-${{ steps.packages-cache-key.outputs.sha }}
 
-  #   - name: Save MacOS arm64 packages
-  #     uses: actions/upload-artifact@v4
-  #     if: always() && !cancelled() && steps.macos-arm64-cache.outputs.cache-hit == 'true'
-  #     with:
-  #       name: packages-macos-arm64-${{ steps.find-library-version.outputs.label }}
-  #       path: ./packages/build/m2-buildrepo/**/* 
-  #       retention-days: 1
+    - name: Save MacOS arm64 packages
+      uses: actions/upload-artifact@v4
+      if: always() && !cancelled() && steps.macos-arm64-cache.outputs.cache-hit == 'true'
+      with:
+        name: packages-macos-arm64-${{ steps.find-library-version.outputs.label }}
+        path: ./packages/build/m2-buildrepo/**/* 
+        retention-days: 1
 
-  #   #
-  #   # MacOS x64
-  #   #
-  #   - name: Check MacOS X64 cache 
-  #     id: macos-x64-cache
-  #     uses: actions/cache@v4
-  #     with:
-  #       path: ./packages/build/m2-buildrepo
-  #       key: packages-m2-macos-x64-sync-${{ steps.packages-cache-key.outputs.sha }}
-  #       lookup-only: true
+  #
+  # MacOS x64
+  #
+  macos-x86:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: MacOS x64
+    outputs:  
+      packages-macos-x64-cache-hit: ${{ steps.macos-x64-cache.outputs.cache-hit }}
 
-  #   - name: Save MacOS x64 packages
-  #     uses: actions/upload-artifact@v4
-  #     if: always() && !cancelled() && steps.macos-x64-cache.outputs.cache-hit == 'true'
-  #     with:
-  #       name: packages-macos-x64-${{ steps.find-library-version.outputs.label }}
-  #       path: ./packages/build/m2-buildrepo/**/* 
-  #       retention-days: 1
+    steps:
+    - name: Check MacOS X64 cache 
+      id: macos-x64-cache
+      uses: actions/cache@v4
+      with:
+        path: ./packages/build/m2-buildrepo
+        key: packages-m2-macos-x64-sync-${{ steps.packages-cache-key.outputs.sha }}
 
-  #   #
-  #   # iOS arm64
-  #   #
-  #   - name: Check iOS arm64 cache 
-  #     id: ios-arm64-cache
-  #     uses: actions/cache@v4
-  #     with:
-  #       path: ./packages/build/m2-buildrepo
-  #       key: packages-m2-ios-arm64-sync-${{ steps.packages-cache-key.outputs.sha }}
-  #       lookup-only: true
+    - name: Save MacOS x64 packages
+      uses: actions/upload-artifact@v4
+      if: always() && !cancelled() && steps.macos-x64-cache.outputs.cache-hit == 'true'
+      with:
+        name: packages-macos-x64-${{ steps.find-library-version.outputs.label }}
+        path: ./packages/build/m2-buildrepo/**/* 
+        retention-days: 1
 
-  #   - name: Save iOS arm64 packages
-  #     uses: actions/upload-artifact@v4
-  #     if: always() && !cancelled() && steps.ios-arm64-cache.outputs.cache-hit == 'true'
-  #     with:
-  #       name: packages-ios-arm64-${{ steps.find-library-version.outputs.label }}
-  #       path: ./packages/build/m2-buildrepo/**/* 
-  #       retention-days: 1
 
-  #   #
-  #   # iOS x64
-  #   #
-  #   - name: Check iOS X64 cache 
-  #     id: ios-x64-cache
-  #     uses: actions/cache@v4
-  #     with:
-  #       path: ./packages/build/m2-buildrepo
-  #       key: packages-m2-ios-x64-sync-${{ steps.packages-cache-key.outputs.sha }}
-  #       lookup-only: true
+  #
+  # iOS arm64
+  #
+  ios-arm:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: iOS arm64
+    outputs:  
+      packages-ios-arm64-cache-hit: ${{ steps.ios-arm64-cache.outputs.cache-hit }}
 
-  #   - name: Save iOS x64 packages
-  #     uses: actions/upload-artifact@v4
-  #     if: always() && !cancelled() && steps.ios-x64-cache.outputs.cache-hit == 'true'
-  #     with:
-  #       name: packages-ios-x64-${{ steps.find-library-version.outputs.label }}
-  #       path: ./packages/build/m2-buildrepo/**/* 
-  #       retention-days: 1
+    steps:
+    - name: Check iOS arm64 cache 
+      id: ios-arm64-cache
+      uses: actions/cache@v4
+      with:
+        path: ./packages/build/m2-buildrepo
+        key: packages-m2-ios-arm64-sync-${{ steps.packages-cache-key.outputs.sha }}
+
+    - name: Save iOS arm64 packages
+      uses: actions/upload-artifact@v4
+      if: always() && !cancelled() && steps.ios-arm64-cache.outputs.cache-hit == 'true'
+      with:
+        name: packages-ios-arm64-${{ steps.find-library-version.outputs.label }}
+        path: ./packages/build/m2-buildrepo/**/* 
+        retention-days: 1
+
+  #
+  # iOS x64
+  #
+  ios-x64:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: iOS x64
+    outputs:  
+      packages-ios-x64-cache-hit: ${{ steps.ios-x64-cache.outputs.cache-hit }}
+      packages-ios-arm64-cache-hit: ${{ steps.ios-arm64-cache.outputs.cache-hit }}
+
+    steps:
+    - name: Check iOS X64 cache 
+      id: ios-x64-cache
+      uses: actions/cache@v4
+      with:
+        path: ./packages/build/m2-buildrepo
+        key: packages-m2-ios-x64-sync-${{ steps.packages-cache-key.outputs.sha }}
+
+    - name: Save iOS x64 packages
+      uses: actions/upload-artifact@v4
+      if: always() && !cancelled() && steps.ios-x64-cache.outputs.cache-hit == 'true'
+      with:
+        name: packages-ios-x64-${{ steps.find-library-version.outputs.label }}
+        path: ./packages/build/m2-buildrepo/**/* 
+        retention-days: 1
