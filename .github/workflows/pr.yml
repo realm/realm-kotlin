@@ -28,12 +28,13 @@ jobs:
    
   # check-cache:
   #   uses: ./.github/workflows/include-check-cache.yml
+  
   # We build the same JNI SWIG stub once and re-use it across platforms to ensure any problems
   # with SWIG if we compile on each seperate platform. 
   build-jni-swig-stub:
     runs-on: ubuntu-latest
-    # needs: check-cache
-    if: always() && !cancelled() && needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
+    needs: check-cache
+    if: always() && !cancelled() #&& needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -118,7 +119,7 @@ jobs:
   #         cmake-version: ${{ vars.VERSION_CMAKE }}
 
   #     - name: Restore JNI Swig Stubs
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: jni-stub-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/jni-swig-stub/build/generated/sources/jni
@@ -195,7 +196,7 @@ jobs:
   #         cmake-version: ${{ vars.VERSION_CMAKE }}
 
   #     - name: Restore JNI Swig Stubs
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: jni-stub-${{ needs.check-cache.outputs.version-label }}
   #         path: ${{ github.workspace }}/packages/jni-swig-stub/build/generated/sources/jni
@@ -296,7 +297,7 @@ jobs:
   #         key: jni-macos-lib-${{ needs.check-cache.outputs.packages-sha }}
 
   #     - name: Restore JNI Swig Stubs
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: jni-stub-${{ needs.check-cache.outputs.version-label }}
   #         path: ${{ github.workspace }}/packages/jni-swig-stub/build/generated/sources/jni        
@@ -460,19 +461,19 @@ jobs:
   #         key: packages-m2-jvm-sync-${{ needs.check-cache.outputs.packages-sha }}
 
   #     - name: Restore Linux JNI lib
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: jni-linux-lib-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/cinterop/build/realmLinuxBuild
 
   #     - name: Restore Windows JNI lib
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/cinterop/build/realmWindowsBuild/Release
 
   #     - name: Restore MacOS JNI lib
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: jni-macos-lib-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/cinterop/build/realmMacOsBuild
@@ -980,19 +981,19 @@ jobs:
   #         cache-read-only: false
 
   #     - name: Restore Kotlin metadata artifacts
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
 
   #     - name: Restore m2-buildrepo (Android)
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-android-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
 
   #     - name: Restore m2-buildrepo (JVM)
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
@@ -1075,7 +1076,7 @@ jobs:
   #       uses: actions/checkout@v4
 
   #     - name: Restore Android Test APK
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: android-base-test-apk-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/test-base/build/outputs/apk/androidTest/debug
@@ -1129,7 +1130,7 @@ jobs:
   #         echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
   #     - name: Restore Android Sync Test APK
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: android-sync-test-apk-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/test-sync/build/outputs/apk/
@@ -1241,13 +1242,13 @@ jobs:
   #         cache-read-only: false
 
   #     - name: Restore m2-buildrepo
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
 
   #     - name: Restore Kotlin metadata artifacts
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
@@ -1363,13 +1364,13 @@ jobs:
   #         cache-read-only: false
 
   #     - name: Restore m2-buildrepo (ios)
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-ios-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
 
   #     - name: Restore Kotlin metadata artifacts
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
@@ -1497,13 +1498,13 @@ jobs:
   #         cache-read-only: false
 
   #     - name: Restore Kotlin metadata artifacts
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
 
   #     - name: Restore m2-buildrepo
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
@@ -1566,43 +1567,43 @@ jobs:
   #     # The Metadata artifact contain broken JVM publications, so it needs to be 
   #     # restored first, it so they can be overidden with the correct ones.
   #     - name: Restore Kotlin metadata artifacts
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
 
   #     - name: Restore Android artifacts
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-android-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
 
   #     - name: Restore JVM artifacts
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
 
   #     - name: Restore MacOS x64 artifacts
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-macos-x64-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
 
   #     - name: Restore MacOS arm64 artifacts
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-macos-arm64-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
 
   #     - name: Restore iOS x64 artifacts
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-ios-x64-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
 
   #     - name: Restore iOS arm64 artifacts
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v3
   #       with:
   #         name: packages-ios-arm64-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
@@ -1688,30 +1689,30 @@ jobs:
   #         echo "Is release build: ${{ steps.check_release.outputs.is_publish_build }}"
 
   # deploy-release:
-    uses: ./.github/workflows/include-deploy-release.yml
-    needs: [ 
-              check-cache,
-              check-release-build, 
-              static-analysis, 
-              integration-tests, 
-              test-jvm-packages, 
-              test-macos-packages, 
-              test-ios-packages, 
-              test-android-packages-emulator, 
-              # test-android-packages-device-farm,
-              test-android-packages-device-farm-sync,
-              package-all-artifacts
-            ]
-    if: |
-      always() && 
-      !cancelled() && 
-      !endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
-      !contains(needs.*.result, 'failure') && 
-      !contains(needs.*.result, 'cancelled') &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' || github.ref == 'refs/heads/release/k2') &&
-      (needs.check-release-build.outputs.is_publish_build == 'true')
+  #   uses: ./.github/workflows/include-deploy-release.yml
+  #   needs: [ 
+  #             check-cache,
+  #             check-release-build, 
+  #             static-analysis, 
+  #             integration-tests, 
+  #             test-jvm-packages, 
+  #             test-macos-packages, 
+  #             test-ios-packages, 
+  #             test-android-packages-emulator, 
+  #             # test-android-packages-device-farm,
+  #             test-android-packages-device-farm-sync,
+  #             package-all-artifacts
+  #           ]
+  #   if: |
+  #     always() && 
+  #     !cancelled() && 
+  #     !endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
+  #     !contains(needs.*.result, 'failure') && 
+  #     !contains(needs.*.result, 'cancelled') &&
+  #     (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' || github.ref == 'refs/heads/release/k2') &&
+  #     (needs.check-release-build.outputs.is_publish_build == 'true')
 
-    secrets: inherit
-    with:
-      version-label: ${{ needs.check-cache.outputs.version-label }}
-      packages-sha-label: ${{ needs.check-cache.outputs.packages-sha }}
+  #   secrets: inherit
+  #   with:
+  #     version-label: ${{ needs.check-cache.outputs.version-label }}
+  #     packages-sha-label: ${{ needs.check-cache.outputs.packages-sha }}
