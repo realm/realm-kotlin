@@ -58,6 +58,7 @@ jobs:
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
+        if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit != 'true'
         with:
           cache-read-only: false
 
