@@ -77,25 +77,25 @@ jobs:
           key: packages-m2-jvm-sync-${{ inputs.packages-sha-label }}
 
       - name: Restore Linux JNI lib
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jni-linux-lib-${{ inputs.version-label }}
           path: ./packages/cinterop/build/realmLinuxBuild
 
       - name: Restore Windows JNI lib
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jni-windows-lib-${{ inputs.version-label }}
           path: ./packages/cinterop/build/realmWindowsBuild/Release
 
       - name: Restore MacOS JNI lib
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jni-macos-lib-${{ inputs.version-label }}
           path: ./packages/cinterop/build/realmMacOsBuild
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo

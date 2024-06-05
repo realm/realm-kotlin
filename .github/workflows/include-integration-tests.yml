@@ -33,7 +33,7 @@ jobs:
   #         cache-read-only: false
 
   #     - name: Restore m2-buildrepo
-  #       uses: actions/download-artifact@v3
+  #       uses: actions/download-artifact@v4
   #       with:
   #         name: all-packages-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
@@ -74,7 +74,7 @@ jobs:
           cache-read-only: false
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 
@@ -104,7 +104,7 @@ jobs:
           cache-read-only: false
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 
@@ -188,7 +188,7 @@ jobs:
           cache-read-only: false
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 
@@ -230,7 +230,7 @@ jobs:
           cache-read-only: false
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 
@@ -311,7 +311,7 @@ jobs:
           cache-read-only: false
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 

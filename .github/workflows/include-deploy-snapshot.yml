@@ -35,7 +35,7 @@ jobs:
           version: ${{ vars.VERSION_KOTLIN_COMMANDLINE_TOOLS }}
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 
