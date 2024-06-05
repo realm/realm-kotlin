@@ -36,23 +36,21 @@ jobs:
     needs: check-cache
     if: always() && !cancelled() #&& needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
     steps:
-      - name: Testing
-        id: testing
-        run: |
-          echo "### Hello world! :rocket:" >> $GITHUB_STEP_SUMMARY
       - name: Check JNI Swig stub cache 
         id: jni-swig-stub-cache
         uses: actions/cache@v4
         with:
           path: ./packages/jni-swig-stub/build/generated/sources/jni
           key: jni-swig-stubs-${{ needs.packages-cache-key.outputs.sha }}
-      
+      - name: Testing
+        id: testing
+        run: |
+          echo "Job status: Hello world"
       - name: Checkout code
         uses: actions/checkout@v4
         if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit != 'true'
         with:
           submodules: "recursive"
-
       - name: Setup Java 11
         uses: actions/setup-java@v3
         if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit != 'true'
