@@ -36,6 +36,10 @@ jobs:
     needs: check-cache
     if: always() && !cancelled() #&& needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
     steps:
+      - name: Testing
+        id: testing
+        run: |
+          echo "::set-output name=cache_hit::💚"
       - name: Check JNI Swig stub cache 
         id: jni-swig-stub-cache
         uses: actions/cache@v4
@@ -85,7 +89,6 @@ jobs:
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
           cd ~
           curl -L ${{ vars.VERSION_SWIG}} > swig.rb && HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true brew install swig.rb
-
 
       - name: Build JNI Stub
         if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit != 'true'
