@@ -124,7 +124,7 @@ jobs:
     #
     - name: Check Kotlin Metadata cache 
       id: kotlin-metadata-cache
-      uses: cmelchior/cache@main
+      uses: clementetb/cache@main
       with:
         path: ./packages/build/m2-buildrepo
         key: packages-m2-metadata-${{ steps.packages-cache-key.outputs.sha }}
@@ -149,7 +149,7 @@ jobs:
     #
     - name: Check JVM cache 
       id: jvm-cache
-      uses: cmelchior/cache@main
+      uses: clementetb/cache@main
       with:
         path: ./packages/build/m2-buildrepo
         key: packages-m2-jvm-sync-${{ steps.packages-cache-key.outputs.sha }}
@@ -174,7 +174,7 @@ jobs:
     #    
     - name: Check JNI Swig stub cache 
       id: jni-swig-stub-cache
-      uses: cmelchior/cache@main
+      uses: clementetb/cache@main
       with:
         path: ./packages/jni-swig-stub/build/generated/sources/jni
         key: jni-swig-stubs-${{ steps.packages-cache-key.outputs.sha }}
@@ -199,7 +199,7 @@ jobs:
     #    
     - name: Check JNI MacOS lib cache 
       id: jni-macos-lib-cache
-      uses: cmelchior/cache@main
+      uses: clementetb/cache@main
       with:
         path: ./packages/cinterop/build/realmMacOsBuild
         key: jni-macos-lib-${{ steps.packages-cache-key.outputs.sha }}
@@ -224,7 +224,7 @@ jobs:
     #    
     - name: Check JNI Linux lib cache 
       id: jni-linux-lib-cache
-      uses: cmelchior/cache@main
+      uses: clementetb/cache@main
       with:
         path: ./packages/cinterop/build/realmLinuxBuild
         key: jni-linux-lib-${{ steps.packages-cache-key.outputs.sha }}
@@ -249,7 +249,7 @@ jobs:
     #
     - name: Check Android cache
       id: android-cache
-      uses: cmelchior/cache@main
+      uses: clementetb/cache@main
       with:
         path: ./packages/build/m2-buildrepo
         key: packages-m2-android-sync-${{ steps.packages-cache-key.outputs.sha }}
@@ -274,7 +274,7 @@ jobs:
       #
     - name: Check Android Base Test APK
       id: android-test-base-apk
-      uses: cmelchior/cache@main
+      uses: clementetb/cache@main
       with:
         path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
         key: android-base-test-apk-key-${{ steps.packages-cache-key.outputs.sha }}
@@ -299,7 +299,7 @@ jobs:
       #
     - name: Check Android Sync Test APK
       id: android-test-sync-apk
-      uses: cmelchior/cache@main
+      uses: clementetb/cache@main
       with:
         key: android-sync-test-apk-key-${{ steps.packages-cache-key.outputs.sha }}
         path: |
@@ -330,7 +330,7 @@ jobs:
     #
     - name: Check MacOS arm64 cache 
       id: macos-arm64-cache
-      uses: cmelchior/cache@main
+      uses: clementetb/cache@main
       with:
         path: ./packages/build/m2-buildrepo
         key: packages-m2-macos-arm64-sync-${{ steps.packages-cache-key.outputs.sha }}
@@ -355,7 +355,7 @@ jobs:
     #
     - name: Check MacOS X64 cache 
       id: macos-x64-cache
-      uses: cmelchior/cache@main
+      uses: clementetb/cache@main
       with:
         path: ./packages/build/m2-buildrepo
         key: packages-m2-macos-x64-sync-${{ steps.packages-cache-key.outputs.sha }}
@@ -380,7 +380,7 @@ jobs:
     #
     - name: Check iOS arm64 cache 
       id: ios-arm64-cache
-      uses: cmelchior/cache@main
+      uses: clementetb/cache@main
       with:
         path: ./packages/build/m2-buildrepo
         key: packages-m2-ios-arm64-sync-${{ steps.packages-cache-key.outputs.sha }}
@@ -405,7 +405,7 @@ jobs:
     #
     - name: Check iOS X64 cache 
       id: ios-x64-cache
-      uses: cmelchior/cache@main
+      uses: clementetb/cache@main
       with:
         path: ./packages/build/m2-buildrepo
         key: packages-m2-ios-x64-sync-${{ steps.packages-cache-key.outputs.sha }}
@@ -430,7 +430,7 @@ jobs:
     #    
     - name: Check JNI Windows lib cache 
       id: jni-windows-lib-cache
-      uses: cmelchior/cache@main
+      uses: clementetb/cache@main
       with:
         path: ./packages/cinterop/build/realmWindowsBuild
         key: jni-windows-lib-${{ steps.packages-cache-key.outputs.sha }}
