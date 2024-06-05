@@ -80,7 +80,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: "recursive"
 
@@ -130,7 +130,7 @@ jobs:
         key: packages-m2-metadata-${{ steps.packages-cache-key.outputs.sha }}
 
     - name: Save Kotlin Metadata packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.kotlin-metadata-cache.outputs.cache-hit == 'true'
       with:
         name: packages-metadata-${{ steps.find-library-version.outputs.label }}
@@ -155,7 +155,7 @@ jobs:
         key: packages-m2-jvm-sync-${{ steps.packages-cache-key.outputs.sha }}
 
     - name: Save JVM packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.jvm-cache.outputs.cache-hit == 'true'
       with:
         name: packages-jvm-${{ steps.find-library-version.outputs.label }}
@@ -180,7 +180,7 @@ jobs:
         key: jni-swig-stubs-${{ steps.packages-cache-key.outputs.sha }}
 
     - name: Save JNI Stub packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit == 'true'
       with:
         name: jni-stub-${{ steps.find-library-version.outputs.label }}
@@ -205,7 +205,7 @@ jobs:
         key: jni-macos-lib-${{ steps.packages-cache-key.outputs.sha }}
 
     - name: Save JNI MacOS lib package
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.jni-macos-lib-cache.outputs.cache-hit == 'true'
       with:
         name: jni-macos-lib-${{ steps.find-library-version.outputs.label }}
@@ -230,7 +230,7 @@ jobs:
         key: jni-linux-lib-${{ steps.packages-cache-key.outputs.sha }}
 
     - name: Save JNI Linux lib package
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.jni-linux-lib-cache.outputs.cache-hit == 'true'
       with:
         name: jni-linux-lib-${{ steps.find-library-version.outputs.label }}
@@ -255,7 +255,7 @@ jobs:
         key: packages-m2-android-sync-${{ steps.packages-cache-key.outputs.sha }}
 
     - name: Save Android packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.android-cache.outputs.cache-hit == 'true'
       with:
         name: packages-android-${{ steps.find-library-version.outputs.label }}
@@ -280,7 +280,7 @@ jobs:
         key: android-base-test-apk-key-${{ steps.packages-cache-key.outputs.sha }}
 
     - name: Save Android Base Test APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.android-test-base-apk.outputs.cache-hit == 'true'
       with:
         name: android-base-test-apk-${{ steps.find-library-version.outputs.label }}
@@ -307,7 +307,7 @@ jobs:
           ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
 
     - name: Save Android Sync Test APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.android-test-sync-apk.outputs.cache-hit == 'true'
       with:
         name: android-sync-test-apk-${{ steps.find-library-version.outputs.label }}
@@ -336,7 +336,7 @@ jobs:
         key: packages-m2-macos-arm64-sync-${{ steps.packages-cache-key.outputs.sha }}
 
     - name: Save MacOS arm64 packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.macos-arm64-cache.outputs.cache-hit == 'true'
       with:
         name: packages-macos-arm64-${{ steps.find-library-version.outputs.label }}
@@ -361,7 +361,7 @@ jobs:
         key: packages-m2-macos-x64-sync-${{ steps.packages-cache-key.outputs.sha }}
 
     - name: Save MacOS x64 packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.macos-x64-cache.outputs.cache-hit == 'true'
       with:
         name: packages-macos-x64-${{ steps.find-library-version.outputs.label }}
@@ -386,7 +386,7 @@ jobs:
         key: packages-m2-ios-arm64-sync-${{ steps.packages-cache-key.outputs.sha }}
 
     - name: Save iOS arm64 packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.ios-arm64-cache.outputs.cache-hit == 'true'
       with:
         name: packages-ios-arm64-${{ steps.find-library-version.outputs.label }}
@@ -411,7 +411,7 @@ jobs:
         key: packages-m2-ios-x64-sync-${{ steps.packages-cache-key.outputs.sha }}
 
     - name: Save iOS x64 packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.ios-x64-cache.outputs.cache-hit == 'true'
       with:
         name: packages-ios-x64-${{ steps.find-library-version.outputs.label }}
@@ -437,7 +437,7 @@ jobs:
         enableCrossOsArchive: true
 
     - name: Save JNI Windows lib package
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
       with:
         name: jni-windows-lib-${{ steps.find-library-version.outputs.label }}

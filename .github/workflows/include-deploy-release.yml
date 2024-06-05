@@ -71,7 +71,7 @@ jobs:
 
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Setup build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-jvm-sync-${{ inputs.packages-sha-label }}
