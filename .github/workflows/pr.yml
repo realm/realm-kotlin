@@ -102,7 +102,7 @@ jobs:
 
   build-jvm-linux-native-lib:
     runs-on: ubuntu-latest
-    needs: [build-jni-swig-stub]
+    needs: [check-cache, build-jni-swig-stub]
     if: |
       always() && 
       !cancelled() && 
