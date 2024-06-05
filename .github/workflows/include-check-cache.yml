@@ -146,13 +146,6 @@ jobs:
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
-    - name: Delete downloaded JVM cache files
-      id: delete-cache-jvm
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.jvm-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/build/m2-buildrepo
-
     #
     # JNI Stub (JVM)
     #    
@@ -171,13 +164,6 @@ jobs:
         name: jni-stub-${{ steps.find-library-version.outputs.label }}
         path: ./packages/jni-swig-stub/build/generated/sources/jni/*
         retention-days: 1
-
-    - name: Delete downloaded JVM cache files
-      id: delete-cache-jni-stub
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/jni-swig-stub/build/generated/sources/jni
 
     #
     # JNI MacOS Lib
@@ -198,13 +184,6 @@ jobs:
         path: ./packages/cinterop/build/realmMacOsBuild/**/*
         retention-days: 1
 
-    - name: Delete downloaded JVM cache files
-      id: delete-cache-macos-lib
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.jni-macos-lib-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/cinterop/build/realmMacOsBuild
-
     #
     # JNI Linux Lib
     #    
@@ -223,13 +202,6 @@ jobs:
         name: jni-linux-lib-${{ steps.find-library-version.outputs.label }}
         path: ./packages/cinterop/build/realmLinuxBuild/**/*
         retention-days: 1
-
-    - name: Delete downloaded JVM cache files
-      id: delete-cache-linux-lib
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.jni-linux-lib-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/cinterop/build/realmLinuxBuild
 
     #
     # Android
@@ -250,13 +222,6 @@ jobs:
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
-    - name: Delete downloaded Android cache files
-      id: delete-cache-android
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.android-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/build/m2-buildrepo
-
       #
       # Android Base Test APK
       #
@@ -275,13 +240,6 @@ jobs:
         name: android-base-test-apk-${{ steps.find-library-version.outputs.label }}
         path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
         retention-days: 1
-
-    - name: Delete Android Base Test APK cache files
-      id: delete-cache-android-base-test-apk
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.android-test-base-apk.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
 
       #
       # Android Sync Test APK
@@ -306,15 +264,6 @@ jobs:
           ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
           ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
 
-    - name: Delete Android Sync Test APK cache files
-      id: delete-cache-android-sync-test-apk
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.android-test-sync-apk.outputs.cache-hit == 'true'
-      with:
-        path: |
-          ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
-          ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
-
     #
     # MacOS arm64
     #
@@ -333,13 +282,6 @@ jobs:
         name: packages-macos-arm64-${{ steps.find-library-version.outputs.label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
-
-    - name: Delete downloaded MacOS arm64 cache files
-      id: delete-cache-macos-arm64
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.macos-arm64-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/build/m2-buildrepo
 
     #
     # MacOS x64
@@ -360,13 +302,6 @@ jobs:
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
-    - name: Delete downloaded MacOS x64 cache files
-      id: delete-cache-macos-x64
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.macos-x64-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/build/m2-buildrepo
-
     #
     # iOS arm64
     #
@@ -385,13 +320,6 @@ jobs:
         name: packages-ios-arm64-${{ steps.find-library-version.outputs.label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
-
-    - name: Delete downloaded iOS arm64 cache files
-      id: delete-cache-ios-arm64
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.ios-arm64-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/build/m2-buildrepo
 
     #
     # iOS x64
@@ -412,13 +340,6 @@ jobs:
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
-    - name: Delete downloaded iOS x64 cache files
-      id: delete-cache-ios-x64
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.ios-x64-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/build/m2-buildrepo
-
     #
     # JNI Windows Lib
     #    
@@ -438,10 +359,3 @@ jobs:
         name: jni-windows-lib-${{ steps.find-library-version.outputs.label }}
         path: ./packages/cinterop/build/realmWindowsBuild/Release/realmc.dll
         retention-days: 1
-
-    - name: Delete downloaded JNI Windows lib cache files
-      id: delete-cache-windows-lib
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/cinterop/build/realmWindowsBuild
