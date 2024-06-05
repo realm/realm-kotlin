@@ -28,7 +28,6 @@ jobs:
    
   check-cache:
     uses: ./.github/workflows/include-check-cache.yml
-
   # We build the same JNI SWIG stub once and re-use it across platforms to ensure any problems
   # with SWIG if we compile on each seperate platform. 
   build-jni-swig-stub:
@@ -37,7 +36,7 @@ jobs:
     if: always() && !cancelled() && needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
       - name: Setup Java 11
@@ -47,7 +46,7 @@ jobs:
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -103,7 +102,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
@@ -170,7 +169,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # TODO See https://github.com/microsoft/vcpkg/issues/25349 which might describe the error here https://github.com/realm/realm-kotlin/runs/8099890473?check_suite_focus=true
           # -- Building for: Visual Studio 17 2022
@@ -239,7 +238,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
@@ -325,7 +324,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
@@ -405,7 +404,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
@@ -508,7 +507,7 @@ jobs:
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
@@ -647,7 +646,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
@@ -716,7 +715,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
@@ -784,7 +783,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
@@ -853,7 +852,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
@@ -944,7 +943,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
@@ -1073,7 +1072,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Restore Android Test APK
         uses: actions/download-artifact@v3
@@ -1110,7 +1109,7 @@ jobs:
       !contains(needs.*.result, 'cancelled')
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
@@ -1207,7 +1206,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
@@ -1329,7 +1328,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
@@ -1463,7 +1462,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
@@ -1562,7 +1561,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # The Metadata artifact contain broken JVM publications, so it needs to be 
       # restored first, it so they can be overidden with the correct ones.
@@ -1660,7 +1659,7 @@ jobs:
       is_publish_build: ${{ steps.check_release.outputs.is_publish_build }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check if release build
         id: check_release

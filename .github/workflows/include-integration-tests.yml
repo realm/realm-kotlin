@@ -19,7 +19,7 @@ jobs:
   #   runs-on: macos-12
   #   steps:
   #     - name: Checkout code
-  #       uses: actions/checkout@v3
+  #       uses: actions/checkout@v4
 
   #     - name: Setup Java 11
   #       uses: actions/setup-java@v3
@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Java 11
         uses: actions/setup-java@v3
@@ -90,7 +90,7 @@ jobs:
     runs-on: macos-12
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Java 11
         uses: actions/setup-java@v3
@@ -171,10 +171,10 @@ jobs:
   build-benchmarks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Java 11
         uses: actions/setup-java@v3
@@ -213,10 +213,10 @@ jobs:
             arguments: integrationTest
     runs-on: macos-12
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Java 11
         uses: actions/setup-java@v3
@@ -294,10 +294,10 @@ jobs:
             arguments: integrationTest
     runs-on: macos-12
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Java 17
         uses: actions/setup-java@v3
