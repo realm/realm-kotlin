@@ -34,10 +34,10 @@ jobs:
   build-jni-swig-stub:
     runs-on: ubuntu-latest
     needs: check-cache
-    if: always() && !cancelled() #&& needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
+    if: always() && !cancelled()
     steps:
-      - name: Check JNI Swig stub cache 
-        id: jni-swig-stub-cache
+      - name: Artifact cache
+        id: artifact-cache
         uses: actions/cache@v4
         with:
           path: ./packages/jni-swig-stub/build/generated/sources/jni
@@ -48,25 +48,25 @@ jobs:
           echo "Job status: Hello world"
       - name: Checkout code
         uses: actions/checkout@v4
-        if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit != 'true'
+        if: always() && !cancelled() && steps.artifact-cache.outputs.cache-hit != 'true'
         with:
           submodules: "recursive"
       - name: Setup Java 11
         uses: actions/setup-java@v3
-        if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit != 'true'
+        if: always() && !cancelled() && steps.artifact-cache.outputs.cache-hit != 'true'
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
-        if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit != 'true'
+        if: always() && !cancelled() && steps.artifact-cache.outputs.cache-hit != 'true'
         with:
           cache-read-only: false
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
-        if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit != 'true'
+        if: always() && !cancelled() && steps.artifact-cache.outputs.cache-hit != 'true'
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -77,7 +77,7 @@ jobs:
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
       # It seems to be required to manually add brew dirs to the PATH. This does not happen automatically.
       - name: Install SWIG
-        if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit != 'true'
+        if: always() && !cancelled() && steps.artifact-cache.outputs.cache-hit != 'true'
         run: |
           test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
           test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
@@ -89,7 +89,7 @@ jobs:
           curl -L ${{ vars.VERSION_SWIG}} > swig.rb && HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true brew install swig.rb
 
       - name: Build JNI Stub
-        if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit != 'true'
+        if: always() && !cancelled() && steps.artifact-cache.outputs.cache-hit != 'true'
         working-directory: ./packages
         run: ./gradlew :jni-swig-stub:assemble -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
@@ -100,72 +100,78 @@ jobs:
           path: ./packages/jni-swig-stub/build/generated/sources/jni/*
           retention-days: 1
 
-  # build-jvm-linux-native-lib:
-  #   runs-on: ubuntu-latest
-  #   needs: [check-cache, build-jni-swig-stub]
-  #   if: |
-  #     always() && 
-  #     !cancelled() && 
-  #     !contains(needs.*.result, 'failure') && 
-  #     !contains(needs.*.result, 'cancelled') &&
-  #     needs.check-cache.outputs.jni-linux-lib-cache-hit != 'true'
+  build-jvm-linux-native-lib:
+    runs-on: ubuntu-latest
+    needs: [build-jni-swig-stub]
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      needs.check-cache.outputs.jni-linux-lib-cache-hit != 'true'
 
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #       with:
-  #         submodules: "recursive"
+    steps:
+      - name: Artifact cache
+        id: artifact-cache
+        uses: actions/cache@v4
+        with:
+          path: ./packages/cinterop/build/realmLinuxBuild
+          key: jni-linux-lib-${{ needs.check-cache.outputs.packages-sha }}
 
-  #     - name: Setup build cache
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: ./packages/cinterop/build/realmLinuxBuild
-  #         key: jni-linux-lib-${{ needs.check-cache.outputs.packages-sha }}
+      - name: Checkout code
+        if: always() && !cancelled() && steps.artifact-cache.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
 
-  #     - name: Setup cmake
-  #       uses: jwlawson/actions-setup-cmake@v1.13
-  #       with:
-  #         cmake-version: ${{ vars.VERSION_CMAKE }}
+      - name: Setup cmake
+        if: always() && !cancelled() && steps.artifact-cache.outputs.cache-hit != 'true'
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: ${{ vars.VERSION_CMAKE }}
 
-  #     - name: Restore JNI Swig Stubs
-  #       uses: actions/download-artifact@v3
-  #       with:
-  #         name: jni-stub-${{ needs.check-cache.outputs.version-label }}
-  #         path: ./packages/jni-swig-stub/build/generated/sources/jni
+      - name: Restore JNI Swig Stubs
+        if: always() && !cancelled() && steps.artifact-cache.outputs.cache-hit != 'true'
+        uses: actions/download-artifact@v3
+        with:
+          name: jni-stub-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/jni-swig-stub/build/generated/sources/jni
 
-  #     - name: Build Docker image
-  #       uses: docker/build-push-action@v3
-  #       with:
-  #         tags: jvm-native-lib-linux:latest
-  #         file: ./packages/cinterop/src/jvmMain/generic.Dockerfile
-  #         push: false
+      - name: Build Docker image
+        if: always() && !cancelled() && steps.artifact-cache.outputs.cache-hit != 'true'
+        uses: docker/build-push-action@v3
+        with:
+          tags: jvm-native-lib-linux:latest
+          file: ./packages/cinterop/src/jvmMain/generic.Dockerfile
+          push: false
 
-  #     - name: Build native lib
-  #       uses: addnab/docker-run-action@v3
-  #       with:
-  #         image: jvm-native-lib-linux:latest
-  #         shell: bash
-  #         options: -v ${{ github.workspace }}:/work
-  #         run: |
-  #           cd /work/packages/cinterop
-  #           mkdir build
-  #           cd build
-  #           rm -rf realmLinuxBuild
-  #           mkdir realmLinuxBuild
-  #           cd realmLinuxBuild
-  #           cmake -DCMAKE_BUILD_TYPE=Release \
-  #           -DREALM_ENABLE_SYNC=1 \
-  #           -DREALM_NO_TESTS=1 \
-  #           -DREALM_BUILD_LIB_ONLY=true \
-  #           ../../src/jvm
-  #           make -j8
+      - name: Build native lib
+        if: always() && !cancelled() && steps.artifact-cache.outputs.cache-hit != 'true'
+        uses: addnab/docker-run-action@v3
+        with:
+          image: jvm-native-lib-linux:latest
+          shell: bash
+          options: -v ${{ github.workspace }}:/work
+          run: |
+            cd /work/packages/cinterop
+            mkdir build
+            cd build
+            rm -rf realmLinuxBuild
+            mkdir realmLinuxBuild
+            cd realmLinuxBuild
+            cmake -DCMAKE_BUILD_TYPE=Release \
+            -DREALM_ENABLE_SYNC=1 \
+            -DREALM_NO_TESTS=1 \
+            -DREALM_BUILD_LIB_ONLY=true \
+            ../../src/jvm
+            make -j8
 
-  #     - name: Upload artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: jni-linux-lib-${{ needs.check-cache.outputs.version-label }}
-  #         path: ./packages/cinterop/build/realmLinuxBuild/librealmc.so 
-  #         retention-days: 1
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jni-linux-lib-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/cinterop/build/realmLinuxBuild/librealmc.so 
+          retention-days: 1
 
   # build-jvm-windows-native-lib:
   #   runs-on: windows-latest
