@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Cache SHA
     outputs:  
-      version-label: ${{ steps.find-library-.outputs.label }}
+      version-label: ${{ steps.find-library-version.outputs.label }}
       packages-sha: ${{ steps.packages-cache-key.outputs.sha }}
       benchmarks-sha: ${{ steps.calculate-benchmarks-cache-key.outputs.sha }}
       core-commit-sha: ${{ steps.calculate-core-versioncommmit-sha.outputs.commit }}
@@ -106,12 +106,13 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-metadata-${{ steps.checksum.outputs.sha }}
+        key: packages-m2-metadata-${{ needs.checksum.outputs.packages-sha }}
+
     - name: Save Kotlin Metadata packages
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.kotlin-metadata-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-metadata-${{ steps.checksum.outputs.label }}
+        name: packages-metadata-${{ needs.checksum.outputs.version-label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
@@ -131,13 +132,13 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-jvm-sync-${{ steps.packages-cache-key.outputs.sha }}
+        key: packages-m2-jvm-sync-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save JVM packages
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.jvm-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-jvm-${{ steps.find-library-version.outputs.label }}
+        name: packages-jvm-${{ needs.checksum.outputs.version-label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
@@ -157,13 +158,13 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./packages/jni-swig-stub/build/generated/sources/jni
-        key: jni-swig-stubs-${{ steps.packages-cache-key.outputs.sha }}
+        key: jni-swig-stubs-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save JNI Stub packages
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit == 'true'
       with:
-        name: jni-stub-${{ steps.find-library-version.outputs.label }}
+        name: jni-stub-${{ needs.checksum.outputs.version-label }}
         path: ./packages/jni-swig-stub/build/generated/sources/jni/*
         retention-days: 1
 
@@ -183,12 +184,12 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./packages/cinterop/build/realmMacOsBuild
-        key: jni-macos-lib-${{ steps.packages-cache-key.outputs.sha }}
+        key: jni-macos-lib-${{ needs.checksum.outputs.packages-sha }}
     - name: Save JNI MacOS lib package
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.jni-macos-lib-cache.outputs.cache-hit == 'true'
       with:
-        name: jni-macos-lib-${{ steps.find-library-version.outputs.label }}
+        name: jni-macos-lib-${{ needs.checksum.outputs.version-label }}
         path: ./packages/cinterop/build/realmMacOsBuild/**/*
         retention-days: 1
 
@@ -208,13 +209,13 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./packages/cinterop/build/realmLinuxBuild
-        key: jni-linux-lib-${{ steps.packages-cache-key.outputs.sha }}
+        key: jni-linux-lib-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save JNI Linux lib package
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.jni-linux-lib-cache.outputs.cache-hit == 'true'
       with:
-        name: jni-linux-lib-${{ steps.find-library-version.outputs.label }}
+        name: jni-linux-lib-${{ needs.checksum.outputs.version-label }}
         path: ./packages/cinterop/build/realmLinuxBuild/**/*
         retention-days: 1
 
@@ -233,14 +234,14 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./packages/cinterop/build/realmWindowsBuild
-        key: jni-windows-lib-${{ steps.packages-cache-key.outputs.sha }}
+        key: jni-windows-lib-${{ needs.checksum.outputs.packages-sha }}
         enableCrossOsArchive: true
 
     - name: Save JNI Windows lib package
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
       with:
-        name: jni-windows-lib-${{ steps.find-library-version.outputs.label }}
+        name: jni-windows-lib-${{ needs.checksum.outputs.version-label }}
         path: ./packages/cinterop/build/realmWindowsBuild/Release/realmc.dll
         retention-days: 1
   #
@@ -259,13 +260,13 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-android-sync-${{ steps.packages-cache-key.outputs.sha }}
+        key: packages-m2-android-sync-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save Android packages
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.android-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-android-${{ steps.find-library-version.outputs.label }}
+        name: packages-android-${{ needs.checksum.outputs.version-label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
@@ -285,12 +286,12 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
-        key: android-base-test-apk-key-${{ steps.packages-cache-key.outputs.sha }}
+        key: android-base-test-apk-key-${{ needs.checksum.outputs.packages-sha }}
     - name: Save Android Base Test APK
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.android-test-base-apk.outputs.cache-hit == 'true'
       with:
-        name: android-base-test-apk-${{ steps.find-library-version.outputs.label }}
+        name: android-base-test-apk-${{ needs.checksum.outputs.version-label }}
         path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
         retention-days: 1
 
@@ -309,7 +310,7 @@ jobs:
       id: android-test-sync-apk
       uses: actions/cache@v4
       with:
-        key: android-sync-test-apk-key-${{ steps.packages-cache-key.outputs.sha }}
+        key: android-sync-test-apk-key-${{ needs.checksum.outputs.packages-sha }}
         path: |
           ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
           ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
@@ -318,7 +319,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.android-test-sync-apk.outputs.cache-hit == 'true'
       with:
-        name: android-sync-test-apk-${{ steps.find-library-version.outputs.label }}
+        name: android-sync-test-apk-${{ needs.checksum.outputs.version-label }}
         retention-days: 1
         path: |
           ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
@@ -340,13 +341,13 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-macos-arm64-sync-${{ steps.packages-cache-key.outputs.sha }}
+        key: packages-m2-macos-arm64-sync-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save MacOS arm64 packages
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.macos-arm64-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-macos-arm64-${{ steps.find-library-version.outputs.label }}
+        name: packages-macos-arm64-${{ needs.checksum.outputs.version-label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
@@ -366,13 +367,13 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-macos-x64-sync-${{ steps.packages-cache-key.outputs.sha }}
+        key: packages-m2-macos-x64-sync-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save MacOS x64 packages
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.macos-x64-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-macos-x64-${{ steps.find-library-version.outputs.label }}
+        name: packages-macos-x64-${{ needs.checksum.outputs.version-label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
@@ -393,13 +394,13 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-ios-arm64-sync-${{ steps.packages-cache-key.outputs.sha }}
+        key: packages-m2-ios-arm64-sync-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save iOS arm64 packages
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.ios-arm64-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-ios-arm64-${{ steps.find-library-version.outputs.label }}
+        name: packages-ios-arm64-${{ needs.checksum.outputs.version-label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
@@ -419,12 +420,12 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-ios-x64-sync-${{ steps.packages-cache-key.outputs.sha }}
+        key: packages-m2-ios-x64-sync-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save iOS x64 packages
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.ios-x64-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-ios-x64-${{ steps.find-library-version.outputs.label }}
+        name: packages-ios-x64-${{ needs.checksum.outputs.version-label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
