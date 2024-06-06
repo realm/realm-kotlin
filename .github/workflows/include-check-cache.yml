@@ -101,10 +101,6 @@ jobs:
     outputs:  
       packages-metadata-cache-hit: ${{ steps.kotlin-metadata-cache.outputs.cache-hit }}
     steps:
-    - name: Testing
-      id: testing
-      run: |
-        echo "label: ${{ jobs.checksum.outputs.version-label }}"
     - name: Check Kotlin Metadata cache 
       id: kotlin-metadata-cache
       uses: actions/cache@v4
