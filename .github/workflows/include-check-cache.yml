@@ -352,7 +352,7 @@ jobs:
   #
   # MacOS x64
   #
-  macos-x86:
+  macos-x64:
     runs-on: ubuntu-latest
     needs: checksum
     name: MacOS x64
@@ -411,7 +411,6 @@ jobs:
     name: iOS x64
     outputs:  
       packages-ios-x64-cache-hit: ${{ steps.ios-x64-cache.outputs.cache-hit }}
-      packages-ios-arm64-cache-hit: ${{ steps.ios-arm64-cache.outputs.cache-hit }}
 
     steps:
     - name: Check iOS X64 cache 
