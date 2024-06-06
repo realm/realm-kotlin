@@ -104,10 +104,9 @@ jobs:
     - name: Testing
       id: testing
       run: |
-        echo "checksum.sha: ${{ steps.checksum.outputs.sha }}"
-        echo "checksum.label: ${{ steps.checksum.outputs.label }}"
-        echo "packages-cache-key: ${{ steps.packages-cache-key.outputs.sha }}"
-        echo "find-library-version: ${{ steps.find-library-version.outputs.label }}"
+        echo "version-label: ${{ version-label }}"
+        echo "outputs.version-label: ${{ outputs.version-label }}"
+        echo "jobs.check-cache.outputs.version-label: ${{ jobs.check-cache.outputs.version-label }}"
     - name: Check Kotlin Metadata cache 
       id: kotlin-metadata-cache
       uses: actions/cache@v4
