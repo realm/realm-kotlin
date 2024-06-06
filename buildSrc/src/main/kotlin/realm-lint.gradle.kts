@@ -64,6 +64,7 @@ allprojects {
             "!src/**/generated/**",
             "!src/**/resources/**",
             "--reporter=plain",
+            "--reporter=html,output=${project.buildDir}/reports/ktlint/ktlint.html",
             "--reporter=checkstyle,output=${project.buildDir}/reports/ktlint/ktlint.xml",
             "--editorconfig=${configDir}/ktlint/.editorconfig"
         )
