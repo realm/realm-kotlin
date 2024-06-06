@@ -59,10 +59,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Cache SHA
     outputs:  
-      version-label: ${{ steps.find-library-version.outputs.label }}
+      version-label: ${{ steps.find-library-.outputs.label }}
       packages-sha: ${{ steps.packages-cache-key.outputs.sha }}
       benchmarks-sha: ${{ steps.calculate-benchmarks-cache-key.outputs.sha }}
-      core-commit-sha: ${{ steps.calculate-core-commmit-sha.outputs.commit }}
+      core-commit-sha: ${{ steps.calculate-core-versioncommmit-sha.outputs.commit }}
 
     steps:
     - name: Checkout code
@@ -74,6 +74,7 @@ jobs:
       id: find-library-version
       run: |
         version=$(grep "const val version" buildSrc/src/main/kotlin/Config.kt | cut -d \" -f2)
+        echo "Label: $version"
         echo "label=$version" >> $GITHUB_OUTPUT
 
     # This also include changes to Realm Core as they are hashed as part of `/packages/external/core`
@@ -105,12 +106,12 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-metadata-${{ steps.packages-cache-key.outputs.sha }}
+        key: packages-m2-metadata-${{ steps.checksum.outputs.sha }}
     - name: Save Kotlin Metadata packages
       uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.kotlin-metadata-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-metadata-${{ steps.find-library-version.outputs.label }}
+        name: packages-metadata-${{ steps.checksum.outputs.label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
