@@ -104,7 +104,6 @@ jobs:
     - name: Testing
       id: testing
       run: |
-        echo "outputs.version-label: ${{ outputs.version-label }}"
         echo "jobs.check-cache.outputs.version-label: ${{ jobs.check-cache.outputs.version-label }}"
     - name: Check Kotlin Metadata cache 
       id: kotlin-metadata-cache
