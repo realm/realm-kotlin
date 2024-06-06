@@ -266,7 +266,7 @@ jobs:
           version: ${{ vars.VERSION_NINJA  }}
 
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'jvm-macos-native-lib'
           max-size: '2.0G'
@@ -352,7 +352,7 @@ jobs:
           version: ${{ vars.VERSION_NINJA  }}
 
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'metadata-package'
           max-size: '2.0G'
@@ -432,7 +432,7 @@ jobs:
           version: ${{ vars.VERSION_NINJA  }}
 
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'jvm-package'
           max-size: '2.0G'
@@ -555,7 +555,7 @@ jobs:
           version: ${{ vars.VERSION_NINJA  }}
  
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'android-package'
           max-size: '2.0G'
@@ -670,7 +670,7 @@ jobs:
           version: ${{ vars.VERSION_NINJA  }}
  
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'macos-x64-package'
           max-size: '2.0G'
@@ -739,7 +739,7 @@ jobs:
           version: ${{ vars.VERSION_NINJA  }}
  
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'macos-arm64-package'
           max-size: '2.0G'
@@ -807,7 +807,7 @@ jobs:
           version: ${{ vars.VERSION_NINJA  }}
  
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'ios-x64-package'
           max-size: '2.0G'
@@ -876,7 +876,7 @@ jobs:
           version: ${{ vars.VERSION_NINJA  }}
  
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'ios-arm64-package'
           max-size: '2.0G'
