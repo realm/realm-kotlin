@@ -5,7 +5,7 @@
             "severity": "error",
             "pattern": [
                 {
-                    "regexp": "(.+\.kt):(\d+):(\d+):\s(.*)\s\[(.+)\]",
+                    "regexp": "(.+\\.kt):(\\d+):(\\d+):\\s(.*)\\s\\[(.+)\\]",
                     "file": 1,
                     "line": 2,
                     "column": 3,
