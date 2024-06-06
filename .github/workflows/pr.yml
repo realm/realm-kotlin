@@ -42,13 +42,13 @@ jobs:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -59,7 +59,7 @@ jobs:
           key: jni-swig-stubs-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -115,7 +115,7 @@ jobs:
           key: jni-linux-lib-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -192,7 +192,7 @@ jobs:
           enableCrossOsArchive: true
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -245,18 +245,18 @@ jobs:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -331,18 +331,18 @@ jobs:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -411,18 +411,18 @@ jobs:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -514,13 +514,13 @@ jobs:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -545,7 +545,7 @@ jobs:
         run: brew install jq
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -649,18 +649,18 @@ jobs:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -718,18 +718,18 @@ jobs:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -786,18 +786,18 @@ jobs:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -855,18 +855,18 @@ jobs:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -967,13 +967,13 @@ jobs:
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -1228,13 +1228,13 @@ jobs:
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -1350,13 +1350,13 @@ jobs:
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -1484,13 +1484,13 @@ jobs:
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
