@@ -126,7 +126,7 @@ jobs:
           path: ./packages/jni-swig-stub/build/generated/sources/jni
 
       - name: Build Docker image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           tags: jvm-native-lib-linux:latest
           file: ./packages/cinterop/src/jvmMain/generic.Dockerfile
