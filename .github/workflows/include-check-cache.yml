@@ -19,13 +19,13 @@ on:
   workflow_call:
     outputs:  
       version-label:
-        value: ${{ jobs.check-cache.outputs.version-label }}
+        value: ${{ jobs.checksum.outputs.version-label }}
       packages-sha: 
-        value: ${{ jobs.check-cache.outputs.packages-sha }}
+        value: ${{ jobs.checksum.outputs.packages-sha }}
       benchmarks-sha: 
-        value: ${{ jobs.check-cache.outputs.benchmarks-sha }}
+        value: ${{ jobs.checksum.outputs.benchmarks-sha }}
       core-commit-sha:
-        value: ${{ jobs.check-cache.outputs.core-commit-sha }}
+        value: ${{ jobs.checksum.outputs.core-commit-sha }}
 
       packages-metadata-cache-hit:
         value: ${{ jobs.metadata-compiler-plugin.outputs.packages-metadata-cache-hit }}
@@ -104,8 +104,7 @@ jobs:
     - name: Testing
       id: testing
       run: |
-        echo "checksum.sha: ${{ outputs.packages-sha }}"
-        echo "checksum.label: ${{ outputs.version-label }}"
+        echo "label: ${{ jobs.checksum.outputs.version-label }}"
     - name: Check Kotlin Metadata cache 
       id: kotlin-metadata-cache
       uses: actions/cache@v4
