@@ -272,7 +272,6 @@ private fun <T> Provider<T>.safeProvider(): Provider<T> = this.let {
     }
 }
 
-@Suppress("ComplexMethod", "NestedBlockDepth")
 private fun gatherTargetInfo(kotlinCompilation: KotlinCompilation<*>): TargetInfo? {
     val project = kotlinCompilation.target.project
     return when (kotlinCompilation) {
