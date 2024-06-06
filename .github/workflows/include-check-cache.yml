@@ -101,6 +101,13 @@ jobs:
     outputs:  
       packages-metadata-cache-hit: ${{ steps.kotlin-metadata-cache.outputs.cache-hit }}
     steps:
+    - name: Testing
+      id: testing
+      run: |
+        echo "checksum.sha: ${{ steps.checksum.outputs.sha }}"
+        echo "checksum.label: ${{ steps.checksum.outputs.label }}"
+        echo "packages-cache-key: ${{ steps.packages-cache-key.outputs.sha }}"
+        echo "find-library-version: ${{ steps.find-library-version.outputs.label }}"
     - name: Check Kotlin Metadata cache 
       id: kotlin-metadata-cache
       uses: actions/cache@v4
