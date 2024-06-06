@@ -34,32 +34,33 @@ jobs:
       - name: Run Ktlint
         run: ./gradlew ktlintCheck
 
-      - name: Register problem matchers
+      - name: Deregister problem matchers
+        if: always()
         run: |-
           echo "::remove-matcher owner=ktlint::"
 
-      # - name: Stash Ktlint results
-      #   if: always()
-      #   run: |
-      #     rm -rf /tmp/ktlint
-      #     rm -rf /tmp/detekt
-      #     mkdir /tmp/ktlint
-      #     mkdir /tmp/detekt
-      #     rsync -a --delete --ignore-errors examples/kmm-sample/shared/build/reports/ktlint/ /tmp/ktlint/example/ || true
-      #     rsync -a --delete --ignore-errors packages/cinterop/build/reports/ktlint/ /tmp/ktlint/cinterop/ || true
-      #     rsync -a --delete --ignore-errors packages/library-base/build/reports/ktlint/ /tmp/ktlint/library-base/ || true
-      #     rsync -a --delete --ignore-errors packages/library-sync/build/reports/ktlint/ /tmp/ktlint/library-sync/ || true
-      #     rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
-      #     rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
-      #     rsync -a --delete --ignore-errors benchmarks/build/reports/ktlint/ /tmp/ktlint/benchmarks/ || true
+      - name: Stash Ktlint results
+        if: always()
+        run: |
+          rm -rf /tmp/ktlint
+          rm -rf /tmp/detekt
+          mkdir /tmp/ktlint
+          mkdir /tmp/detekt
+          rsync -a --delete --ignore-errors examples/kmm-sample/shared/build/reports/ktlint/ /tmp/ktlint/example/ || true
+          rsync -a --delete --ignore-errors packages/cinterop/build/reports/ktlint/ /tmp/ktlint/cinterop/ || true
+          rsync -a --delete --ignore-errors packages/library-base/build/reports/ktlint/ /tmp/ktlint/library-base/ || true
+          rsync -a --delete --ignore-errors packages/library-sync/build/reports/ktlint/ /tmp/ktlint/library-sync/ || true
+          rsync -a --delete --ignore-errors packages/plugin-compiler/build/reports/ktlint/ /tmp/ktlint/plugin-compiler/ || true
+          rsync -a --delete --ignore-errors packages/gradle-plugin/build/reports/ktlint/ /tmp/ktlint/plugin-gradle/ || true
+          rsync -a --delete --ignore-errors benchmarks/build/reports/ktlint/ /tmp/ktlint/benchmarks/ || true
 
-      # - name: Publish Ktlint results    
-      #   uses: clementetb/checkstyle-github-action@master
-      #   if: always()
-      #   with:
-      #     name: Ktlint Results
-      #     title: Ktlint Analyzer report
-      #     path: '/tmp/ktlint/**/*.xml'
+      - name: Publish Ktlint results
+        uses: actions/upload-artifact@v4
+        if: always() && !cancelled()
+        with:
+          name: Ktlint Analyzer report
+          path: /tmp/ktlint/*
+          retention-days: 1
 
   detekt:
     runs-on: ubuntu-latest
