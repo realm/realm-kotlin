@@ -5,12 +5,11 @@
             "severity": "error",
             "pattern": [
                 {
-                    "regexp": "(.+\\.kt):(\\d+):(\\d+):\\s(.*)\\s\\[(.+)\\]",
+                    "regexp": "(.+\\.kt):(\\d+):(\\d+):\\s(.*)",
                     "file": 1,
                     "line": 2,
                     "column": 3,
-                    "message": 4,
-                    "code": 5
+                    "message": 4
                 }
             ]
         }
