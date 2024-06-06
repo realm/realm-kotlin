@@ -39,7 +39,7 @@ jobs:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Setup ninja
-        uses: cmelchior/setup-ninja@master
+        uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
 
