@@ -15,7 +15,6 @@ jobs:
 
       - name: Register problem matchers
         run: |-
-          echo "::add-matcher::.github/problem-matchers/kotlin.json"
           echo "::add-matcher::.github/problem-matchers/ktlint.json"
 
       - name: Setup Gradle and task/dependency caching
@@ -69,7 +68,6 @@ jobs:
 
       - name: Register problem matchers
         run: |-
-          echo "::add-matcher::.github/problem-matchers/kotlin.json"
           echo "::add-matcher::.github/problem-matchers/detekt.json"
 
       - name: Setup Gradle and task/dependency caching
