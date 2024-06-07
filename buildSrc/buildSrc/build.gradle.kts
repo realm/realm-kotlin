@@ -11,6 +11,3 @@ sourceSets.main {
         include("Config.kt")
     }
 }
-
-val a: Int = ""
-
