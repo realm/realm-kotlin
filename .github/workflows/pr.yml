@@ -192,10 +192,6 @@ jobs:
           fetch-depth: 0 
           submodules: "recursive"
 
-      - name: Register problem matchers
-        run: |-
-          echo "::add-matcher::.github/problem-matchers/kotlin.json"
-
       - name: Setup build cache
         uses: actions/cache@v4
         with:
@@ -255,10 +251,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: "recursive"
-
-      - name: Register problem matchers
-        run: |-
-          echo "::add-matcher::.github/problem-matchers/kotlin.json"
 
       - name: Setup Java 11
         uses: actions/setup-java@v4
@@ -537,10 +529,6 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: Register problem matchers
-        run: |-
-          echo "::add-matcher::.github/problem-matchers/kotlin.json"
-
       - name: Setup Java 11
         uses: actions/setup-java@v4
         with:
@@ -676,10 +664,6 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: Register problem matchers
-        run: |-
-          echo "::add-matcher::.github/problem-matchers/kotlin.json"
-
       - name: Setup Java 11
         uses: actions/setup-java@v4
         with:
@@ -749,10 +733,6 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: Register problem matchers
-        run: |-
-          echo "::add-matcher::.github/problem-matchers/kotlin.json"
-
       - name: Setup Java 11
         uses: actions/setup-java@v4
         with:
@@ -820,10 +800,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: "recursive"
-
-      - name: Register problem matchers
-        run: |-
-          echo "::add-matcher::.github/problem-matchers/kotlin.json"
 
       - name: Setup Java 11
         uses: actions/setup-java@v4
@@ -893,10 +869,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: "recursive"
-
-      - name: Register problem matchers
-        run: |-
-          echo "::add-matcher::.github/problem-matchers/kotlin.json"
 
       - name: Setup Java 11
         uses: actions/setup-java@v4
@@ -988,10 +960,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: "recursive"
-
-      - name: Register problem matchers
-        run: |-
-          echo "::add-matcher::.github/problem-matchers/kotlin.json"
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
@@ -1254,10 +1222,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Register problem matchers
-        run: |-
-          echo "::add-matcher::.github/problem-matchers/kotlin.json"
-
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
         if: matrix.type == 'sync'
@@ -1379,10 +1343,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Register problem matchers
-        run: |-
-          echo "::add-matcher::.github/problem-matchers/kotlin.json"
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
@@ -1517,10 +1477,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Register problem matchers
-        run: |-
-          echo "::add-matcher::.github/problem-matchers/kotlin.json"
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
