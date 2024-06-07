@@ -127,7 +127,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
                     if (result) {
                         return true
                     } else {
-                        throw BadFlexibleSyncQueryException(errorMessage!!)
+                        throw BadFlexibleSyncQueryException(errorMessage)
                     }
                 }
                 else -> throw IllegalStateException("Unexpected value: $result")

@@ -369,7 +369,7 @@ class CredentialsTests {
             payload = mapOf("mail" to TestHelper.randomEmail(), "id" to 0)
         )
 
-        assertFailsWithMessage<AuthException>("unauthorized") {
+        assertFailsWithMessage<AuthException>("Authentication failed") {
             runBlocking {
                 app.login(credentials)
             }

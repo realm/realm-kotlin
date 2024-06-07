@@ -93,7 +93,7 @@ jobs:
     # This also include changes to Realm Core as they are hashed as part of `/packages/external/core`
     - name: Calculate ./packages SHAs 
       id: packages-cache-key
-      run: echo "sha=${{ hashFiles('./packages/**', './buildSrc/**', '!./packages/test-base/**', '!./packages/test-sync/**') }}" >> $GITHUB_OUTPUT
+      run: echo "sha=${{ hashFiles('./packages/**', './buildSrc/**') }}" >> $GITHUB_OUTPUT
 
     - name: Calculate ./benchmarks SHAs 
       id: calculate-benchmarks-cache-key
