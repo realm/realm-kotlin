@@ -14,7 +14,7 @@
             ]
         },
         {
-            "owner": "kotlin-1.7-warning",
+            "owner": "kotlin-warning",
             "severity": "warning",
             "pattern": [
                 {

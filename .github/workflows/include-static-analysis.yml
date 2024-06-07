@@ -88,7 +88,7 @@ jobs:
         run: ./gradlew detekt
 
       - name: Stash Detekt results    
-        if: always() && !cancelled()
+        if: !cancelled()
         run: |
           rm -rf /tmp/detekt
           mkdir /tmp/detekt
@@ -102,7 +102,7 @@ jobs:
 
       - name: Publish Detekt results    
         uses: actions/upload-artifact@v4
-        if: always() && !cancelled()
+        if: !cancelled()
         with:
           name: Detekt Analyzer report
           path: /tmp/detekt/*
