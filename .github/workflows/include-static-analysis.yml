@@ -35,6 +35,7 @@ jobs:
         run: ./gradlew ktlintCheck
 
       - name: Stash Ktlint results
+        if: always() && !cancelled()
         run: |
           rm -rf /tmp/ktlint
           rm -rf /tmp/detekt
@@ -50,6 +51,7 @@ jobs:
 
       - name: Publish Ktlint results
         uses: actions/upload-artifact@v4
+        if: always() && !cancelled()
         with:
           name: Ktlint Analyzer report
           path: /tmp/ktlint/*
@@ -86,6 +88,7 @@ jobs:
         run: ./gradlew detekt
 
       - name: Stash Detekt results    
+        if: always() && !cancelled()
         run: |
           rm -rf /tmp/detekt
           mkdir /tmp/detekt
@@ -99,6 +102,7 @@ jobs:
 
       - name: Publish Detekt results    
         uses: actions/upload-artifact@v4
+        if: always() && !cancelled()
         with:
           name: Detekt Analyzer report
           path: /tmp/detekt/*
