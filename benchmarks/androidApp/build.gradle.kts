@@ -25,6 +25,7 @@ android {
         testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR,UNLOCKED"
         // Disable profiling. See https://developer.android.com/studio/profile/microbenchmark-profile
         testInstrumentationRunnerArguments["androidx.benchmark.profiling.mode"] = "None"
+        multiDexEnabled = true
     }
 
     testBuildType = "release"
