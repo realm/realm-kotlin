@@ -13,6 +13,11 @@ jobs:
         with:
           submodules: "recursive"
 
+      - name: Register problem matchers
+        run: |-
+          echo "::add-matcher::.github/problem-matchers/kotlin.json"
+          echo "::add-matcher::.github/problem-matchers/ktlint.json"
+
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
         with:
@@ -26,10 +31,6 @@ jobs:
       - name: Build Gradle Plugin
         working-directory: packages
         run: ./gradlew :gradle-plugin:publishAllPublicationsToTestRepository --info --stacktrace
-
-      - name: Register problem matchers
-        run: |-
-          echo "::add-matcher::.github/problem-matchers/ktlint.json"
 
       - name: Run Ktlint
         run: ./gradlew ktlintCheck
@@ -71,6 +72,11 @@ jobs:
         with:
           submodules: "recursive"
 
+      - name: Register problem matchers
+        run: |-
+          echo "::add-matcher::.github/problem-matchers/kotlin.json"
+          echo "::add-matcher::.github/problem-matchers/detekt.json"
+
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
         with:
@@ -85,17 +91,8 @@ jobs:
         working-directory: packages
         run: ./gradlew :gradle-plugin:publishAllPublicationsToTestRepository --info --stacktrace
 
-      - name: Register problem matchers
-        run: |-
-          echo "::add-matcher::.github/problem-matchers/detekt.json"
-
       - name: Run Detekt
         run: ./gradlew detekt
-
-      - name: Deregister problem matchers
-        if: always()
-        run: |-
-          echo "::remove-matcher owner=detekt::"
 
       - name: Stash Detekt results    
         if: always() && !cancelled()
