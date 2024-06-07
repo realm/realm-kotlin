@@ -29,8 +29,6 @@ internal actual fun <T : Any> realmObjectCompanionOrNull(clazz: KClass<T>): Real
         clazz.companionObjectInstance as RealmObjectCompanion
     } else null
 
-
-
 @PublishedApi
 internal actual fun <T : BaseRealmObject> realmObjectCompanionOrThrow(clazz: KClass<T>): RealmObjectCompanion =
     realmObjectCompanionOrNull(clazz)
