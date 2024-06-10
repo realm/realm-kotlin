@@ -1154,7 +1154,6 @@ actual object RealmInterop {
 
     actual fun realm_app_get(
         appConfig: RealmAppConfigurationPointer,
-        syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
         return LongPointerWrapper(realmc.realm_app_create(appConfig.cptr()), managed = true)
@@ -1314,8 +1313,8 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
-        return LongPointerWrapper(realmc.realm_sync_client_config_new())
+    actual fun realm_app_config_get_sync_client_config(configPointer: RealmAppConfigurationPointer): RealmSyncClientConfigurationPointer {
+        return LongPointerWrapper(realmc.realm_app_config_get_sync_client_config(configPointer.cptr()))
     }
 
     actual fun realm_sync_client_config_set_default_binding_thread_observer(syncClientConfig: RealmSyncClientConfigurationPointer, appId: String) {

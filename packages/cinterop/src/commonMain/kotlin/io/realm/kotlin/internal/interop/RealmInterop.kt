@@ -519,7 +519,6 @@ expect object RealmInterop {
     // App
     fun realm_app_get(
         appConfig: RealmAppConfigurationPointer,
-        syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String,
     ): RealmAppPointer
     fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer?
@@ -600,8 +599,7 @@ expect object RealmInterop {
     fun realm_user_refresh_custom_data(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
 
     // Sync client config
-    fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer
-
+    fun realm_app_config_get_sync_client_config(configPointer: RealmAppConfigurationPointer): RealmSyncClientConfigurationPointer
     fun realm_sync_client_config_set_default_binding_thread_observer(
         syncClientConfig: RealmSyncClientConfigurationPointer,
         appId: String
