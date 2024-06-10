@@ -315,6 +315,10 @@ jobs:
         working-directory: packages
         run: ./gradlew buildJVMSharedLibs -Prealm.kotlin.mainHost=false
 
+      - name: Show ccache size
+        run: |
+          echo `du -sh ~/.ccache`
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -498,6 +502,10 @@ jobs:
       - name: Build JVM Package
         working-directory: packages
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.copyNativeJvmLibs=linux,windows,macos -Prealm.kotlin.mainHost=false
+
+      - name: Show ccache size
+        run: |
+          echo `du -sh ~/.ccache`
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -705,6 +713,10 @@ jobs:
       - name: Build packages
         working-directory: packages
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosX64 -Prealm.kotlin.mainHost=false
+
+      - name: Show ccache size
+        run: |
+          echo `du -sh ~/.ccache`
 
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Store build cache

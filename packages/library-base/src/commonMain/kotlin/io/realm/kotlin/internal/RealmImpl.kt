@@ -106,6 +106,10 @@ public class RealmImpl private constructor(
     @OptIn(ExperimentalStdlibApi::class)
     public var syncContext: AtomicRef<AutoCloseable?> = atomic(null)
 
+    internal fun test(){
+        
+    }
+
     init {
         @Suppress("TooGenericExceptionCaught")
         // Track whether or not the file was created as part of opening the Realm. We need this
