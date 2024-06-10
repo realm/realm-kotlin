@@ -103,7 +103,6 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
             websocketTransport,
             RealmInterop.realm_app_get(
                 appConfigPointer,
-                synClientConfig,
                 appFilesDirectory()
             )
         )
