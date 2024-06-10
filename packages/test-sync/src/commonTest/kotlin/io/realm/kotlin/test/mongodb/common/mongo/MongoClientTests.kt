@@ -22,11 +22,13 @@ import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.ext.collection
 import io.realm.kotlin.mongodb.ext.insertOne
 import io.realm.kotlin.mongodb.mongo.MongoClient
+import io.realm.kotlin.mongodb.mongo.realmSerializerModule
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import kotlinx.serialization.SerializationException
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -48,7 +50,7 @@ class MongoClientTests {
             appName = TEST_APP_FLEX,
         )
         val user = app.createUserAndLogin()
-        client = user.mongoClient(TEST_SERVICE_NAME)
+        client = user.mongoClient(TEST_SERVICE_NAME, eJson = EJson(serializersModule = realmSerializerModule(setOf(CollectionDataType::class))))
     }
 
     @AfterTest

@@ -200,19 +200,13 @@ jobs:
   gradle-plugin-integration:
     strategy:
       matrix:
-        type: [current, currentK2, gradle6, gradle71, gradle75]
+        type: [current, gradle72, gradle75]
         include:
           - type: current
             path: integration-tests/gradle/current
             arguments: integrationTest
-          - type: currentK2
-            path: integration-tests/gradle/current
-            arguments: -Pkotlin.experimental.tryK2=true integrationTest
-          - type: gradle6
-            path: integration-tests/gradle/gradle6-test
-            arguments: integrationTest
-          - type: gradle71
-            path: integration-tests/gradle/gradle71-test
+          - type: gradle72
+            path: integration-tests/gradle/gradle72-test
             arguments: integrationTest
           - type: gradle75
             path: integration-tests/gradle/gradle75-test
@@ -290,10 +284,13 @@ jobs:
   gradle-plugin-integration-java-17:
     strategy:
       matrix:
-        type: [gradle8]
+        type: [gradle8, gradle85]
         include:
           - type: gradle8
             path: integration-tests/gradle/gradle8-test
+            arguments: integrationTest
+          - type: gradle85
+            path: integration-tests/gradle/gradle85-test
             arguments: integrationTest
     runs-on: macos-12
     steps:

@@ -98,4 +98,6 @@ class Registrar : ComponentRegistrar {
             }
         }
     }
+
+    override val supportsK2: Boolean = true
 }

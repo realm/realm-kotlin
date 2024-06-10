@@ -107,7 +107,7 @@ void
 sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handler);
 
 void
-realm_sync_session_progress_notifier_callback(void *userdata, uint64_t transferred_bytes, uint64_t total_bytes, double progress);
+realm_sync_session_progress_notifier_callback(void *userdata, uint64_t, uint64_t, double progress_estimate);
 
 void
 realm_sync_session_connection_state_change_callback(void *userdata, realm_sync_connection_state_e old_state, realm_sync_connection_state_e new_state);
