@@ -31,7 +31,7 @@ import io.realm.kotlin.types.RealmAny
  *
  * @see io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler
  */
-public open class SyncException internal constructor(message: String) : AppException(message)
+public open class SyncException internal constructor(message: String?) : AppException(message)
 
 /**
  * Thrown when something has gone wrong with Device Sync in a way that is not recoverable.
@@ -60,7 +60,7 @@ public class WrongSyncTypeException internal constructor(message: String) : Sync
  * Thrown when the server does not support one or more of the queries defined in the
  * [io.realm.kotlin.mongodb.sync.SubscriptionSet].
  */
-public class BadFlexibleSyncQueryException internal constructor(message: String) :
+public class BadFlexibleSyncQueryException internal constructor(message: String?) :
     SyncException(message)
 
 /**
