@@ -19,7 +19,6 @@
 
 package io.realm.kotlin.test.mongodb
 
-import io.realm.kotlin.Realm
 import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SynchronizableObject
@@ -31,8 +30,6 @@ import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
-import io.realm.kotlin.mongodb.sync.SyncConfiguration
-import io.realm.kotlin.test.mongodb.common.FLEXIBLE_SYNC_SCHEMA
 import io.realm.kotlin.test.mongodb.util.AppAdmin
 import io.realm.kotlin.test.mongodb.util.AppAdminImpl
 import io.realm.kotlin.test.mongodb.util.AppServicesClient
@@ -41,7 +38,6 @@ import io.realm.kotlin.test.mongodb.util.Service
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
-import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
@@ -117,28 +113,6 @@ open class TestApp private constructor(
             initialSetup = initialSetup
         )
     )
-
-    init {
-        // For apps with Flexible Sync, we need to bootstrap all the schemas to work around
-        // https://github.com/realm/realm-core/issues/7297.
-        // So we create a dummy Realm, upload all the schemas and close the Realm again.
-        if (app.configuration.appId.startsWith(TEST_APP_FLEX, ignoreCase = false)) {
-            runBlocking {
-                val user = app.login(Credentials.anonymous())
-                val config = SyncConfiguration.create(user, FLEXIBLE_SYNC_SCHEMA)
-                try {
-                    Realm.open(config).use {
-                        // Using syncSession.uploadAllLocalChanges() seems to just hang forever.
-                        // This is tracked by the above Core issue. Instead use the Sync Progress
-                        // endpoint to signal when the schemas are ready.
-                        pairAdminApp.second.waitForSyncBootstrap()
-                    }
-                } finally {
-                    user.delete()
-                }
-            }
-        }
-    }
 
     fun createUserAndLogin(): User = runBlocking {
         val (email, password) = TestHelper.randomEmail() to "password1234"
