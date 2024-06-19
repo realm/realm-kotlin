@@ -39,6 +39,7 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 }
 
 // Common Kotlin configuration
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     jvm()
     androidTarget {
@@ -202,6 +203,7 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
             }
             jdkVersion.set(8)
         }
+        @Suppress("UNUSED_VARIABLE")
         val commonMain by getting {
             includes.from(
                 "overview.md",

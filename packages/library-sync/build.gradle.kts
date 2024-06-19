@@ -36,6 +36,7 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 }
 
 // Common Kotlin configuration
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     jvm()
     androidTarget {

@@ -72,6 +72,7 @@ configurations.all {
 }
 
 // Common Kotlin configuration
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     sourceSets {
         val commonMain by getting {
@@ -158,11 +159,11 @@ android {
     // Remove overlapping resources after adding "org.jetbrains.kotlinx:kotlinx-coroutines-test" to
     // avoid errors like "More than one file was found with OS independent path 'META-INF/AL2.0'."
     packagingOptions {
-        exclude("META-INF/AL2.0")
-        exclude("META-INF/LGPL2.1")
+        resources.excludes.add("META-INF/AL2.0")
+        resources.excludes.add("META-INF/LGPL2.1")
     }
 }
-
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     androidTarget()
     sourceSets {
@@ -222,7 +223,7 @@ kotlin {
         }
     }
 }
-
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     jvm()
     sourceSets {
@@ -241,7 +242,7 @@ kotlin {
         }
     }
 }
-
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     if (HOST_OS == OperatingSystem.MACOS_ARM64) {
         iosSimulatorArm64("ios")

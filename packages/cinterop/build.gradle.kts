@@ -122,6 +122,7 @@ val nativeLibraryIncludesIosSimulatorArm64Debug =
 val nativeLibraryIncludesIosSimulatorArm64Release =
     includeBinaries(releaseLibs.map { "$absoluteCorePath/build-simulator-arm64/lib/$it" })
 
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     jvm()
     androidTarget {
