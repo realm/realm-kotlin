@@ -29,8 +29,10 @@ import io.realm.kotlin.mongodb.ext.call
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.CustomLogCollector
 import io.realm.kotlin.test.mongodb.syncServerAppName
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
+import io.realm.kotlin.test.mongodb.util.BaseAppInitializer
+import io.realm.kotlin.test.mongodb.util.FIRST_ARG_FUNCTION
+import io.realm.kotlin.test.mongodb.util.NULL_FUNCTION
+import io.realm.kotlin.test.mongodb.util.SUM_FUNCTION
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
@@ -122,13 +124,11 @@ class HttpLogObfuscatorTests {
     private fun initApp(): TestApp {
         return TestApp(
             this::class.simpleName,
-            appName = syncServerAppName("obfsctr"),
-            initialSetup = { app, service ->
-                initializeDefault(app, service)
-                app.addFunction(TestAppInitializer.FIRST_ARG_FUNCTION)
-                app.addFunction(TestAppInitializer.SUM_FUNCTION)
-                app.addFunction(TestAppInitializer.NULL_FUNCTION)
-            }
+            object : BaseAppInitializer(syncServerAppName("obfsctr"), {
+                it.addFunction(FIRST_ARG_FUNCTION)
+                it.addFunction(SUM_FUNCTION)
+                it.addFunction(NULL_FUNCTION)
+            }) {}
         )
     }
 
@@ -148,14 +148,15 @@ class HttpLogObfuscatorTests {
         RealmLog.add(logger)
         app = TestApp(
             "nullObfuscator",
-            appName = syncServerAppName("null-obf"),
+            object : BaseAppInitializer(
+                syncServerAppName("null-obf"),
+                {
+                    it.addFunction(FIRST_ARG_FUNCTION)
+                    it.addFunction(SUM_FUNCTION)
+                    it.addFunction(NULL_FUNCTION)
+                }
+            ) {},
             builder = { it.httpLogObfuscator(null) },
-            initialSetup = { app, service ->
-                initializeDefault(app, service)
-                app.addFunction(TestAppInitializer.FIRST_ARG_FUNCTION)
-                app.addFunction(TestAppInitializer.SUM_FUNCTION)
-                app.addFunction(TestAppInitializer.NULL_FUNCTION)
-            }
         )
 
         // Create user and log in
@@ -190,9 +191,9 @@ class HttpLogObfuscatorTests {
 
         // Calling functions with arguments results in these not being obfuscated
         with(user.functions) {
-            call<Double>(TestAppInitializer.FIRST_ARG_FUNCTION.name, 42.0)
-            call<Double>(TestAppInitializer.SUM_FUNCTION.name, 42.0, 1.0)
-            call<BsonNull>(TestAppInitializer.NULL_FUNCTION.name)
+            call<Double>(FIRST_ARG_FUNCTION.name, 42.0)
+            call<Double>(SUM_FUNCTION.name, 42.0, 1.0)
+            call<BsonNull>(NULL_FUNCTION.name)
         }
 
         // Verify that none of the logs are obfuscated
@@ -315,9 +316,9 @@ class HttpLogObfuscatorTests {
 
         async {
             with(user.functions) {
-                call<Double>(TestAppInitializer.FIRST_ARG_FUNCTION.name, 42.0)
-                call<Double>(TestAppInitializer.SUM_FUNCTION.name, 42.0, 1.0)
-                call<BsonNull>(TestAppInitializer.NULL_FUNCTION.name)
+                call<Double>(FIRST_ARG_FUNCTION.name, 42.0)
+                call<Double>(SUM_FUNCTION.name, 42.0, 1.0)
+                call<BsonNull>(NULL_FUNCTION.name)
             }
         }
         // 1st custom function call - request (obfuscate arguments)

@@ -62,6 +62,8 @@ import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
+import io.realm.kotlin.test.mongodb.util.DefaultFlexibleSyncAppInitializer
+import io.realm.kotlin.test.mongodb.util.DefaultPartitionBasedAppInitializer
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
@@ -121,7 +123,7 @@ class SyncedRealmTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = TestApp(this::class.simpleName)
+        app = TestApp(this::class.simpleName, DefaultPartitionBasedAppInitializer)
 
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
@@ -922,7 +924,7 @@ class SyncedRealmTests {
     fun writeCopyTo_localToFlexibleSync_throws() = runBlocking {
         TestApp(
             this::class.simpleName,
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
             }
@@ -1001,7 +1003,7 @@ class SyncedRealmTests {
     fun writeCopyTo_flexibleSyncToLocal() = runBlocking {
         TestApp(
             "writeCopyTo_flexibleSyncToLocal",
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
             }
@@ -1124,7 +1126,7 @@ class SyncedRealmTests {
     fun writeCopyTo_flexibleSyncToFlexibleSync() = runBlocking {
         TestApp(
             "writeCopyTo_flexibleSyncToFlexibleSync",
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
             }
@@ -1227,7 +1229,7 @@ class SyncedRealmTests {
     fun accessSessionAfterRemoteChange() = runBlocking {
         TestApp(
             "accessSessionAfterRemoteChange",
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
             }
@@ -1418,7 +1420,7 @@ class SyncedRealmTests {
     fun createInitialRealmFx() = runBlocking {
         TestApp(
             "createInitialRealmFx",
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
             }
@@ -1473,7 +1475,7 @@ class SyncedRealmTests {
         @OptIn(ExperimentalKBsonSerializerApi::class)
         TestApp(
             "initialRealm_flexibleSync",
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
             }
