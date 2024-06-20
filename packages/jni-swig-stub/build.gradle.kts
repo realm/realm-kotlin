@@ -26,6 +26,7 @@ val generatedSourceRoot = "$buildDir/generated/sources"
 
 java {
     withSourcesJar()
+    withJavadocJar()
     sourceSets {
         main {
             java.srcDir("$generatedSourceRoot/java")
