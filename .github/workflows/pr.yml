@@ -237,7 +237,7 @@ jobs:
           retention-days: 1
 
   build-jvm-macos-native-lib:
-    runs-on: macos-12
+    runs-on: macos-14
     needs: [check-cache, build-jni-swig-stub]
     if: |
       always() &&
@@ -329,6 +329,8 @@ jobs:
   build-kotlin-metadata-package:
     runs-on: ubuntu-latest
     needs: [check-cache]
+    env:
+      NDK_VERSION: 23.2.8568313
     if: |
       always() && 
       !cancelled() && 
@@ -411,8 +413,10 @@ jobs:
   # This task is also responsible for creating the Gradle and Compiler Plugin as well as 
   # all Kotlin Multiplatform Metadata
   build-jvm-packages:
-    runs-on: macos-12
+    runs-on: macos-14
     needs: [check-cache, build-jvm-linux-native-lib, build-jvm-windows-native-lib, build-jvm-macos-native-lib]
+    env:
+      NDK_VERSION: 23.2.8568313
     if: |
       always() && 
       !cancelled() && 
@@ -430,11 +434,11 @@ jobs:
         run: |-
           echo "::add-matcher::.github/problem-matchers/kotlin.json"
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          java-version: '17'
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -457,6 +461,9 @@ jobs:
           key: 'jvm-package'
           max-size: '2.0G'
 
+      - name: Install SWIG
+        run: brew install swig
+
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
@@ -468,11 +475,11 @@ jobs:
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
-      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
-      - name: Setup NDK
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r23c
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+  
+      - name: Install NDK
+        run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}"
 
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Setup build cache
@@ -518,6 +525,8 @@ jobs:
   build-android-packages:
     runs-on: ubuntu-latest
     needs: check-cache
+    env:
+      NDK_VERSION: 23.2.8568313
     outputs:
       baas-container-id: ${{ steps.baas_cli_start.outputs.baas_container_id }}
     if: |
@@ -595,11 +604,11 @@ jobs:
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
-      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
-      - name: Setup NDK
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r23c
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+    
+      - name: Install NDK
+        run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}"
 
       - name: Build Android Base Test Apk
         working-directory: packages
@@ -662,7 +671,7 @@ jobs:
 
   # TODO: ccache is not being used by this build for some reason
   build-macos-x64-packages:
-    runs-on: macos-12
+    runs-on: macos-14 # x64 builds fine on an arm64 node
     needs: check-cache
     if: always() && !cancelled() && needs.check-cache.outputs.packages-macos-x64-cache-hit != 'true'
 
@@ -699,6 +708,9 @@ jobs:
           key: 'macos-x64-package'
           max-size: '2.0G'
 
+      - name: Install SWIG
+        run: brew install swig
+
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
@@ -734,7 +746,7 @@ jobs:
           retention-days: 1
 
   build-macos-arm64-packages:
-    runs-on: macos-12
+    runs-on: macos-14
     needs: check-cache
     # needs: static-analysis
     if: always() && !cancelled() && needs.check-cache.outputs.packages-macos-arm64-cache-hit != 'true'
@@ -772,6 +784,9 @@ jobs:
           key: 'macos-arm64-package'
           max-size: '2.0G'
 
+      - name: Install SWIG
+        run: brew install swig
+
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
@@ -802,7 +817,7 @@ jobs:
           retention-days: 1
 
   build-ios-x64-packages:
-    runs-on: macos-12
+    runs-on: macos-14 # x64 builds fine on an arm64 node
     needs: check-cache
     # needs: static-analysis
     if: always() && !cancelled() && needs.check-cache.outputs.packages-ios-x64-cache-hit != 'true'
@@ -840,6 +855,9 @@ jobs:
           key: 'ios-x64-package'
           max-size: '2.0G'
 
+      - name: Install SWIG
+        run: brew install swig
+
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
@@ -871,7 +889,7 @@ jobs:
           retention-days: 1
 
   build-ios-arm64-packages:
-    runs-on: macos-12
+    runs-on: macos-14
     needs: check-cache
     # needs: static-analysis
     if: always() && !cancelled() && needs.check-cache.outputs.packages-ios-arm64-cache-hit != 'true'
@@ -908,6 +926,9 @@ jobs:
         with:
           key: 'ios-arm64-package'
           max-size: '2.0G'
+
+      - name: Install SWIG
+        run: brew install swig
 
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
@@ -959,7 +980,7 @@ jobs:
           - type: sync
             test-title: Unit Test Results - Android Sync (Emulator)
  
-    runs-on: macos-12
+    runs-on: macos-12 # android emulator does not run on arm64 - https://github.com/ReactiveCircus/android-emulator-runner/issues/350
     needs: [check-cache, build-android-packages, build-jvm-packages, build-kotlin-metadata-package]
     if: |
       always() && 
@@ -1203,7 +1224,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12] # , macos-arm]
+        os: [macos-12, macos-14]
         type: [base, sync]
         include:
           - os: macos-12
@@ -1216,14 +1237,21 @@ jobs:
             os-id: macos
             package-prefix: macos-x64
             test-title: Unit Test Results - MacOS x64 Sync
-          # - os: macos-arm
-          #   package-prefix: macos-arm64
-          #   test-title: Results - MacOS arm64 Base
+          - os: macos-14
+            type: base
+            os-id: macos
+            package-prefix: macos-arm64
+            test-title: Unit Test Results - MacOS arm64 Base
+          - os: macos-14
+            type: sync
+            os-id: macos
+            package-prefix: macos-arm64
+            test-title: Unit Test Results - MacOS arm64 Sync
  
     runs-on: ${{ matrix.os }}
     # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
-    needs: [check-cache, build-macos-x64-packages, build-kotlin-metadata-package] #, build-macos-arm64-packages] 
+    needs: [check-cache, build-kotlin-metadata-package, build-macos-x64-packages, build-macos-arm64-packages]
     if: |
       always() && 
       !cancelled() && 
@@ -1325,7 +1353,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12] # , macos-arm]
+        os: [macos-12, macos-14]
         type: [base, sync]
         include:
           - os: macos-12
@@ -1338,14 +1366,21 @@ jobs:
             package-prefix: x64
             test-title: Unit Test Results - iOS x64 Sync
             test-task: iosTest
-          # - os: macos-arm
-          #   package-prefix: macos-arm64
-          #   test-title: Results - MacOS arm64 Base
+          - os: macos-14
+            type: base
+            package-prefix: arm64
+            test-title: Unit Test Results - iOS arm64 Base
+            test-task: iosTest
+          - os: macos-14
+            type: sync
+            package-prefix: arm64
+            test-title: Unit Test Results - iOS arm64 Sync
+            test-task: iosTest
  
     runs-on: ${{ matrix.os }}
     # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
-    needs: [check-cache, build-ios-x64-packages, build-kotlin-metadata-package] # , build-ios-arm64-packages] 
+    needs: [check-cache, build-kotlin-metadata-package, build-ios-x64-packages, build-ios-arm64-packages]
     if: |
       always() && 
       !cancelled() && 
@@ -1447,13 +1482,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, ubuntu-latest, windows-latest] # TODO Should we also test om MacOS arm64?
+        os: [macos-12, macos-14, ubuntu-latest, windows-latest] 
         type: [base, sync]
         include:
           - os: macos-12
             os-id: mac
             type: base
             test-title: Unit Test Results - Base JVM MacOS x64
+          - os: macos-14
+            os-id: mac
+            type: base
+            test-title: Unit Test Results - Base JVM MacOS arm64
           - os: ubuntu-latest
             os-id: ubu
             type: base
@@ -1466,6 +1505,10 @@ jobs:
             os-id: mac
             type: sync
             test-title: Unit Test Results - Sync JVM MacOS x64
+          - os: macos-14
+            os-id: mac
+            type: sync
+            test-title: Unit Test Results - Sync JVM MacOS arm64
           - os: ubuntu-latest
             os-id: ubu
             type: sync

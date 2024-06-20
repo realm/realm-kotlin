@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("invisible_reference", "invisible_member")
+@file:Suppress("invisible_member", "invisible_reference")
 
 package io.realm.kotlin.test.mongodb.common
 
@@ -28,15 +28,19 @@ import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.internal.interop.ErrorCode
+import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.App
+import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.exceptions.UnrecoverableSyncException
+import io.realm.kotlin.mongodb.internal.SyncSessionImpl
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.InitialSubscriptionsCallback
 import io.realm.kotlin.mongodb.sync.SubscriptionSetState
@@ -314,6 +318,56 @@ class SyncedRealmTests {
     }
 
     @Test
+    fun errorHandlerProcessFatalSyncErrors() {
+        val channel = TestChannel<Throwable>()
+        val user = runBlocking {
+            app.login(Credentials.anonymous())
+        }
+
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        ).errorHandler { _, error ->
+            channel.trySendOrFail(error)
+        }.build()
+
+        runBlocking {
+            val deferred = async {
+                Realm.open(config).use { realm ->
+                    RealmInterop.realm_sync_session_handle_error_for_testing(
+                        syncSession = (realm.syncSession as SyncSessionImpl).nativePointer,
+                        error = ErrorCode.RLM_ERR_ACCOUNT_NAME_IN_USE,
+                        errorMessage = "Non fatal error",
+                        isFatal = true, // flipped https://jira.mongodb.org/browse/RCORE-2146
+                    )
+
+                    RealmInterop.realm_sync_session_handle_error_for_testing(
+                        syncSession = (realm.syncSession as SyncSessionImpl).nativePointer,
+                        error = ErrorCode.RLM_ERR_INTERNAL_SERVER_ERROR,
+                        errorMessage = "Fatal error",
+                        isFatal = false, // flipped https://jira.mongodb.org/browse/RCORE-2146
+                    )
+                }
+            }
+
+            // First error
+            channel.receiveOrFail().let { error ->
+                assertNotNull(error.message)
+                assertIs<SyncException>(error)
+            }
+
+            // Second
+            channel.receiveOrFail().let { error ->
+                assertNotNull(error.message)
+                assertIs<UnrecoverableSyncException>(error)
+            }
+
+            deferred.cancel()
+        }
+    }
+
+    @Test
     fun errorHandlerReceivesPermissionDeniedSyncError() {
         val channel = TestChannel<Throwable>()
         // Remove permissions to generate a sync error containing ONLY the original path
@@ -336,15 +390,15 @@ class SyncedRealmTests {
                 Realm.open(config).use {
                     // Make sure that the test eventually fail. Coroutines can cancel a delay
                     // so this doesn't always block the test for 10 seconds.
-                    delay(10 * 1000)
+                    delay(10_000)
                     channel.send(AssertionError("Realm was successfully opened"))
                 }
             }
 
             val error = channel.receiveOrFail()
-            assertTrue(error is UnrecoverableSyncException, "Was $error")
             val message = error.message
             assertNotNull(message)
+            assertTrue(error is UnrecoverableSyncException, "Was $error")
             assertTrue(
                 message.lowercase().contains("permission denied"),
                 "The error should be 'PermissionDenied' but it was: $message"
