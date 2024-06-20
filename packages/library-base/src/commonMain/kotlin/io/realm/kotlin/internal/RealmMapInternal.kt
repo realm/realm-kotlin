@@ -344,6 +344,7 @@ internal open class PrimitiveMapOperator<K, V> constructor(
 
     override fun getValue(resultsPointer: RealmResultsPointer, index: Int): V? {
         return getterScope {
+            @Suppress("UNCHECKED_CAST")
             with(realmValueConverter) {
                 val transport = realm_results_get(resultsPointer, index.toLong())
                 realmValueToPublic(transport)

@@ -90,12 +90,14 @@ public class ContextLogger(public val context: String? = null) {
         }
     }
 
+    @Suppress("NOTHING_TO_INLINE")
     private inline fun doLog(level: LogLevel, throwable: Throwable?) {
         checkPriority(level) {
             RealmLog.doLog(SdkLogCategory, level, throwable, null)
         }
     }
 
+    @Suppress("NOTHING_TO_INLINE")
     private inline fun doLog(
         level: LogLevel,
         throwable: Throwable?,

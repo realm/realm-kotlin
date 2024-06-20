@@ -15,7 +15,6 @@
  */
 // TODO https://github.com/realm/realm-kotlin/issues/889
 @file:Suppress("TooGenericExceptionThrown", "TooGenericExceptionCaught")
-@file:OptIn(ExperimentalForeignApi::class)
 
 package io.realm.kotlin.internal.interop
 
@@ -55,7 +54,6 @@ import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CPointerVarOf
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.CVariable
-import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
@@ -124,7 +122,6 @@ import realm_wrapper.realm_results_t
 import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_set_t
 import realm_wrapper.realm_string_t
-import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_sync_session_state_e
 import realm_wrapper.realm_sync_session_stop_policy_e
 import realm_wrapper.realm_sync_socket_post_callback_t
@@ -140,11 +137,11 @@ import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
 import realm_wrapper.realm_work_queue_t
 import kotlin.collections.set
-import kotlin.native.internal.createCleaner
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.createCleaner
 
-@SharedImmutable
 actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realm_wrapper.RLM_INVALID_CLASS_KEY.toLong()) }
-@SharedImmutable
+
 actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realm_wrapper.RLM_INVALID_PROPERTY_KEY) }
 
 private fun throwOnError() {
@@ -208,7 +205,7 @@ class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean 
 
     val ptr: CPointer<out CPointed>? = _ptr.ptr
 
-    @OptIn(ExperimentalStdlibApi::class)
+    @OptIn(ExperimentalNativeApi::class)
     val cleaner = if (managed) {
         createCleaner(_ptr) {
             it.release()
@@ -223,7 +220,9 @@ class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean 
 }
 
 // Convenience type cast
+@Suppress("NOTHING_TO_INLINE")
 inline fun <S : CapiT, T : CPointed> NativePointer<out S>.cptr(): CPointer<T> {
+    @Suppress("UNCHECKED_CAST")
     return (this as CPointerWrapper<out S>).ptr as CPointer<T>
 }
 
@@ -270,7 +269,6 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
     set(memScope, this@toRString)
 }
 
-@OptIn(ExperimentalForeignApi::class)
 @Suppress("LargeClass", "FunctionNaming")
 actual object RealmInterop {
 
@@ -411,6 +409,7 @@ actual object RealmInterop {
     actual fun realm_config_set_encryption_key(config: RealmConfigurationPointer, encryptionKey: ByteArray) {
         memScoped {
             val encryptionKeyPointer = encryptionKey.refTo(0).getPointer(memScope)
+            @Suppress("UNCHECKED_CAST")
             realm_wrapper.realm_config_set_encryption_key(
                 config.cptr(),
                 encryptionKeyPointer as CPointer<uint8_tVar>,
@@ -424,7 +423,7 @@ actual object RealmInterop {
             val encryptionKey = ByteArray(ENCRYPTION_KEY_LENGTH)
             val encryptionKeyPointer = encryptionKey.refTo(0).getPointer(memScope)
 
-            val keyLength = realm_wrapper.realm_config_get_encryption_key(
+            @Suppress("UNCHECKED_CAST") val keyLength = realm_wrapper.realm_config_get_encryption_key(
                 config.cptr(),
                 encryptionKeyPointer as CPointer<uint8_tVar>
             )
@@ -2550,7 +2549,7 @@ actual object RealmInterop {
     ) {
         realm_wrapper.realm_app_config_set_metadata_mode(
             appConfig.cptr(),
-            realm_wrapper.realm_sync_client_metadata_mode.byValue(metadataMode.metadataValue.toUInt())
+            metadataMode.metadataValue
         )
     }
 
@@ -2560,6 +2559,7 @@ actual object RealmInterop {
     ) {
         memScoped {
             val encryptionKeyPointer = encryptionKey.refTo(0).getPointer(memScope)
+            @Suppress("UNCHECKED_CAST")
             realm_wrapper.realm_app_config_set_metadata_encryption_key(
                 appConfig.cptr(),
                 encryptionKeyPointer as CPointer<uint8_tVar>
@@ -2673,7 +2673,7 @@ actual object RealmInterop {
     ) {
         realm_wrapper.realm_sync_config_set_resync_mode(
             syncConfig.cptr(),
-            realm_sync_session_resync_mode.byValue(resyncMode.nativeValue)
+            resyncMode.value
         )
     }
 
@@ -2780,7 +2780,7 @@ actual object RealmInterop {
 
     actual fun realm_sync_connection_state(syncSession: RealmSyncSessionPointer): CoreConnectionState =
         CoreConnectionState.of(
-            realm_wrapper.realm_sync_session_get_connection_state(syncSession.cptr()).value.toInt()
+            realm_wrapper.realm_sync_session_get_connection_state(syncSession.cptr())
         )
 
     actual fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer) {
@@ -2839,7 +2839,7 @@ actual object RealmInterop {
                 syncSession.cptr(),
                 staticCFunction<COpaquePointer?, realm_wrapper.realm_sync_connection_state, realm_wrapper.realm_sync_connection_state, Unit> { userData, oldState, newState ->
                     safeUserData<ConnectionStateChangeCallback>(userData).run {
-                        onChange(oldState.value.toInt(), newState.value.toInt())
+                        onChange(CoreConnectionState.of(oldState), CoreConnectionState.of(newState))
                     }
                 },
                 StableRef.create(callback).asCPointer(),
@@ -3458,7 +3458,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_subscriptionset_insert_or_assign(
-        mutatableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         query: RealmQueryPointer,
         name: String?
     ): Pair<RealmSubscriptionPointer, Boolean> {
@@ -3466,15 +3466,16 @@ actual object RealmInterop {
             val outIndex = alloc<size_tVar>()
             val outInserted = alloc<BooleanVar>()
             realm_wrapper.realm_sync_subscription_set_insert_or_assign_query(
-                mutatableSubscriptionSet.cptr(),
+                mutableSubscriptionSet.cptr(),
                 query.cptr(),
                 name,
                 outIndex.ptr,
                 outInserted.ptr
             )
+            @Suppress("UNCHECKED_CAST")
             return Pair(
                 realm_sync_subscription_at(
-                    mutatableSubscriptionSet as RealmSubscriptionSetPointer,
+                    mutableSubscriptionSet as RealmSubscriptionSetPointer,
                     outIndex.value.toLong()
                 ),
                 outInserted.value
@@ -3814,6 +3815,7 @@ private inline fun <reified T : Any> disposeUserData(userdata: COpaquePointer?) 
 // Development debugging methods
 // TODO Consider consolidating into platform abstract methods!?
 // private inline fun printlntid(s: String) = printlnWithTid(s)
+@Suppress("NOTHING_TO_INLINE")
 private inline fun printlntid(s: String) = Unit
 
 private fun printlnWithTid(s: String) {
@@ -3825,7 +3827,6 @@ private fun printlnWithTid(s: String) {
 
 private fun tid(): ULong {
     memScoped {
-        initRuntimeIfNeeded()
         val tidVar = alloc<ULongVar>()
         pthread_threadid_np(null, tidVar.ptr).ensureUnixCallResult("pthread_threadid_np")
         return tidVar.value
@@ -3833,6 +3834,8 @@ private fun tid(): ULong {
 }
 
 private fun getUnixError() = strerror(posix_errno())!!.toKString()
+
+@Suppress("NOTHING_TO_INLINE")
 private inline fun Int.ensureUnixCallResult(s: String): Int {
     if (this != 0) {
         throw Error("$s ${getUnixError()}")

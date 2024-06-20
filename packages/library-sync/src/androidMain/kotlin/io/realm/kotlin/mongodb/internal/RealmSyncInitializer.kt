@@ -24,7 +24,6 @@ import android.net.ConnectivityManager
 import android.net.ConnectivityManager.NetworkCallback
 import android.net.Network
 import android.net.NetworkCapabilities
-import android.net.NetworkInfo
 import android.net.NetworkRequest
 import android.os.Build
 import androidx.startup.Initializer
@@ -43,7 +42,7 @@ internal class RealmSyncInitializer : Initializer<Context> {
         @Suppress("DEPRECATION") // Should only be called below API 21
         fun isConnected(cm: ConnectivityManager?): Boolean {
             return cm?.let {
-                val networkInfo: NetworkInfo? = cm.activeNetworkInfo
+                val networkInfo: android.net.NetworkInfo? = cm.activeNetworkInfo
                 networkInfo != null && networkInfo.isConnectedOrConnecting || isEmulator()
             } ?: true
         }

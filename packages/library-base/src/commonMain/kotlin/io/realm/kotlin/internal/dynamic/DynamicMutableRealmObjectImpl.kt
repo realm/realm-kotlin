@@ -57,7 +57,10 @@ internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, Dynami
             clazz,
             nullable = false,
             issueDynamicMutableObject = true
-        ).let { it as RealmList<T> }
+        ).let {
+            @Suppress("unchecked_cast")
+            it as RealmList<T>
+        }
     }
 
     override fun <T : Any> getNullableValueList(propertyName: String, clazz: KClass<T>): RealmList<T?> {
@@ -81,7 +84,10 @@ internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, Dynami
             clazz,
             nullable = false,
             issueDynamicMutableObject = true
-        ).let { it as RealmSet<T> }
+        ).let {
+            @Suppress("unchecked_cast")
+            it as RealmSet<T>
+        }
     }
 
     override fun <T : Any> getNullableValueSet(propertyName: String, clazz: KClass<T>): RealmSet<T?> {
@@ -100,7 +106,7 @@ internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, Dynami
 
     override fun <T : Any> getValueDictionary(
         propertyName: String,
-        clazz: KClass<T>
+        clazz: KClass<T>,
     ): RealmDictionary<T> {
         return RealmObjectHelper.dynamicGetDictionary(
             `io_realm_kotlin_objectReference`!!,
@@ -108,7 +114,10 @@ internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, Dynami
             clazz,
             nullable = false,
             issueDynamicMutableObject = true
-        ).let { it as RealmDictionary<T> }
+        ).let {
+            @Suppress("unchecked_cast")
+            it as RealmDictionary<T>
+        }
     }
 
     override fun <T : Any> getNullableValueDictionary(

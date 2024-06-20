@@ -1,4 +1,6 @@
 @file:Suppress("invisible_member", "invisible_reference")
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 /*
  * Copyright 2021 Realm Inc.
  *
@@ -34,6 +36,8 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.platform.platformFileSystem
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.newSingleThreadContext
 import okio.Path.Companion.toPath
 import kotlin.random.Random
@@ -265,17 +269,18 @@ class RealmConfigurationTests {
     @Test
     fun notificationDispatcherRealmConfigurationDefault() {
         val configuration = RealmConfiguration.create(schema = setOf(Sample::class))
-        assertTrue((configuration as InternalConfiguration).notificationDispatcherFactory is CoroutineDispatcherFactory)
+        assertIs<CoroutineDispatcherFactory>((configuration as InternalConfiguration).notificationDispatcherFactory)
     }
 
     @Test
     fun notificationDispatcherRealmConfigurationBuilderDefault() {
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
-        assertTrue((configuration as InternalConfiguration).notificationDispatcherFactory is CoroutineDispatcherFactory)
+        assertIs<CoroutineDispatcherFactory>((configuration as InternalConfiguration).notificationDispatcherFactory)
     }
 
     @Test
     @Suppress("invisible_member")
+    @DelicateCoroutinesApi
     fun notificationDispatcherRealmConfigurationBuilder() {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class))
@@ -286,17 +291,18 @@ class RealmConfigurationTests {
     @Test
     fun writeDispatcherRealmConfigurationDefault() {
         val configuration = RealmConfiguration.create(schema = setOf(Sample::class))
-        assertTrue((configuration as InternalConfiguration).writeDispatcherFactory.create().dispatcher is CoroutineDispatcher)
+        assertIs<CoroutineDispatcher>((configuration as InternalConfiguration).writeDispatcherFactory.create().dispatcher)
     }
 
     @Test
     fun writeDispatcherRealmConfigurationBuilderDefault() {
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
-        assertTrue((configuration as InternalConfiguration).writeDispatcherFactory.create().dispatcher is CoroutineDispatcher)
+        assertIs<CoroutineDispatcher>((configuration as InternalConfiguration).writeDispatcherFactory.create().dispatcher)
     }
 
     @Test
     @Suppress("invisible_member")
+    @DelicateCoroutinesApi
     fun writeDispatcherRealmConfigurationBuilder() {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
         val configuration =
@@ -307,6 +313,7 @@ class RealmConfigurationTests {
 
     @Test
     @Suppress("invisible_member")
+    @DelicateCoroutinesApi
     fun writesExecutesOnWriteDispatcher() {
         val dispatcher = newSingleThreadContext("ConfigurationTest")
         val configuration =

@@ -43,11 +43,11 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
-import kotlin.test.assertTrue
 import kotlin.test.fail
 
 @Suppress("LargeClass")
@@ -469,7 +469,7 @@ class MutableRealmTests {
 
     @Test
     fun writeReturningUnmanaged() {
-        assertTrue(realm.writeBlocking { Parent() } is Parent)
+        assertIs<Parent>(realm.writeBlocking { Parent() })
     }
 
     @Test

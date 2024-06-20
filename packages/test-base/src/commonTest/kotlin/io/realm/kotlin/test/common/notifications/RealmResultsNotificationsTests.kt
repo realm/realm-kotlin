@@ -38,6 +38,7 @@ import io.realm.kotlin.test.common.utils.assertIsChangeSet
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.filterNot
@@ -319,6 +320,7 @@ class RealmResultsNotificationsTests : FlowableTests, KeyPathFlowableTests {
                 assertIs<UpdatedResults<*>>(resultsChange)
                 assertEquals(2, resultsChange.list.size)
             }
+            @OptIn(ExperimentalCoroutinesApi::class)
             assertTrue(c1.isEmpty)
             observer2.cancel()
             c1.close()
@@ -413,12 +415,7 @@ class RealmResultsNotificationsTests : FlowableTests, KeyPathFlowableTests {
         }
         c.receiveOrFail().let { resultsChange ->
             assertIs<UpdatedResults<Sample>>(resultsChange)
-            when (resultsChange) {
-                is UpdatedResults -> {
-                    assertEquals(1, resultsChange.changes.size)
-                }
-                else -> fail("Unexpected change: $resultsChange")
-            }
+            assertEquals(1, resultsChange.changes.size)
         }
         observer.cancel()
         c.close()
@@ -455,12 +452,7 @@ class RealmResultsNotificationsTests : FlowableTests, KeyPathFlowableTests {
         }
         c.receiveOrFail().let { resultsChange ->
             assertIs<UpdatedResults<Sample>>(resultsChange)
-            when (resultsChange) {
-                is UpdatedResults -> {
-                    assertEquals(1, resultsChange.changes.size)
-                }
-                else -> fail("Unexpected change: $resultsChange")
-            }
+            assertEquals(1, resultsChange.changes.size)
         }
         observer.cancel()
         c.close()
@@ -510,16 +502,11 @@ class RealmResultsNotificationsTests : FlowableTests, KeyPathFlowableTests {
         }
         c.receiveOrFail().let { resultsChange ->
             assertIs<UpdatedResults<Sample>>(resultsChange)
-            when (resultsChange) {
-                is ResultsChange<*> -> {
-                    // Core will only report something changed to the top-level property.
-                    assertEquals(1, resultsChange.changes.size)
-                    // Default value is 42, so if this event is triggered by the first write
-                    // this assert will fail
-                    assertEquals(1, resultsChange.list.first().intField)
-                }
-                else -> fail("Unexpected change: $resultsChange")
-            }
+            // Core will only report something changed to the top-level property.
+            assertEquals(1, resultsChange.changes.size)
+            // Default value is 42, so if this event is triggered by the first write
+            // this assert will fail
+            assertEquals(1, resultsChange.list.first().intField)
         }
         observer.cancel()
         c.close()
@@ -569,13 +556,8 @@ class RealmResultsNotificationsTests : FlowableTests, KeyPathFlowableTests {
         }
         c.receiveOrFail().let { resultsChange ->
             assertIs<UpdatedResults<Sample>>(resultsChange)
-            when (resultsChange) {
-                is ResultsChange<*> -> {
-                    // Core will only report something changed to the top-level property.
-                    assertEquals(1, resultsChange.changes.size)
-                }
-                else -> fail("Unexpected change: $resultsChange")
-            }
+            // Core will only report something changed to the top-level property.
+            assertEquals(1, resultsChange.changes.size)
         }
         observer.cancel()
         c.close()
