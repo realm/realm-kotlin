@@ -32,10 +32,8 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.test.mongodb.util.AppAdmin
 import io.realm.kotlin.test.mongodb.util.AppAdminImpl
+import io.realm.kotlin.test.mongodb.util.AppInitializer
 import io.realm.kotlin.test.mongodb.util.AppServicesClient
-import io.realm.kotlin.test.mongodb.util.BaasApp
-import io.realm.kotlin.test.mongodb.util.Service
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CloseableCoroutineDispatcher
@@ -90,27 +88,23 @@ open class TestApp private constructor(
     @OptIn(ExperimentalKBsonSerializerApi::class)
     constructor(
         testId: String?,
-        appName: String = TEST_APP_PARTITION,
+        appInitializer: AppInitializer,
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("$testId-dispatcher"),
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = {
-            it.syncRootDirectory(PlatformUtils.createTempDir("$appName-$testId"))
+            it.syncRootDirectory(PlatformUtils.createTempDir("${appInitializer.name}-$testId"))
         },
         debug: Boolean = false,
         networkTransport: NetworkTransport? = null,
         ejson: EJson = EJson,
-        initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit = { app: BaasApp, service: Service ->
-            initializeDefault(app, service)
-        }
     ) : this(
         dispatcher,
         build(
             debug = debug,
-            appName = appName,
+            appInitializer = appInitializer,
             dispatcher = dispatcher,
             builder = builder,
             networkTransport = networkTransport,
             ejson = ejson,
-            initialSetup = initialSetup
         )
     )
 
@@ -170,12 +164,11 @@ open class TestApp private constructor(
         @Suppress("LongParameterList")
         fun build(
             debug: Boolean,
-            appName: String,
+            appInitializer: AppInitializer,
             dispatcher: CoroutineDispatcher,
             builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
             networkTransport: NetworkTransport?,
             ejson: EJson,
-            initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
         ): Pair<App, AppAdmin> {
             val appAdmin: AppAdmin = runBlocking(dispatcher) {
                 AppServicesClient.build(
@@ -183,7 +176,7 @@ open class TestApp private constructor(
                     debug = debug,
                     dispatcher = dispatcher
                 ).run {
-                    val baasApp = getOrCreateApp(appName, initialSetup)
+                    val baasApp = getOrCreateApp(appInitializer)
 
                     AppAdminImpl(this, baasApp)
                 }

@@ -40,7 +40,6 @@ import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.test.mongodb.SyncServerConfig
 import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.test.mongodb.common.FLEXIBLE_SYNC_SCHEMA_COUNT
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
@@ -66,6 +65,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.serializer
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
+private const val PRIVATE_PATH = "/api/private/v1.0"
 
 data class SyncPermissions(
     val read: Boolean,
@@ -113,8 +113,17 @@ data class BaasApp(
     @SerialName("client_app_id") val clientAppId: String,
     val name: String,
     @SerialName("domain_id") val domainId: String,
-    @SerialName("group_id") val groupId: String
-)
+    @SerialName("group_id") val groupId: String,
+
+    @Transient private val _client: AppServicesClient? = null
+) {
+    val client: AppServicesClient
+        get() = _client ?: TODO("App should be copy'ed with _client set to the AppServicesClient that retrieved it")
+    val url: String
+        get() = client.baseUrl + ADMIN_PATH + "/groups/${this.groupId}/apps/${this._id}"
+    val privateUrl: String
+        get() = client.baseUrl + PRIVATE_PATH + "/groups/${this.groupId}/apps/${this._id}"
+}
 
 /**
  * Client to interact with App Services Server. It allows to create Applications and tweak their
@@ -122,145 +131,34 @@ data class BaasApp(
  */
 class AppServicesClient(
     val baseUrl: String,
-    private val groupUrl: String,
-    private val httpClient: HttpClient,
+    private val groupId: String,
+    internal val httpClient: HttpClient,
     val dispatcher: CoroutineDispatcher,
 ) {
-    companion object {
-        // Default serializer fails with
-        // InvalidMutabilityException: mutation attempt of frozen kotlin.collections.HashMap
-        // on native. Have tried the various workarounds from
-        // https://github.com/Kotlin/kotlinx.serialization/issues/1450
-        // but only one that works is manual invoking the deserializer
-        @OptIn(InternalSerializationApi::class)
-        private suspend inline fun <reified T : Any> HttpClient.typedRequest(
-            method: HttpMethod,
-            url: String,
-            crossinline block: HttpRequestBuilder.() -> Unit = {}
-        ): T {
-            val response: HttpResponse = this@typedRequest.request(url) {
-                this.method = method
-                this.apply(block)
-            }
-            if (!response.status.isSuccess()) {
-                throw IllegalStateException("Http request failed: $url. ${response.status}: ${response.bodyAsText()}")
-            }
-            return response.bodyAsText()
-                .let {
-                    Json { ignoreUnknownKeys = true }.decodeFromString(
-                        T::class.serializer(),
-                        it
-                    )
-                }
-        }
 
-        // Default serializer fails with
-        // InvalidMutabilityException: mutation attempt of frozen kotlin.collections.HashMap
-        // on native. Have tried the various workarounds from
-        // https://github.com/Kotlin/kotlinx.serialization/issues/1450
-        // but only one that works is manual invoking the deserializer
-        @OptIn(InternalSerializationApi::class)
-        private suspend inline fun <reified T : Any> HttpClient.typedListRequest(
-            method: HttpMethod,
-            url: String,
-            crossinline block: HttpRequestBuilder.() -> Unit = {}
-        ): List<T> {
-            return this@typedListRequest.request(url) {
-                this.method = method
-                this.apply(block)
-            }.bodyAsText()
-                .let {
-                    Json { ignoreUnknownKeys = true }.decodeFromString(
-                        ListSerializer(T::class.serializer()),
-                        it
-                    )
-                }
-        }
-
-        suspend fun build(
-            debug: Boolean,
-            baseUrl: String,
-            dispatcher: CoroutineDispatcher,
-        ): AppServicesClient {
-            val adminUrl = baseUrl + ADMIN_PATH
-            // Work around issues on Native with the Ktor client being created and used
-            // on different threads.
-            // Log in using unauthorized client
-            val unauthorizedClient = defaultClient("realm-baas-unauthorized", debug)
-
-            var loginMethod: String = "local-userpass"
-            var json: Map<String, String> = mapOf("username" to SyncServerConfig.email, "password" to SyncServerConfig.password)
-            if (SyncServerConfig.publicApiKey.isNotEmpty()) {
-                loginMethod = "mongodb-cloud"
-                json = mapOf("username" to SyncServerConfig.publicApiKey, "apiKey" to SyncServerConfig.privateApiKey)
-            }
-            val loginResponse = unauthorizedClient.typedRequest<LoginResponse>(
-                HttpMethod.Post,
-                "$adminUrl/auth/providers/$loginMethod/login"
-            ) {
-                contentType(ContentType.Application.Json)
-                setBody(json)
-            }
-
-            // Setup authorized client for the rest of the requests
-            val accessToken = loginResponse.access_token
-            unauthorizedClient.close()
-
-            val httpClient = defaultClient("realm-baas-authorized", debug) {
-                defaultRequest {
-                    headers {
-                        append("Authorization", "Bearer $accessToken")
-                    }
-                }
-                install(ContentNegotiation) {
-                    json(
-                        Json {
-                            prettyPrint = true
-                            isLenient = true
-                        }
-                    )
-                }
-                install(Logging) {
-                    // Set to LogLevel.ALL to debug Admin API requests. All relevant
-                    // data for each request/response will be console or LogCat.
-                    level = LogLevel.INFO
-                }
-            }
-
-            // Collect app group id
-            val groupId = httpClient.typedRequest<Profile>(Get, "$adminUrl/auth/profile")
-                .roles
-                .first()
-                .group_id
-
-            return AppServicesClient(
-                baseUrl,
-                "$adminUrl/groups/$groupId",
-                httpClient,
-                dispatcher
-            )
-        }
-    }
+    val groupUrl: String
+        get() = baseUrl + ADMIN_PATH + "/groups/$groupId"
 
     fun closeClient() {
         httpClient.close()
     }
 
-    suspend fun getOrCreateApp(
-        appName: String,
-        initializer: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
-    ): BaasApp =
-        getApp(appName) ?: createApp(appName) {
-            initialize(this, initializer)
+    suspend fun getOrCreateApp(appInitializer: AppInitializer): BaasApp {
+        val app = getApp(appInitializer.name)
+        return app ?: createApp(appInitializer.name) {
+            appInitializer.initialize(this@AppServicesClient, this)
         }
+    }
 
-    private suspend fun getApp(appName: String): BaasApp? =
-        withContext(dispatcher) {
+    private suspend fun getApp(appName: String): BaasApp? {
+        val withContext = withContext(dispatcher) {
             httpClient.typedListRequest<BaasApp>(Get, "$groupUrl/apps")
                 .firstOrNull {
                     it.name == appName
-                }
+                }?.copy(_client = this@AppServicesClient)
         }
+        return withContext
+    }
 
     private suspend fun createApp(
         appName: String,
@@ -273,14 +171,23 @@ class AppServicesClient(
             httpClient.typedRequest<BaasApp>(Post, "$groupUrl/apps") {
                 setBody(Json.parseToJsonElement("""{"name": $appName}"""))
                 contentType(ContentType.Application.Json)
-            }.apply {
+            }.copy(_client = this@AppServicesClient).apply {
                 initializer(this)
             }
         }
     }
 
-    val BaasApp.url: String
-        get() = "$groupUrl/apps/${this._id}"
+    suspend fun BaasApp.toggleFeatures(features: Set<String>, enable: Boolean) {
+        withContext(dispatcher) {
+            httpClient.typedRequest<Unit>(
+                Post,
+                "$privateUrl/features"
+            ) {
+                setBody(Json.parseToJsonElement("""{ "action": "${if (enable) "enable" else "disable"}", "feature_flags": [ ${features.joinToString { "\"$it\"" }} ] }"""))
+                contentType(ContentType.Application.Json)
+            }
+        }
+    }
 
     suspend fun BaasApp.addFunction(function: Function): Function =
         withContext(dispatcher) {
@@ -475,7 +382,7 @@ class AppServicesClient(
                     .first {
                         val type = if (TEST_APP_CLUSTER_NAME.isEmpty()) "mongodb" else "mongodb-atlas"
                         it.type == type
-                    }
+                    }.copy(app = this@mongodbService)
             }
         }
 
@@ -714,5 +621,120 @@ class AppServicesClient(
                     else -> it.jsonObject
                 }
             }
+        }
+    companion object {
+        suspend fun build(
+            debug: Boolean,
+            baseUrl: String,
+            dispatcher: CoroutineDispatcher,
+        ): AppServicesClient {
+            val adminUrl = baseUrl + ADMIN_PATH
+            // Work around issues on Native with the Ktor client being created and used
+            // on different threads.
+            // Log in using unauthorized client
+            val unauthorizedClient = defaultClient("realm-baas-unauthorized", debug)
+
+            var loginMethod: String = "local-userpass"
+            var json: Map<String, String> = mapOf("username" to SyncServerConfig.email, "password" to SyncServerConfig.password)
+            if (SyncServerConfig.publicApiKey.isNotEmpty()) {
+                loginMethod = "mongodb-cloud"
+                json = mapOf("username" to SyncServerConfig.publicApiKey, "apiKey" to SyncServerConfig.privateApiKey)
+            }
+            val loginResponse = unauthorizedClient.typedRequest<LoginResponse>(
+                HttpMethod.Post,
+                "$adminUrl/auth/providers/$loginMethod/login"
+            ) {
+                contentType(ContentType.Application.Json)
+                setBody(json)
+            }
+
+            // Setup authorized client for the rest of the requests
+            val accessToken = loginResponse.access_token
+            unauthorizedClient.close()
+
+            val httpClient = defaultClient("realm-baas-authorized", debug) {
+                defaultRequest {
+                    headers {
+                        append("Authorization", "Bearer $accessToken")
+                    }
+                }
+                install(ContentNegotiation) {
+                    json(
+                        Json {
+                            prettyPrint = true
+                            isLenient = true
+                        }
+                    )
+                }
+                install(Logging) {
+                    // Set to LogLevel.ALL to debug Admin API requests. All relevant
+                    // data for each request/response will be console or LogCat.
+                    level = LogLevel.ALL
+                }
+            }
+
+            // Collect app group id
+            val groupId = httpClient.typedRequest<Profile>(Get, "$adminUrl/auth/profile")
+                .roles
+                .first()
+                .group_id ?: "null"
+
+            return AppServicesClient(
+                baseUrl,
+                groupId,
+                httpClient,
+                dispatcher
+            )
+        }
+    }
+}
+
+// Default serializer fails with
+// InvalidMutabilityException: mutation attempt of frozen kotlin.collections.HashMap
+// on native. Have tried the various workarounds from
+// https://github.com/Kotlin/kotlinx.serialization/issues/1450
+// but only one that works is manual invoking the deserializer
+@OptIn(InternalSerializationApi::class)
+private suspend inline fun <reified T : Any> HttpClient.typedRequest(
+    method: HttpMethod,
+    url: String,
+    crossinline block: HttpRequestBuilder.() -> Unit = {}
+): T {
+    val response: HttpResponse = this@typedRequest.request(url) {
+        this.method = method
+        this.apply(block)
+    }
+    if (!response.status.isSuccess()) {
+        throw IllegalStateException("Http request failed: $url. ${response.status}: ${response.bodyAsText()}")
+    }
+    return response.bodyAsText()
+        .let {
+            Json { ignoreUnknownKeys = true }.decodeFromString(
+                T::class.serializer(),
+                it
+            )
+        }
+}
+
+// Default serializer fails with
+// InvalidMutabilityException: mutation attempt of frozen kotlin.collections.HashMap
+// on native. Have tried the various workarounds from
+// https://github.com/Kotlin/kotlinx.serialization/issues/1450
+// but only one that works is manual invoking the deserializer
+@OptIn(InternalSerializationApi::class)
+private suspend inline fun <reified T : Any> HttpClient.typedListRequest(
+    method: HttpMethod,
+    url: String,
+    crossinline block: HttpRequestBuilder.() -> Unit = {}
+): List<T> {
+    return this@typedListRequest.request(url) {
+        this.method = method
+        this.apply(block)
+    }.bodyAsText()
+        .let {
+            Json { ignoreUnknownKeys = true }.decodeFromString(
+                ListSerializer(T::class.serializer()),
+                it
+            )
         }
 }

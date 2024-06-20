@@ -27,6 +27,7 @@ import io.realm.kotlin.mongodb.ext.profileAsBsonDocument
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
+import io.realm.kotlin.test.mongodb.util.DefaultPartitionBasedAppInitializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -102,6 +103,7 @@ class UserProfileTests {
     fun setUp() {
         app = TestApp(
             this::class.simpleName,
+            DefaultPartitionBasedAppInitializer,
             networkTransport = object : NetworkTransport {
                 override val authorizationHeaderName: String?
                     get() = ""

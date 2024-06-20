@@ -18,29 +18,116 @@ package io.realm.kotlin.test.mongodb.util
 import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
-object TestAppInitializer {
-    // Setups a test app
-    suspend fun AppServicesClient.initializeDefault(app: BaasApp, service: Service) {
-        addEmailProvider(app)
+interface AppInitializer {
+    val name: String
+    suspend fun initialize(client: AppServicesClient, app: BaasApp)
+}
 
-        when (app.name) {
-            TEST_APP_PARTITION -> initializePartitionSync(app, service)
-            TEST_APP_FLEX -> initializeFlexibleSync(app, service)
+open class BaseAppInitializer(
+    override val name: String,
+    val block: (suspend AppServicesClient.(app: BaasApp) -> Unit)? = null,
+) : AppInitializer {
+
+    override suspend fun initialize(client: AppServicesClient, app: BaasApp) {
+        with(client) {
+            with(app) {
+                addFunction(insertDocument)
+                addFunction(queryDocument)
+                addFunction(deleteDocument)
+                addFunction(countDocuments)
+
+                val testAuthFuncId = addFunction(testAuthFunc)._id
+                addAuthProvider(
+                    """
+                        {
+                            "type": "custom-function",
+                            "config": {
+                                "authFunctionId": "$testAuthFuncId",
+                                "authFunctionName": "${testAuthFunc.name}"
+                            }
+                        }
+                    """.trimIndent()
+                )
+
+                addAuthProvider("""{"type": "anon-user"}""")
+
+                // Enable 'API-KEY' by updating it. It exists by default in the server so we cannot add.
+                getAuthProvider("api-key").run {
+                    enable(true)
+                }
+
+                val (type: String, config: String) = if (TEST_APP_CLUSTER_NAME.isEmpty()) {
+                    "mongodb" to """{ "uri": "mongodb://localhost:26000" }"""
+                } else {
+                    "mongodb-atlas" to """{ "clusterName": "$TEST_APP_CLUSTER_NAME" }"""
+                }
+                addService(
+                    """
+                        {
+                            "name": "BackingDB",
+                            "type": "$type",
+                            "config": $config
+                        }
+                    """.trimIndent()
+                ).let { service: Service ->
+                    val dbName = app.clientAppId
+                    service.addDefaultRule(
+                        """
+                            {
+                                "roles": [{
+                                    "name": "defaultRole",
+                                    "apply_when": {},
+                                    "document_filters": {
+                                        "read": true,
+                                        "write": true
+                                    },
+                                    "write": true,
+                                    "read": true,
+                                    "insert": true,
+                                    "delete": true
+                                }]
+                            }
+                        """.trimIndent()
+                    )
+
+                    app.setCustomUserData(
+                        """
+                            {
+                                "mongo_service_id": ${service._id},
+                                "enabled": true,
+                                "database_name": "$dbName",
+                                "collection_name": "UserData",
+                                "user_id_field": "user_id"
+                            }
+                        """.trimIndent()
+                    )
+                }
+                with(client) {
+                    block?.invoke(this, app)
+                }
+                app.setDevelopmentMode(true)
+                addEmailProvider(app)
+            }
         }
     }
+}
 
-    @Suppress("LongMethod")
-    suspend fun AppServicesClient.initializeFlexibleSync(
-        app: BaasApp,
-        service: Service,
-        recoveryDisabled: Boolean = false // TODO
-    ) {
-        val databaseName = app.clientAppId
-        service.setSyncConfig(
-            """
+object DefaultPartitionBasedAppInitializer :
+    BaseAppInitializer(TEST_APP_PARTITION, { initializePartitionSync(it) })
+
+object DefaultFlexibleSyncAppInitializer :
+    BaseAppInitializer(TEST_APP_FLEX, { initializeFlexibleSync(it) })
+
+@Suppress("LongMethod")
+suspend fun AppServicesClient.initializeFlexibleSync(
+    app: BaasApp,
+    recoveryDisabled: Boolean = false, // TODO
+) {
+    val databaseName = app.clientAppId
+    app.mongodbService.setSyncConfig(
+        """
             {
                 "flexible_sync": {
                     "state": "enabled",
@@ -52,23 +139,22 @@ object TestAppInitializer {
                     ]
                 }
             }
-            """.trimIndent()
-        )
-    }
+        """.trimIndent()
+    )
+}
 
-    @Suppress("LongMethod")
-    suspend fun AppServicesClient.initializePartitionSync(
-        app: BaasApp,
-        service: Service,
-        recoveryDisabled: Boolean = false // TODO
-    ) {
-        val databaseName = app.clientAppId
+@Suppress("LongMethod")
+suspend fun AppServicesClient.initializePartitionSync(
+    app: BaasApp,
+    recoveryDisabled: Boolean = false, // TODO
+) {
+    val databaseName = app.clientAppId
 
-        app.addFunction(canReadPartition)
-        app.addFunction(canWritePartition)
+    app.addFunction(canReadPartition)
+    app.addFunction(canWritePartition)
 
-        service.setSyncConfig(
-            """
+    app.mongodbService.setSyncConfig(
+        """
             {
                 "sync": {
                     "state": "enabled",
@@ -102,11 +188,11 @@ object TestAppInitializer {
                     }
                 }
             }
-            """.trimIndent()
-        )
+        """.trimIndent()
+    )
 
-        app.addSchema(
-            """
+    app.addSchema(
+        """
             {
                 "metadata": {
                     "data_source": "BackingDB",
@@ -134,11 +220,11 @@ object TestAppInitializer {
                     "title": "SyncDog"
                 }
             }
-            """.trimIndent()
-        )
+        """.trimIndent()
+    )
 
-        app.addSchema(
-            """
+    app.addSchema(
+        """
             {
                 "metadata": {
                     "data_source": "BackingDB",
@@ -185,20 +271,20 @@ object TestAppInitializer {
                     "title": "SyncPerson"
                 }
             }
-            """.trimIndent()
-        )
-    }
+        """.trimIndent()
+    )
+}
 
-    suspend fun AppServicesClient.addEmailProvider(
-        app: BaasApp,
-        autoConfirm: Boolean = true,
-        runConfirmationFunction: Boolean = false
-    ) = with(app) {
-        val confirmFuncId = addFunction(confirmFunc)._id
-        val resetFuncId = addFunction(resetFunc)._id
+suspend fun AppServicesClient.addEmailProvider(
+    app: BaasApp,
+    autoConfirm: Boolean = true,
+    runConfirmationFunction: Boolean = false,
+) = with(app) {
+    val confirmFuncId = addFunction(confirmFunc)._id
+    val resetFuncId = addFunction(resetFunc)._id
 
-        addAuthProvider(
-            """
+    addAuthProvider(
+        """
             {
                 "type": "local-userpass",
                 "config": {
@@ -214,95 +300,14 @@ object TestAppInitializer {
                     "runResetFunction": false
                 }
             }
-            """.trimIndent()
-        )
-    }
+        """.trimIndent()
+    )
+}
 
-    suspend fun AppServicesClient.initialize(
-        app: BaasApp,
-        block: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
-    ) = with(app) {
-        addFunction(insertDocument)
-        addFunction(queryDocument)
-        addFunction(deleteDocument)
-        addFunction(countDocuments)
-
-        val testAuthFuncId = addFunction(testAuthFunc)._id
-        addAuthProvider(
-            """
-            {
-                "type": "custom-function",
-                "config": {
-                    "authFunctionId": "$testAuthFuncId",
-                    "authFunctionName": "${testAuthFunc.name}"
-                }
-            }
-            """.trimIndent()
-        )
-
-        addAuthProvider("""{"type": "anon-user"}""")
-
-        // Enable 'API-KEY' by updating it. It exists by default in the server so we cannot add.
-        getAuthProvider("api-key").run {
-            enable(true)
-        }
-
-        val (type: String, config: String) = if (TEST_APP_CLUSTER_NAME.isEmpty()) {
-            "mongodb" to """{ "uri": "mongodb://localhost:26000" }"""
-        } else {
-            "mongodb-atlas" to """{ "clusterName": "$TEST_APP_CLUSTER_NAME" }"""
-        }
-        addService(
-            """
-            {
-                "name": "BackingDB",
-                "type": "$type",
-                "config": $config
-            }
-            """.trimIndent()
-        ).let { service: Service ->
-            val dbName = app.clientAppId
-            service.addDefaultRule(
-                """
-                {
-                    "roles": [{
-                        "name": "defaultRole",
-                        "apply_when": {},
-                        "document_filters": {
-                            "read": true,
-                            "write": true
-                        },
-                        "write": true,
-                        "read": true,
-                        "insert": true,
-                        "delete": true
-                    }]
-                }
-                """.trimIndent()
-            )
-
-            app.setCustomUserData(
-                """
-                {
-                    "mongo_service_id": ${service._id},
-                    "enabled": true,
-                    "database_name": "$dbName",
-                    "collection_name": "UserData",
-                    "user_id_field": "user_id"
-                }
-                """.trimIndent()
-            )
-
-            block(app, service)
-        }
-
-        setDevelopmentMode(true)
-    }
-
-    private val insertDocument = Function(
-        name = "insertDocument",
-        source =
-        """
+private val insertDocument = Function(
+    name = "insertDocument",
+    source =
+    """
         exports = function (service, db, collection, document) {
             const mongodb = context.services.get(service);
             const result = mongodb
@@ -313,13 +318,13 @@ object TestAppInitializer {
             return result;
         }
         
-        """.trimIndent()
-    )
+    """.trimIndent()
+)
 
-    private val deleteDocument = Function(
-        name = "deleteDocument",
-        source =
-        """
+private val deleteDocument = Function(
+    name = "deleteDocument",
+    source =
+    """
         exports = function (service, db, collection, query) {
             const mongodb = context.services.get(service);
             const result = mongodb
@@ -330,13 +335,13 @@ object TestAppInitializer {
             return result;
         }
         
-        """.trimIndent()
-    )
+    """.trimIndent()
+)
 
-    private val queryDocument = Function(
-        name = "queryDocument",
-        source =
-        """
+private val queryDocument = Function(
+    name = "queryDocument",
+    source =
+    """
         exports = function (service, db, collection, query) {
             const mongodb = context.services.get(service);
             const result = mongodb
@@ -346,14 +351,13 @@ object TestAppInitializer {
         
             return result;
         }
-        
-        """.trimIndent()
-    )
+    """.trimIndent()
+)
 
-    private val countDocuments = Function(
-        name = "countDocuments",
-        source =
-        """
+private val countDocuments = Function(
+    name = "countDocuments",
+    source =
+    """
         exports = function (service, db, collection) {
             const mongodb = context.services.get(service);
             const result = mongodb
@@ -363,13 +367,13 @@ object TestAppInitializer {
             return { value: result };
         }
         
-        """.trimIndent()
-    )
+    """.trimIndent()
+)
 
-    private val testAuthFunc = Function(
-        name = "testAuthFunc",
-        source =
-        """
+private val testAuthFunc = Function(
+    name = "testAuthFunc",
+    source =
+    """
         exports = ({mail, id}) => {
             // Auth function will fail for emails with a domain different to @10gen.com
             // or with id lower than 666
@@ -380,14 +384,13 @@ object TestAppInitializer {
                 return mail;
             }
         }
-        
-        """.trimIndent()
-    )
+    """.trimIndent()
+)
 
-    private val confirmFunc = Function(
-        name = "confirmFunc",
-        source =
-        """
+private val confirmFunc = Function(
+    name = "confirmFunc",
+    source =
+    """
         exports = async ({ token, tokenId, username }) => {
           // process the confirm token, tokenId and username
           
@@ -413,14 +416,13 @@ object TestAppInitializer {
             return { status: 'fail' };
           }
         }
-        
-        """.trimIndent()
-    )
+    """.trimIndent()
+)
 
-    private val resetFunc = Function(
-        name = "resetFunc",
-        source =
-        """
+private val resetFunc = Function(
+    name = "resetFunc",
+    source =
+    """
         exports = ({ token, tokenId, username, password }, customParam1, customParam2) => {
             if (customParam1 != "say-the-magic-word" || customParam2 != 42) {
                 return { status: 'fail' };
@@ -428,14 +430,13 @@ object TestAppInitializer {
                 return { status: 'success' };
             }
         }
-        
-        """.trimIndent()
-    )
+    """.trimIndent()
+)
 
-    private val canReadPartition = Function(
-        name = "canReadPartition",
-        source =
-        """
+private val canReadPartition = Function(
+    name = "canReadPartition",
+    source =
+    """
         /**
          * Users with an email that contains `_noread_` do not have read access,
          * all others do.
@@ -448,90 +449,84 @@ object TestAppInitializer {
             return true;
           }
         }
-        
-        """.trimIndent()
-    )
+    """.trimIndent()
+)
 
-    private val canWritePartition = Function(
+private val canWritePartition =
+    Function(
         name = "canWritePartition",
         source =
         """
-        /**
-         * Users with an email that contains `_nowrite_` do not have write access,
-         * all others do.
-         */
-        exports = async (partition) => {
-          const email = context.user.data.email;
-          if (email != undefined) {
-            return(!email.includes("_nowrite_"));
-          } else {
-            return true;
-          }  
-        }
-        
+            /**
+             * Users with an email that contains `_nowrite_` do not have write access,
+             * all others do.
+             */
+            exports = async (partition) => {
+              const email = context.user.data.email;
+              if (email != undefined) {
+                return(!email.includes("_nowrite_"));
+              } else {
+                return true;
+              }  
+            }
         """.trimIndent()
     )
 
-    val FIRST_ARG_FUNCTION = Function(
-        name = "firstArg",
-        source =
-        """
+val FIRST_ARG_FUNCTION = Function(
+    name = "firstArg",
+    source =
+    """
         exports = function(arg){
           // Returns first argument
           return arg
         };
-        
-        """.trimIndent()
-    )
+    """.trimIndent()
+)
 
-    val SUM_FUNCTION = Function(
-        name = "sum",
-        source =
-        """
+val SUM_FUNCTION = Function(
+    name = "sum",
+    source =
+    """
         exports = function(...args) {
             return parseInt(args.reduce((a,b) => a + b, 0));
         };
-        
-        """.trimIndent()
-    )
+    """.trimIndent()
+)
 
-    val NULL_FUNCTION = Function(
-        name = "null",
-        source =
-        """
+val NULL_FUNCTION = Function(
+    name = "null",
+    source =
+    """
         exports = function(arg){
           return null;
         };
-        
-        """.trimIndent()
-    )
+    """.trimIndent()
+)
 
-    val ERROR_FUNCTION = Function(
-        name = "error",
-        source =
-        """
+val ERROR_FUNCTION = Function(
+    name = "error",
+    source =
+    """
         exports = function(arg){
           return unknown;
         };
-        
-        """.trimIndent()
-    )
+    """.trimIndent()
+)
 
-    val VOID_FUNCTION = Function(
-        name = "void",
-        source =
-        """
+val VOID_FUNCTION = Function(
+    name = "void",
+    source =
+    """
         exports = function(arg){
           return void(0);
         };
-        
-        """.trimIndent()
-    )
+    """.trimIndent()
+)
 
-    val AUTHORIZED_ONLY_FUNCTION = Function(
-        name = "authorizedOnly",
-        source =
-        """
+val AUTHORIZED_ONLY_FUNCTION = Function(
+    name = "authorizedOnly",
+    source =
+    """
         exports = function(arg){
           /*
             Accessing application's values:
@@ -548,10 +543,9 @@ object TestAppInitializer {
           */
           return {arg: context.user};
         };
-        
-        """.trimIndent(),
-        canEvaluate = Json.decodeFromString(
-            """
+    """.trimIndent(),
+    canEvaluate = Json.decodeFromString(
+        """
             {
                 "%%user.data.email": {
                     "%in": [
@@ -559,7 +553,6 @@ object TestAppInitializer {
                     ]
                 }
             }
-            """.trimIndent()
-        )
+        """.trimIndent()
     )
-}
+)

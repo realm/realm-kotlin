@@ -24,11 +24,8 @@ import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
-import io.realm.kotlin.test.mongodb.syncServerAppName
 import io.realm.kotlin.test.mongodb.util.AppServicesClient
-import io.realm.kotlin.test.mongodb.util.BaasApp
-import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer.initialize
-import io.realm.kotlin.test.mongodb.util.Service
+import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer
 import io.realm.kotlin.test.mongodb.util.TEST_METHODS
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
@@ -66,9 +63,7 @@ internal class KtorNetworkTransportTest {
                 dispatcher = dispatcher
             )
             appClient.run {
-                getOrCreateApp(syncServerAppName("ktor")) { app: BaasApp, service: Service ->
-                    initialize(app, TEST_METHODS)
-                }
+                getOrCreateApp(KtorTestAppInitializer)
             }
         }
 

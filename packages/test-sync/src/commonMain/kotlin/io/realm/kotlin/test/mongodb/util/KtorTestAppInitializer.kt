@@ -17,7 +17,10 @@ package io.realm.kotlin.test.mongodb.util
 
 import io.ktor.http.HttpMethod
 
-object KtorTestAppInitializer {
+object KtorTestAppInitializer : AppInitializer {
+    override suspend fun initialize(client: AppServicesClient, app: BaasApp) {
+        client.initialize(app, TEST_METHODS)
+    }
 
     // Setups the app with the functions and https endpoints required to run the KtorNetworkTransportTests
     suspend fun AppServicesClient.initialize(app: BaasApp, methods: List<HttpMethod>) =
@@ -68,4 +71,6 @@ object KtorTestAppInitializer {
                 )
             }
         }
+
+    override val name: String = "ktor-test-app"
 }
