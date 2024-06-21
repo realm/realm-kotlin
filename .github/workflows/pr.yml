@@ -1031,7 +1031,7 @@ jobs:
       - name: Run Integration Tests
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-        uses: nhachicha/android-emulator-runner
+        uses: nhachicha/android-emulator-runner@main
         with:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
