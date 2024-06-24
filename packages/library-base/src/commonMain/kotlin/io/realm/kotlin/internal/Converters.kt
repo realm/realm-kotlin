@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("NOTHING_TO_INLINE", "OVERRIDE_BY_INLINE")
 
 package io.realm.kotlin.internal
 
@@ -42,7 +43,6 @@ import io.realm.kotlin.types.geo.GeoCircle
 import io.realm.kotlin.types.geo.GeoPolygon
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
-import kotlin.native.concurrent.SharedImmutable
 import kotlin.reflect.KClass
 
 // This file contains all code for converting public API values into values passed to the C-API.
@@ -144,6 +144,7 @@ internal inline fun realmValueToRealmAny(
                         ?.clazz
                         ?: throw IllegalArgumentException("The object class is not present in the current schema - are you using an outdated schema version?")
                     val realmObject = realmValueToRealmObject(realmValue, clazz, mediator, owner)
+                    @Suppress("UNCHECKED_CAST")
                     RealmAny.create(realmObject!! as RealmObject, clazz as KClass<out RealmObject>)
                 }
             }
@@ -217,6 +218,7 @@ internal abstract class CompositeConverter<T, S> :
 }
 
 // RealmValueConverter with default pass-through public-to-storage-type implementation
+@Suppress("UNCHECKED_CAST")
 internal abstract class PassThroughPublicConverter<T> : CompositeConverter<T, T>() {
     override fun fromPublic(value: T?): T? = passthrough(value) as T?
     override fun toPublic(value: T?): T? = passthrough(value) as T?
@@ -338,7 +340,6 @@ internal object Decimal128Converter : PassThroughPublicConverter<Decimal128>() {
         decimal128Transport(value)
 }
 
-@SharedImmutable
 internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
     mapOf<KClass<*>, RealmValueConverter<*>>(
         Byte::class to ByteConverter,
@@ -365,6 +366,7 @@ internal object RealmValueArgumentConverter {
     fun MemTrackingAllocator.kAnyToPrimaryKeyRealmValue(value: Any?): RealmValue {
         return value?.let { value ->
             primitiveTypeConverters[value::class]?.let { converter ->
+                @Suppress("UNCHECKED_CAST")
                 with(converter as RealmValueConverter<Any?>) {
                     publicToRealmValue(value)
                 }
@@ -383,6 +385,7 @@ internal object RealmValueArgumentConverter {
                         realmAnyToRealmValueWithoutImport(value)
                     else -> {
                         primitiveTypeConverters[value::class]?.let { converter ->
+                            @Suppress("UNCHECKED_CAST")
                             with(converter as RealmValueConverter<Any?>) {
                                 publicToRealmValue(value)
                             }
@@ -579,6 +582,7 @@ internal inline fun realmObjectToRealmReferenceOrError(
 }
 
 // Returns a converter fixed to convert objects of the given type in the context of the given mediator/realm
+@Suppress("UNCHECKED_CAST")
 internal fun <T> converter(
     clazz: KClass<T & Any>
 ): RealmValueConverter<T> = primitiveTypeConverters.getValue(clazz) as RealmValueConverter<T>

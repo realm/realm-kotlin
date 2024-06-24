@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import io.gitlab.arturbosch.detekt.Detekt
+import io.gitlab.arturbosch.detekt.extensions.DetektReports
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -86,30 +88,36 @@ allprojects {
 
     detekt {
         buildUponDefaultConfig = true // preconfigure defaults
-        config = files("$configDir/detekt/detekt.yml") // point to your custom config defining rules to run, overwriting default behavior
+        config.from(files("$configDir/detekt/detekt.yml")) // point to your custom config defining rules to run, overwriting default behavior
         baseline = file("$configDir/detekt/baseline.xml") // a way of suppressing issues before introducing detekt
-        input = files(
-            file("src/androidMain/kotlin"),
-            file("src/androidAndroidTest/kotlin"),
-            file("src/androidTest/kotlin"),
-            file("src/commonMain/kotlin"),
-            file("src/commonTest/kotlin"),
-            file("src/darwin/kotlin"),
-            file("src/ios/kotlin"),
-            file("src/iosMain/kotlin"),
-            file("src/iosTest/kotlin"),
-            file("src/jvm/kotlin"),
-            file("src/jvmMain/kotlin"),
-            file("src/main/kotlin"),
-            file("src/macosMain/kotlin"),
-            file("src/macosTest/kotlin"),
-            file("src/test/kotlin")
+        source.files.addAll(
+            files(
+                file("src/androidMain/kotlin"),
+                file("src/androidAndroidTest/kotlin"),
+                file("src/androidTest/kotlin"),
+                file("src/commonMain/kotlin"),
+                file("src/commonTest/kotlin"),
+                file("src/darwin/kotlin"),
+                file("src/ios/kotlin"),
+                file("src/iosMain/kotlin"),
+                file("src/iosTest/kotlin"),
+                file("src/jvm/kotlin"),
+                file("src/jvmMain/kotlin"),
+                file("src/main/kotlin"),
+                file("src/macosMain/kotlin"),
+                file("src/macosTest/kotlin"),
+                file("src/test/kotlin")
+            )
         )
 
-        reports {
-            html.enabled = true // observe findings in your browser with structure and code snippets
-            xml.enabled = false // checkstyle like format mainly for integrations like GHA
-            txt.enabled = false // similar to the console output, contains issue signature to manually edit baseline files
+        tasks.withType<Detekt>().configureEach {
+            reports {
+                xml.required.set(true)
+                html.required.set(true)
+                txt.required.set(true)
+                sarif.required.set(true)
+                md.required.set(true)
+            }
         }
     }
 }

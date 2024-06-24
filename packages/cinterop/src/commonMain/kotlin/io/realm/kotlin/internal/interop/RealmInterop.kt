@@ -833,7 +833,7 @@ expect object RealmInterop {
     ): Boolean
     // Returns a Pair of (<subscriptionPtr>, <true if inserted, false if updated>)
     fun realm_sync_subscriptionset_insert_or_assign(
-        mutatableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         query: RealmQueryPointer,
         name: String?
     ): Pair<RealmSubscriptionPointer, Boolean>

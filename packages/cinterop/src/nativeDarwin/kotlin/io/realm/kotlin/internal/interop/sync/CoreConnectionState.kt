@@ -16,18 +16,17 @@
 
 package io.realm.kotlin.internal.interop.sync
 
-import io.realm.kotlin.internal.interop.NativeEnumerated
 import realm_wrapper.realm_sync_connection_state
 
-actual enum class CoreConnectionState(override val nativeValue: UInt) : NativeEnumerated {
-    RLM_SYNC_CONNECTION_STATE_DISCONNECTED(realm_sync_connection_state.RLM_SYNC_CONNECTION_STATE_DISCONNECTED.value),
-    RLM_SYNC_CONNECTION_STATE_CONNECTING(realm_sync_connection_state.RLM_SYNC_CONNECTION_STATE_CONNECTING.value),
-    RLM_SYNC_CONNECTION_STATE_CONNECTED(realm_sync_connection_state.RLM_SYNC_CONNECTION_STATE_CONNECTED.value),
+actual enum class CoreConnectionState(val value: realm_sync_connection_state) {
+    RLM_SYNC_CONNECTION_STATE_DISCONNECTED(realm_sync_connection_state.RLM_SYNC_CONNECTION_STATE_DISCONNECTED),
+    RLM_SYNC_CONNECTION_STATE_CONNECTING(realm_sync_connection_state.RLM_SYNC_CONNECTION_STATE_CONNECTING),
+    RLM_SYNC_CONNECTION_STATE_CONNECTED(realm_sync_connection_state.RLM_SYNC_CONNECTION_STATE_CONNECTED),
     ;
 
-    actual companion object {
-        actual fun of(nativeValue: Int): CoreConnectionState =
-            values().find { it.nativeValue == nativeValue.toUInt() }
+    companion object {
+        fun of(nativeValue: realm_sync_connection_state): CoreConnectionState =
+            entries.find { it.value == nativeValue }
                 ?: error("Unknown property type: $nativeValue")
     }
 }

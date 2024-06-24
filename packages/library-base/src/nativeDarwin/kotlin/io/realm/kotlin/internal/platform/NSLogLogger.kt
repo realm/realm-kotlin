@@ -42,7 +42,7 @@ internal class NSLogLogger(
         val logMessage: String = prepareLogMessage(
             throwable = throwable,
             message = messageWithCategory(category, message),
-            args = *args,
+            args = args,
         )
 
         NSLog("%s: [%s] %s", level.name, tag, logMessage)
@@ -107,5 +107,6 @@ internal class NSLogLogger(
 
     // TODO `throwable.stackTraceToString()` have a memory leak. See https://youtrack.jetbrains.com/issue/KT-46291.
     //  So use a slimmed down version until it has been fixed.
+    @Suppress("NOTHING_TO_INLINE")
     private inline fun dumpStackTrace(throwable: Throwable): String = throwable.toString()
 }

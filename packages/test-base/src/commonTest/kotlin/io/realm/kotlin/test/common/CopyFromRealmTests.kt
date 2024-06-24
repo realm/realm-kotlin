@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-@file:Suppress("invisible_reference", "invisible_member")
+@file:Suppress("invisible_reference", "invisible_member", "unchecked_cast")
 package io.realm.kotlin.test.common
 
 import io.realm.kotlin.Realm
@@ -760,10 +760,10 @@ class CopyFromRealmTests {
             intField = 3
         }
 
-        val managedSample1 = realm.writeBlocking {
+        val managedSample1: Sample = realm.writeBlocking {
             copyToRealm(sample)
         }
-        val managedSample2 = realm.writeBlocking {
+        val managedSample2: Sample = realm.writeBlocking {
             findLatest(managedSample1)!!.apply {
                 intField = 42
             }
@@ -772,7 +772,7 @@ class CopyFromRealmTests {
         val o2p = (managedSample2 as RealmObjectInternal).io_realm_kotlin_objectReference!!.objectPointer
         assertFalse(RealmInterop.realm_equals(o1p, o2p))
 
-        val unmanagedObjects = realm.copyFromRealm(listOf(managedSample1, managedSample2))
+        val unmanagedObjects = realm.copyFromRealm(listOf<Sample>(managedSample1, managedSample2))
         assertEquals(2, unmanagedObjects.size)
         val unmanagedSample1 = unmanagedObjects.first()
         val unmanagedSample2 = unmanagedObjects.last()

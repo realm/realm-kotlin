@@ -1,7 +1,10 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package io.realm.kotlin.internal.platform
 
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 

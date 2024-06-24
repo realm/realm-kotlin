@@ -46,7 +46,7 @@ internal class LogCatLogger(
         val logMessage: String = prepareLogMessage(
             throwable = throwable,
             message = messageWithCategory(category, message),
-            args = *args
+            args = args
         )
 
         // Short circuit if message can fit into a single line in LogCat

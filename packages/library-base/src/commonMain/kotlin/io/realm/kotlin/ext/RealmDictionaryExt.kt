@@ -88,6 +88,8 @@ public fun <V> realmDictionaryEntryOf(entry: Map.Entry<String, V>): RealmDiction
  * @returns an in-memory copy of all input objects.
  * @throws IllegalArgumentException if depth < 0 or, or the list is not valid to copy.
  */
+
+@Suppress("NOTHING_TO_INLINE")
 public inline fun <T : RealmObject> RealmDictionary<T?>.copyFromRealm(
     depth: UInt = UInt.MAX_VALUE
 ): Map<String, T?> {

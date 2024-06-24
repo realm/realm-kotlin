@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:OptIn(UnsafeDuringIrConstructionAPI::class)
+
 package io.realm.kotlin.compiler
 
 import io.realm.kotlin.compiler.ClassIds.ASYMMETRIC_OBJECT_INTERFACE
@@ -82,6 +84,7 @@ import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
 import org.jetbrains.kotlin.ir.descriptors.toIrBasedKotlinType
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrDeclarationReference
+import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument

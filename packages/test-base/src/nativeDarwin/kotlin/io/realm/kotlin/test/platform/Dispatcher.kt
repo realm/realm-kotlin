@@ -19,6 +19,7 @@ package io.realm.kotlin.test.platform
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Delay
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Runnable
 import platform.darwin.DISPATCH_TIME_NOW
@@ -38,6 +39,7 @@ internal class NsQueueDispatcher(private val dispatchQueue: dispatch_queue_t) : 
         dispatch_async(dispatchQueue) { block.run() }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val queue = dispatch_get_main_queue()
 

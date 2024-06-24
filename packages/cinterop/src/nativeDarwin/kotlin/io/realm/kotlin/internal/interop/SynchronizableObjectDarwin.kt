@@ -25,13 +25,14 @@ import realm_wrapper.native_pthread_mutex_destroy
 import realm_wrapper.native_pthread_mutex_lock
 import realm_wrapper.native_pthread_mutex_t
 import realm_wrapper.native_pthread_mutex_unlock
-import kotlin.native.internal.createCleaner
+import kotlin.experimental.ExperimentalNativeApi
+import kotlin.native.ref.createCleaner
 
 // Inspired by https://github.com/ktorio/ktor/blob/1.2.x/ktor-utils/posix/src/io/ktor/util/LockNative.kt
 actual class SynchronizableObject {
     private val mutex = nativeHeap.alloc<native_pthread_mutex_t>()
 
-    @OptIn(ExperimentalStdlibApi::class)
+    @OptIn(ExperimentalNativeApi::class)
     private val cleaner = createCleaner(mutex) { capturedMutex ->
         native_pthread_mutex_destroy(capturedMutex.ptr)
         nativeHeap.free(capturedMutex)

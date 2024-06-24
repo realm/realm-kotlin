@@ -114,17 +114,22 @@ open class BaseAppInitializer(
 }
 
 object DefaultPartitionBasedAppInitializer :
-    BaseAppInitializer(TEST_APP_PARTITION, {app ->
-        addEmailProvider(app)
-        initializePartitionSync(app) }
+    BaseAppInitializer(
+        TEST_APP_PARTITION,
+        { app ->
+            addEmailProvider(app)
+            initializePartitionSync(app)
+        }
     )
 
 object DefaultFlexibleSyncAppInitializer :
-    BaseAppInitializer(TEST_APP_FLEX, { app ->
-        addEmailProvider(app)
-        initializeFlexibleSync(app) }
+    BaseAppInitializer(
+        TEST_APP_FLEX,
+        { app ->
+            addEmailProvider(app)
+            initializeFlexibleSync(app)
+        }
     )
-
 
 @Suppress("LongMethod")
 suspend fun AppServicesClient.initializeFlexibleSync(

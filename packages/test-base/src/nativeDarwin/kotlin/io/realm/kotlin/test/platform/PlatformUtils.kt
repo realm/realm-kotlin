@@ -30,7 +30,8 @@ import platform.posix.S_IRWXU
 import platform.posix.nanosleep
 import platform.posix.pthread_threadid_np
 import platform.posix.timespec
-import kotlin.native.internal.GC
+import kotlin.native.runtime.GC
+import kotlin.native.runtime.NativeRuntimeApi
 import kotlin.time.Duration
 
 actual object PlatformUtils {
@@ -67,6 +68,7 @@ actual object PlatformUtils {
         }
     }
 
+    @OptIn(NativeRuntimeApi::class)
     actual fun triggerGC() {
         GC.collect()
     }

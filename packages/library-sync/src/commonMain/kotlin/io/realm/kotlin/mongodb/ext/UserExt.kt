@@ -32,6 +32,7 @@ import org.mongodb.kbson.serialization.EJson
  *
  * @return The profile for this user.
  */
+@Suppress("NOTHING_TO_INLINE")
 public inline fun User.profileAsBsonDocument(): BsonDocument =
     (this as UserImpl).profileInternal { ejson ->
         Bson(ejson) as BsonDocument
@@ -45,6 +46,7 @@ public inline fun User.profileAsBsonDocument(): BsonDocument =
  *
  * @return The custom user data associated with the user.
  */
+@Suppress("NOTHING_TO_INLINE")
 public inline fun User.customDataAsBsonDocument(): BsonDocument? =
     (this as UserImpl).customDataInternal { ejson ->
         Bson(ejson) as BsonDocument

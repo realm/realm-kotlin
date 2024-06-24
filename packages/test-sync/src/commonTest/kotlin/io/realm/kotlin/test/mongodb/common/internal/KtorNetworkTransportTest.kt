@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package io.realm.kotlin.test.mongodb.common.internal
 
 import io.ktor.http.HttpMethod
@@ -26,16 +28,24 @@ import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
 import io.realm.kotlin.test.mongodb.util.AppServicesClient
 import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer
-import io.realm.kotlin.test.mongodb.util.TEST_METHODS
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.trySendOrFail
 import kotlinx.coroutines.CloseableCoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+
+val TEST_METHODS = listOf(
+    HttpMethod.Get,
+    HttpMethod.Post,
+    HttpMethod.Patch,
+    HttpMethod.Put,
+    HttpMethod.Delete,
+)
 
 internal class KtorNetworkTransportTest {
     private lateinit var transport: KtorNetworkTransport

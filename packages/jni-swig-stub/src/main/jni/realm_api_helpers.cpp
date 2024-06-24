@@ -396,6 +396,17 @@ jobject convert_to_jvm_app_error(JNIEnv* env, const realm_app_error_t* error) {
     return env->PopLocalFrame(result);
 }
 
+jobject core_connection_state(JNIEnv* env, realm_sync_connection_state_e state) {
+    static JavaMethod connection_state_constructor(env,
+                                            JavaClassGlobalDef::connection_state(),
+                                            "of",
+                                            "(I)Lio/realm/kotlin/internal/interop/sync/CoreConnectionState;",
+                                            true);
+    env->PushLocalFrame(1);
+    auto result = env->CallStaticObjectMethod(JavaClassGlobalDef::connection_state(), connection_state_constructor, jint(state));
+    jni_check_exception(env);
+    return env->PopLocalFrame(result);
+}
 
 void app_complete_void_callback(void *userdata, const realm_app_error_t *error) {
     auto env = get_env(true);
@@ -1258,10 +1269,13 @@ void
 realm_sync_session_connection_state_change_callback(void *userdata, realm_sync_connection_state_e old_state, realm_sync_connection_state_e new_state) {
     auto env = get_env(true);
 
-    static JavaMethod java_callback_method(env, JavaClassGlobalDef::connection_state_change_callback(), "onChange", "(II)V");
+    static JavaMethod java_callback_method(env, JavaClassGlobalDef::connection_state_change_callback(), "onChange", "(Lio/realm/kotlin/internal/interop/sync/CoreConnectionState;Lio/realm/kotlin/internal/interop/sync/CoreConnectionState;)V");
+
+    jobject jold_state = core_connection_state(env, old_state);
+    jobject jnew_state = core_connection_state(env, new_state);
 
     jni_check_exception(env);
-    env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method, jint(old_state), jint(new_state));
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method, jold_state, jnew_state);
     jni_check_exception(env);
 }
 

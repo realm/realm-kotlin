@@ -38,7 +38,6 @@ import io.realm.kotlin.internal.schema.SchemaMetadata
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject
-import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import java.io.File
@@ -127,7 +126,7 @@ class GenerationExtensionTest {
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
         val kClazz = result.classLoader.loadClass("sample.input.Sample")
-        val sampleModel = kClazz.newInstance()!!
+        val sampleModel = kClazz.getDeclaredConstructor().newInstance()!!
 
         assertTrue(sampleModel is RealmObject)
         assertTrue(sampleModel is RealmObjectInternal)
@@ -337,7 +336,7 @@ class GenerationExtensionTest {
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
 
         val kClazz = result.classLoader.loadClass("sample.input.Sample")
-        val sampleModel = kClazz.newInstance()!!
+        val sampleModel = kClazz.getDeclaredConstructor().newInstance()!!
         val nameProperty = sampleModel::class.members.find { it.name == "stringField" }
             ?: fail("Couldn't find property name of class Sample")
         assertTrue(nameProperty is KMutableProperty<*>)
@@ -384,9 +383,10 @@ class GenerationExtensionTest {
         inputs.assertGeneratedIR()
     }
 
+    @Suppress("deprecation")
     private fun compile(
         inputs: Files,
-        plugins: List<ComponentRegistrar> = listOf(Registrar()),
+        plugins: List<org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar> = listOf(Registrar()),
         options: List<PluginOption> = emptyList(),
     ): JvmCompilationResult {
         return KotlinCompilation().apply {

@@ -1,3 +1,6 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 /*
  * Copyright 2020 Realm Inc.
  *
@@ -33,9 +36,10 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 }
 
 // Common Kotlin configuration
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     jvm()
-    androidTarget("android") {
+    androidTarget {
         // Changing this will also requires an update to the publishCIPackages task
         // in /packages/build.gradle.kts
         publishLibraryVariants("release")
@@ -116,20 +120,25 @@ kotlin {
 
 // Using a custom name module for internal methods to avoid default name mangling in Kotlin compiler which uses the module
 // name and build type variant as a suffix, this default behaviour can cause mismatch at runtime https://github.com/realm/realm-kotlin/issues/621
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    kotlinOptions {
-        freeCompilerArgs = listOf("-module-name", "io.realm.kotlin.library")
+tasks.withType<KotlinCompilationTask<*>>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions.moduleName.set("io.realm.kotlin.library")
 }
 
 // Android configuration
 android {
-    compileSdkVersion(Versions.Android.compileSdkVersion)
+    namespace = "io.realm.kotlin.mongodb"
+    compileSdk = Versions.Android.compileSdkVersion
     buildToolsVersion = Versions.Android.buildToolsVersion
 
     defaultConfig {
-        minSdkVersion(Versions.Android.minSdk)
-        targetSdkVersion(Versions.Android.targetSdk)
+        minSdk = Versions.Android.minSdk
+        targetSdk = Versions.Android.targetSdk
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         sourceSets {

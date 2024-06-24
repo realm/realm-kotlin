@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:OptIn(UnsafeDuringIrConstructionAPI::class, UnsafeDuringIrConstructionAPI::class)
+
 package io.realm.kotlin.compiler
 
 import io.realm.kotlin.compiler.ClassIds.ASYMMETRIC_OBJECT_INTERFACE
@@ -89,6 +91,7 @@ import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
+import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
@@ -150,6 +153,7 @@ val anyRealmObjectInterfacesFqNames = realmObjectInterfaceFqNames + realmEmbedde
 
 fun IrType.classIdOrFail(): ClassId = getClass()?.classId ?: error("Can't get classId of ${render()}")
 
+@Suppress("NOTHING_TO_INLINE")
 inline fun PsiElement.hasInterface(interfaces: Set<String>): Boolean {
     var hasRealmObjectAsSuperType = false
     this.acceptChildren(object : PsiElementVisitor() {
@@ -177,6 +181,8 @@ inline fun PsiElement.hasInterface(interfaces: Set<String>): Boolean {
 
     return hasRealmObjectAsSuperType
 }
+
+@Suppress("NOTHING_TO_INLINE")
 inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     // Using PSI to find super types to avoid cyclic reference (see https://github.com/realm/realm-kotlin/issues/339)
     return this.findPsi()?.hasInterface(interfaces) ?: false
@@ -309,6 +315,7 @@ internal fun IrPluginContext.lookupConstructorInClass(
 internal fun <T> IrClass.lookupCompanionDeclaration(
     name: Name
 ): T {
+    @Suppress("UNCHECKED_CAST")
     return this.companionObject()?.declarations?.first {
         it is IrDeclarationWithName && it.name == name
     } as T

@@ -1,3 +1,7 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
+
 /*
  * Copyright 2020 Realm Inc.
  *
@@ -35,15 +39,17 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 }
 
 // Common Kotlin configuration
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     jvm()
-    androidTarget("android") {
+    androidTarget {
         // Changing this will also requires an update to the publishCIPackages task
         // in /packages/build.gradle.kts
         publishLibraryVariants("release")
     }
-    ios()
+    iosX64()
     iosSimulatorArm64()
+    iosArm64()
     macosX64()
     macosArm64()
 
@@ -118,25 +124,31 @@ kotlin {
 
 // Using a custom name module for internal methods to avoid default name mangling in Kotlin compiler which uses the module
 // name and build type variant as a suffix, this default behaviour can cause mismatch at runtime https://github.com/realm/realm-kotlin/issues/621
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    kotlinOptions {
-        freeCompilerArgs += listOf("-module-name", "io.realm.kotlin.library")
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions.moduleName.set("io.realm.kotlin.library")
+}
+
+tasks.withType<KotlinCompilationTask<*>>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
 }
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().all {
-    kotlinOptions {
-        freeCompilerArgs += listOf("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
+
+tasks.withType<KotlinNativeCompile>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
     }
 }
 
 // Android configuration
 android {
-    compileSdkVersion(Versions.Android.compileSdkVersion)
+    namespace = "io.realm.kotlin"
+    compileSdk = Versions.Android.compileSdkVersion
     buildToolsVersion = Versions.Android.buildToolsVersion
 
     defaultConfig {
-        minSdkVersion(Versions.Android.minSdk)
-        targetSdkVersion(Versions.Android.targetSdk)
+        minSdk = Versions.Android.minSdk
+        targetSdk = Versions.Android.targetSdk
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         sourceSets {
@@ -191,6 +203,7 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
             }
             jdkVersion.set(8)
         }
+        @Suppress("UNUSED_VARIABLE")
         val commonMain by getting {
             includes.from(
                 "overview.md",

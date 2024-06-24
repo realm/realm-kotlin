@@ -94,6 +94,7 @@ private fun <T : BaseRealm> initSyncContextIfNeeded(realm: T): SyncedRealmContex
     // Kotlin Native.
     val syncContext = (realm as RealmImpl).syncContext
     return if (syncContext.value != null) {
+        @Suppress("UNCHECKED_CAST")
         syncContext.value!! as SyncedRealmContext<T>
     } else {
         // Worst case, two SyncedRealmContext will be created and one of them will thrown
@@ -101,6 +102,7 @@ private fun <T : BaseRealm> initSyncContextIfNeeded(realm: T): SyncedRealmContex
         // some point, it start having too much state, we can consider making `lazy` properties
         // inside the class to defer the construction cost.
         syncContext.compareAndSet(null, SyncedRealmContext<T>(realm))
+        @Suppress("UNCHECKED_CAST")
         syncContext.value!! as SyncedRealmContext<T>
     }
 }

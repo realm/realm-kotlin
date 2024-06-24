@@ -42,7 +42,7 @@ internal class StdOutLogger(
         val logMessage: String = prepareLogMessage(
             throwable = throwable,
             message = messageWithCategory(category, message),
-            args = *args
+            args = args
         )
         val timestamp: String = getTimestamp()
         println("$timestamp ${level.name}: [$tag] $logMessage")
@@ -55,7 +55,7 @@ internal class StdOutLogger(
      *
      * We cannot use `DateFormatter` as it isn't thread-safe.
      */
-    @Suppress("NewApi")
+    @Suppress("NewApi", "NOTHING_TO_INLINE")
     private inline fun getTimestamp(): String {
         return TIMESTAMP_FORMATTER.format(Instant.now().atZone(ZoneId.systemDefault()))
     }
