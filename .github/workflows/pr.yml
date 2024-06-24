@@ -1035,7 +1035,7 @@ jobs:
         with:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          api-level: ${{ vars.VERSION_ANDROID_EMULATOR_API_LEVEL }} # Must be 30 to support aosp_atd
+          api-level: VanillaIceCream # Must be 30 to support aosp_atd
           target: google_apis_ps16k
           arch: x86_64
           disk-size: 4096M
