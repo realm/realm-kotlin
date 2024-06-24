@@ -952,7 +952,7 @@ jobs:
           - type: sync
             test-title: Unit Test Results - Android Sync (Emulator)
 
-    runs-on: macos-14-arm64 # android emulator does not run on arm64 - https://github.com/ReactiveCircus/android-emulator-runner/issues/350
+    runs-on: macos-13-xlarge # android emulator does not run on arm64 - https://github.com/ReactiveCircus/android-emulator-runner/issues/350
     needs: [check-cache, build-android-packages, build-jvm-packages, build-kotlin-metadata-package]
     if: |
       always() && 
