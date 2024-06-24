@@ -26,8 +26,10 @@ import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
+import io.realm.kotlin.test.mongodb.util.AppInitializer
 import io.realm.kotlin.test.mongodb.util.AppServicesClient
-import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer
+import io.realm.kotlin.test.mongodb.util.BaasApp
+import io.realm.kotlin.test.mongodb.util.Function
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.trySendOrFail
@@ -46,6 +48,64 @@ val TEST_METHODS = listOf(
     HttpMethod.Put,
     HttpMethod.Delete,
 )
+
+object KtorTestAppInitializer : AppInitializer {
+    override suspend fun initialize(client: AppServicesClient, app: BaasApp) {
+        client.initialize(app, TEST_METHODS)
+    }
+
+    // Setups the app with the functions and https endpoints required to run the KtorNetworkTransportTests
+    suspend fun AppServicesClient.initialize(app: BaasApp, methods: List<HttpMethod>) =
+        with(app) {
+            // We have to create a function per method because the request parameter does not
+            // has what method triggered it.
+            methods.forEach { httpMethod: HttpMethod ->
+                val method = httpMethod.value
+                val function = addFunction(
+                    Function(
+                        name = "test_network_transport_$method",
+                        runAsSystem = true,
+                        source =
+                        """
+                        exports = async function (request, response) {
+                            response.setHeader('Content-Type', 'text/plain');
+                            let isSuccess = request.query["success"] == "true";
+
+                            if (isSuccess) {
+                                response.setStatusCode(200);
+                                response.setBody("$method-success");
+                            } else {
+                                response.setStatusCode(500);
+                                response.setBody("$method-failure");
+                            }
+                        }
+                        """.trimIndent()
+                    )
+                )
+
+                addEndpoint(
+                    """
+                    {
+                      "route": "/test_network_transport",
+                      "function_name": "${function.name}",
+                      "function_id": "${function._id}",
+                      "http_method": "$method",
+                      "validation_method": "NO_VALIDATION",
+                      "secret_id": "",
+                      "secret_name": "",
+                      "create_user_on_auth": false,
+                      "fetch_custom_user_data": false,
+                      "respond_result": false,
+                      "disabled": false,
+                      "return_type": "JSON"
+                    }
+                    """.trimIndent()
+                )
+            }
+        }
+
+    override val name: String = "ktor-test-app"
+}
 
 internal class KtorNetworkTransportTest {
     private lateinit var transport: KtorNetworkTransport
