@@ -1194,7 +1194,7 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
-          name: ${{ matrix.test-title }}
+          name: Unit Test Results - Android Sync (Emulator Android 15 - 16KB Page Size)
           path: ./packages/test-sync/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
