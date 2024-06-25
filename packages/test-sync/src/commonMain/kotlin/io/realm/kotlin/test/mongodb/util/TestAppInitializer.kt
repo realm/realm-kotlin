@@ -15,20 +15,13 @@
  */
 package io.realm.kotlin.test.mongodb.util
 
-import io.ktor.client.call.body
-import io.realm.kotlin.entities.sync.ChildPk
-import io.realm.kotlin.entities.sync.flx.FlexChildObject
-import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
-import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
+import io.realm.kotlin.test.mongodb.common.FLEXIBLE_SYNC_SCHEMA
 import io.realm.kotlin.test.mongodb.common.PARTITION_BASED_SCHEMA
-import kotlinx.serialization.encodeToString
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 import kotlin.random.Random
 
 interface AppInitializer {
@@ -118,8 +111,12 @@ open class BaseAppInitializer(
                 with(client) {
                     block?.invoke(this, app)
                 }
-                app.setDevelopmentMode(true)
+//                app.setDevelopmentMode(true)
                 addEmailProvider(app)
+
+                while (!app.initialSyncComplete()) {
+                    delay(500)
+                }
             }
         }
     }
@@ -137,6 +134,12 @@ suspend fun AppServicesClient.initializeFlexibleSync(
     recoveryDisabled: Boolean = false, // TODO
 ) {
     val databaseName = app.clientAppId
+
+    app.setSchema(
+        schema = FLEXIBLE_SYNC_SCHEMA,
+        extraProperties = mapOf("realm_id" to PrimitivePropertyType.Type.STRING)
+    )
+
     app.mongodbService.setSyncConfig(
         """
             {
@@ -154,6 +157,13 @@ suspend fun AppServicesClient.initializeFlexibleSync(
     )
 }
 
+
+val json = Json {
+//            classDiscriminatorMode = ClassDiscriminatorMode.NONE
+    classDiscriminator = ""
+    encodeDefaults = true
+}
+
 @Suppress("LongMethod")
 suspend fun AppServicesClient.initializePartitionSync(
     app: BaasApp,
@@ -164,30 +174,10 @@ suspend fun AppServicesClient.initializePartitionSync(
     app.addFunction(canReadPartition)
     app.addFunction(canWritePartition)
 
-
-    val (schemas, relationships) = SchemaProcessor.process(
-        databaseName = databaseName,
-        classes = PARTITION_BASED_SCHEMA,
+    app.setSchema(
+        schema = PARTITION_BASED_SCHEMA,
         extraProperties = mapOf("realm_id" to PrimitivePropertyType.Type.STRING)
     )
-
-    // add schemas
-    val ids: Map<String, String> = schemas.entries
-        .associate { (name, schema) ->
-            name to app.addSchema(Json.encodeToString(schema))
-        }
-
-    relationships
-        .forEach { (name, schema) ->
-            println(
-                app.updateSchema(
-                    id = ids[name]!!,
-                    Json.encodeToString(schema)
-                ).let {
-                    "${it.status} ${it.body<String>()}"
-                }
-            )
-        }
 
     app.mongodbService.setSyncConfig(
         """

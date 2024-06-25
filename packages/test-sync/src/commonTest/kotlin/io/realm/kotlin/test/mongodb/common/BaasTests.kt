@@ -72,7 +72,7 @@ class BaasTests {
     fun testing() {
         val classes = setOf(RegularObject::class, EmbeddedObject::class, Doggy::class)
 
-        val (schemas, relationships) = SchemaProcessor.process("database", classes)
+        val schemas = SchemaProcessor.process("database", classes)
         println(Json { prettyPrint = true }.encodeToString(schemas))
     }
 

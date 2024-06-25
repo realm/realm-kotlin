@@ -135,19 +135,32 @@ data class BaasApp(
 }
 
 @Serializable
-class SchemaRequest(
-    @Transient val database: String = "",
-    val schema: Schema,
-    val relationships: Map<String, SchemaRelationship> = emptyMap()
+data class Schema(
+    val metadata: SchemaMetadata = SchemaMetadata(
+        database = "database",
+        collection = "title"
+    ),
+    val schema: SchemaData,
+    val relationships: Map<String, SchemaRelationship> = emptyMap(),
 ) {
-    private val metadata: SchemaMetadata = SchemaMetadata(
-        database = database,
-        collection = schema.title
-    )
+    companion object {
+        fun create(
+            database: String,
+            schema: SchemaData,
+            relationships: Map<String, SchemaRelationship>
+        ) = Schema(
+            metadata = SchemaMetadata(
+                database = database,
+                collection = schema.title
+            ),
+            schema = schema,
+            relationships = relationships
+        )
+    }
 }
 
 @Serializable
-class SchemaMetadata(
+data class SchemaMetadata(
     var database: String = "",
     @SerialName("data_source")
     var dataSource: String = "BackingDB",
@@ -196,7 +209,7 @@ class ObjectReferenceType(
 }
 
 @Serializable
-data class Schema(
+data class SchemaData(
     var title: String = "",
     var properties: Map<String, SchemaPropertyType> = mutableMapOf(),
     val required: List<String> = mutableListOf(),
@@ -352,6 +365,31 @@ class AppServicesClient(
         }
     }
 
+    suspend fun BaasApp.setSchema(
+        schema: Set<KClass<out BaseRealmObject>>,
+        extraProperties: Map<String, PrimitivePropertyType.Type>
+    ) {
+        val schemas = SchemaProcessor.process(
+            databaseName = clientAppId,
+            classes = schema,
+            extraProperties = extraProperties
+        )
+
+        // First we create the schemas without the relationships
+        val ids: Map<String, String> = schemas.entries
+            .associate { (name, schema: Schema) ->
+                name to addSchema(schema = schema.copy(relationships = emptyMap()))
+            }
+
+        // then we update the schema to add the relationships
+        schemas.forEach { (name, schema) ->
+            updateSchema(
+                id = ids[name]!!,
+                schema = schema
+            )
+        }
+    }
+
     suspend fun BaasApp.addFunction(function: Function): Function =
         withContext(dispatcher) {
             httpClient.typedRequest<Function>(
@@ -365,25 +403,25 @@ class AppServicesClient(
 
     suspend fun BaasApp.updateSchema(
         id: String,
-        schema: String,
+        schema: Schema,
     ): HttpResponse =
         withContext(dispatcher) {
             httpClient.request(
                 "$url/schemas/$id"//?bypass_service_change=SyncSchemaVersionIncrease"
             ) {
                 this.method = HttpMethod.Put
-                setBody(Json.parseToJsonElement(schema))
+                setBody(json.encodeToJsonElement(schema))
                 contentType(ContentType.Application.Json)
             }
         }
 
-    suspend fun BaasApp.addSchema(schema: String): String =
+    suspend fun BaasApp.addSchema(schema: Schema): String =
         withContext(dispatcher) {
             httpClient.typedRequest<JsonObject>(
                 Post,
                 "$url/schemas"
             ) {
-                setBody(Json.parseToJsonElement(schema))
+                setBody(json.encodeToJsonElement(schema))
                 contentType(ContentType.Application.Json)
             }
         }.let { jsonObject: JsonObject ->
@@ -404,7 +442,7 @@ class AppServicesClient(
     suspend fun BaasApp.addSchema(
         database: String,
         classes: Set<KClass<out BaseRealmObject>>,
-        block: SchemaRequest.()->Unit = {},
+        block: Schema.()->Unit = {},
     ): Map<String, String> {
         val realmSchemas = classes.associate { clazz ->
             val companion = clazz.realmObjectCompanionOrNull()!!
@@ -412,7 +450,7 @@ class AppServicesClient(
             realmSchema.cinteropClass.name to realmSchema
         }
 
-        val processedSchemas: MutableMap<String, Schema> = mutableMapOf()
+        val processedSchemas: MutableMap<String, SchemaData> = mutableMapOf()
 
         realmSchemas.entries.forEach { (name: String, realmSchema: RealmClassImpl) ->
             val primaryKey = realmSchema.cinteropClass.name
@@ -430,7 +468,7 @@ class AppServicesClient(
             }
             println(properties)
         }
-        val schemas = mapOf<KClass<out BaseRealmObject>, Schema>()
+        val schemas = mapOf<KClass<out BaseRealmObject>, SchemaData>()
 
 //        classes.forEach { clazz ->
 //            val companion = clazz.realmObjectCompanionOrNull()!!
