@@ -1097,7 +1097,6 @@ jobs:
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
-        if: matrix.type == 'sync'
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
           gh repo clone 10gen/baasaas
@@ -1106,7 +1105,6 @@ jobs:
       # We save the container id to poll against and get the hostname info later
       - name: Start Baas instance in the background
         id: baas_cli_start
-        if: matrix.type == 'sync'
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
@@ -1154,7 +1152,6 @@ jobs:
       # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
       - name: Fetching the BAAS CLI hostname
         id: baas_cli_poll
-        if: matrix.type == 'sync'
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
@@ -1202,7 +1199,7 @@ jobs:
           fail-on-error: true
 
       - name: Stopping the BAAS container
-        if: always() && matrix.type == 'sync'
+        if: always()
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
