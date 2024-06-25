@@ -47,6 +47,7 @@ import io.realm.kotlin.test.mongodb.util.FIRST_ARG_FUNCTION
 import io.realm.kotlin.test.mongodb.util.NULL_FUNCTION
 import io.realm.kotlin.test.mongodb.util.SUM_FUNCTION
 import io.realm.kotlin.test.mongodb.util.VOID_FUNCTION
+import io.realm.kotlin.test.mongodb.util.addEmailProvider
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.RealmAny
@@ -202,6 +203,7 @@ class FunctionsTests {
             object : BaseAppInitializer(
                 syncServerAppName("funcs"),
                 {
+                    addEmailProvider(it)
                     it.addFunction(FIRST_ARG_FUNCTION)
                     it.addFunction(NULL_FUNCTION)
                     it.addFunction(SUM_FUNCTION)

@@ -112,7 +112,6 @@ open class BaseAppInitializer(
                     block?.invoke(this, app)
                 }
 //                app.setDevelopmentMode(true)
-                addEmailProvider(app)
 
                 while (!app.initialSyncComplete()) {
                     delay(500)
@@ -123,7 +122,7 @@ open class BaseAppInitializer(
 }
 
 object DefaultPartitionBasedAppInitializer :
-    BaseAppInitializer(TEST_APP_PARTITION + Random.nextInt(), { initializePartitionSync(it) })
+    BaseAppInitializer(TEST_APP_PARTITION, { initializePartitionSync(it) })
 
 object DefaultFlexibleSyncAppInitializer :
     BaseAppInitializer(TEST_APP_FLEX, { initializeFlexibleSync(it) })
@@ -131,14 +130,13 @@ object DefaultFlexibleSyncAppInitializer :
 @Suppress("LongMethod")
 suspend fun AppServicesClient.initializeFlexibleSync(
     app: BaasApp,
-    recoveryDisabled: Boolean = false, // TODO
+    recoveryDisabled: Boolean = false,
 ) {
     val databaseName = app.clientAppId
 
-    app.setSchema(
-        schema = FLEXIBLE_SYNC_SCHEMA,
-        extraProperties = mapOf("realm_id" to PrimitivePropertyType.Type.STRING)
-    )
+    addEmailProvider(app)
+
+    app.setSchema(FLEXIBLE_SYNC_SCHEMA)
 
     app.mongodbService.setSyncConfig(
         """
@@ -149,7 +147,13 @@ suspend fun AppServicesClient.initializeFlexibleSync(
                     "is_recovery_mode_disabled": $recoveryDisabled,
                     "queryable_fields_names": [
                         "name",
-                        "section"
+                        "section",
+                        "stringField",
+                        "location"
+                    ],
+                    "asymmetric_tables": [
+                        "AsymmetricA",
+                        "Measurement"
                     ]
                 }
             }
@@ -169,6 +173,8 @@ suspend fun AppServicesClient.initializePartitionSync(
     app: BaasApp,
     recoveryDisabled: Boolean = false,
 ) {
+    addEmailProvider(app)
+
     val databaseName = app.clientAppId
 
     app.addFunction(canReadPartition)
@@ -243,8 +249,7 @@ suspend fun AppServicesClient.addEmailProvider(
                     "runResetFunction": false
                 }
             }
-        """.trimIndent()
-    )
+        """.trimIndent())
 }
 
 private val insertDocument = Function(

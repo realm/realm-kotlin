@@ -33,6 +33,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
+import io.ktor.http.HttpMethod.Companion.Put
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
@@ -367,7 +368,7 @@ class AppServicesClient(
 
     suspend fun BaasApp.setSchema(
         schema: Set<KClass<out BaseRealmObject>>,
-        extraProperties: Map<String, PrimitivePropertyType.Type>
+        extraProperties: Map<String, PrimitivePropertyType.Type> = emptyMap()
     ) {
         val schemas = SchemaProcessor.process(
             databaseName = clientAppId,
@@ -919,6 +920,7 @@ class AppServicesClient(
             unauthorizedClient.close()
 
             val httpClient = defaultClient("realm-baas-authorized", debug) {
+                expectSuccess = true
                 defaultRequest {
                     headers {
                         append("Authorization", "Bearer $accessToken")
