@@ -82,6 +82,11 @@ class PBSProgressListenerTests {
     }
 
     @Test
+    fun testing() {
+
+    }
+
+    @Test
     @Ignore // https://github.com/realm/realm-core/issues/7627
     fun downloadProgressListener_changesOnly() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { uploadRealm ->

@@ -15,10 +15,21 @@
  */
 package io.realm.kotlin.test.mongodb.util
 
+import io.ktor.client.call.body
+import io.realm.kotlin.entities.sync.ChildPk
+import io.realm.kotlin.entities.sync.flx.FlexChildObject
+import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
+import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
+import io.realm.kotlin.test.mongodb.common.PARTITION_BASED_SCHEMA
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlin.random.Random
 
 interface AppInitializer {
     val name: String
@@ -115,7 +126,7 @@ open class BaseAppInitializer(
 }
 
 object DefaultPartitionBasedAppInitializer :
-    BaseAppInitializer(TEST_APP_PARTITION, { initializePartitionSync(it) })
+    BaseAppInitializer(TEST_APP_PARTITION + Random.nextInt(), { initializePartitionSync(it) })
 
 object DefaultFlexibleSyncAppInitializer :
     BaseAppInitializer(TEST_APP_FLEX, { initializeFlexibleSync(it) })
@@ -146,12 +157,37 @@ suspend fun AppServicesClient.initializeFlexibleSync(
 @Suppress("LongMethod")
 suspend fun AppServicesClient.initializePartitionSync(
     app: BaasApp,
-    recoveryDisabled: Boolean = false, // TODO
+    recoveryDisabled: Boolean = false,
 ) {
     val databaseName = app.clientAppId
 
     app.addFunction(canReadPartition)
     app.addFunction(canWritePartition)
+
+
+    val (schemas, relationships) = SchemaProcessor.process(
+        databaseName = databaseName,
+        classes = PARTITION_BASED_SCHEMA,
+        extraProperties = mapOf("realm_id" to PrimitivePropertyType.Type.STRING)
+    )
+
+    // add schemas
+    val ids: Map<String, String> = schemas.entries
+        .associate { (name, schema) ->
+            name to app.addSchema(Json.encodeToString(schema))
+        }
+
+    relationships
+        .forEach { (name, schema) ->
+            println(
+                app.updateSchema(
+                    id = ids[name]!!,
+                    Json.encodeToString(schema)
+                ).let {
+                    "${it.status} ${it.body<String>()}"
+                }
+            )
+        }
 
     app.mongodbService.setSyncConfig(
         """
@@ -186,89 +222,6 @@ suspend fun AppServicesClient.initializePartitionSync(
                             }
                         }
                     }
-                }
-            }
-        """.trimIndent()
-    )
-
-    app.addSchema(
-        """
-            {
-                "metadata": {
-                    "data_source": "BackingDB",
-                    "database": "$databaseName",
-                    "collection": "SyncDog"
-                },
-                "schema": {
-                    "properties": {
-                        "_id": {
-                            "bsonType": "objectId"
-                        },
-                        "breed": {
-                            "bsonType": "string"
-                        },
-                        "name": {
-                            "bsonType": "string"
-                        },
-                        "realm_id": {
-                            "bsonType": "string"
-                        }
-                    },
-                    "required": [
-                        "name"
-                    ],
-                    "title": "SyncDog"
-                }
-            }
-        """.trimIndent()
-    )
-
-    app.addSchema(
-        """
-            {
-                "metadata": {
-                    "data_source": "BackingDB",
-                    "database": "$databaseName",
-                    "collection": "SyncPerson"
-                },
-                "relationships": {
-                    "dogs": {
-                        "ref": "#/relationship/BackingDB/$databaseName/SyncDog",
-                        "source_key": "dogs",
-                        "foreign_key": "_id",
-                        "is_list": true
-                    }
-                },
-                "schema": {
-                    "properties": {
-                        "_id": {
-                            "bsonType": "objectId"
-                        },
-                        "age": {
-                            "bsonType": "int"
-                        },
-                        "dogs": {
-                            "bsonType": "array",
-                            "items": {
-                                "bsonType": "objectId"
-                            }
-                        },
-                        "firstName": {
-                            "bsonType": "string"
-                        },
-                        "lastName": {
-                            "bsonType": "string"
-                        },
-                        "realm_id": {
-                            "bsonType": "string"
-                        }
-                    },
-                    "required": [
-                        "firstName",
-                        "lastName",
-                        "age"
-                    ],
-                    "title": "SyncPerson"
                 }
             }
         """.trimIndent()
