@@ -1363,10 +1363,18 @@ class SyncedRealmTests {
     // key of the objects from asset-pbs.realm will not be unique on secondary runs.
     @Test
     fun initialRealm_partitionBasedSync() {
+        // Delete any document from previous runs
+        with(app.asTestApp) {
+            runBlocking {
+                deleteDocuments(clientAppId, ParentPk::class.simpleName!!, "{}")
+            }
+        }
+
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
+
         val config1 = createPartitionSyncConfig(
             user = user, partitionValue = partitionValue, name = "db1",
             errorHandler = object : SyncSession.ErrorHandler {

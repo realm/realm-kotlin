@@ -9,8 +9,6 @@ import io.realm.kotlin.internal.realmObjectCompanionOrNull
 import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.types.BaseRealmObject
-//import kotlinx.serialization.json.ClassDiscriminatorMode
-import kotlinx.serialization.json.Json
 import kotlin.reflect.KClass
 
 // TODO REname methods and classes
@@ -33,7 +31,11 @@ class SchemaProcessor private constructor(
                 .filterNot { (_, schema) -> schema.kind == RealmClassKind.EMBEDDED }
                 .associate { (name, schema) ->
                     // add metadata
-                    name to Schema.create(databaseName, schema, processor.processedRelationships[name]!!)
+                    name to Schema.create(
+                        databaseName,
+                        schema,
+                        processor.processedRelationships[name]!!
+                    )
                 }
         }
     }
@@ -55,7 +57,8 @@ class SchemaProcessor private constructor(
 
     private fun generateRelationships() {
         processedSchemas.values.forEach { schema ->
-            processedRelationships[schema.title] = findRelationships(schema.properties).associateBy { it.sourceKey }
+            processedRelationships[schema.title] =
+                findRelationships(schema.properties).associateBy { it.sourceKey }
         }
     }
 
@@ -79,7 +82,7 @@ class SchemaProcessor private constructor(
             is ObjectReferenceType -> listOf(toSchemaRelationship(path))
             is CollectionPropertyType -> items.toSchemaRelationships("$path$key.[]")
             is MapPropertyType -> additionalProperties.toSchemaRelationships("$path$key.[]")
-            is SchemaData -> findRelationships(properties, "$path${key}.")
+            is SchemaData -> findRelationships(properties, "$path$key.")
             else -> emptyList()
         }
     }
@@ -88,7 +91,7 @@ class SchemaProcessor private constructor(
         SchemaRelationship(
             database = databaseName,
             target = target,
-            sourceKey = "${path}${sourceKey}",
+            sourceKey = "$path$sourceKey",
             foreignKey = targetKey,
             isList = isList
         )
@@ -109,19 +112,18 @@ class SchemaProcessor private constructor(
             }
             .associate { property: PropertyInfo ->
                 property.name to property.toSchemaProperty()
-            } +
-                when (kind) {
-                    RealmClassKind.STANDARD -> extraProperties.entries
-                        .associate {
-                            it.key to PrimitivePropertyType(
-                                bsonType = it.value,
-                                isRequired = false,
-                            )
-                        }
-
-                    RealmClassKind.EMBEDDED -> emptyMap()
-                    RealmClassKind.ASYMMETRIC -> emptyMap()
+            } + when (kind) {
+            RealmClassKind.STANDARD ->
+                extraProperties.entries.associate {
+                    it.key to PrimitivePropertyType(
+                        bsonType = it.value,
+                        isRequired = false,
+                    )
                 }
+
+            RealmClassKind.EMBEDDED -> emptyMap()
+            RealmClassKind.ASYMMETRIC -> emptyMap()
+        }
 
         val required: List<String> = properties.entries
             .filter { (_, value) ->

@@ -21,8 +21,8 @@ import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.common.FLEXIBLE_SYNC_SCHEMA
 import io.realm.kotlin.test.mongodb.common.PARTITION_BASED_SCHEMA
 import kotlinx.coroutines.delay
+import kotlinx.serialization.json.ClassDiscriminatorMode
 import kotlinx.serialization.json.Json
-import kotlin.random.Random
 
 interface AppInitializer {
     val name: String
@@ -161,10 +161,8 @@ suspend fun AppServicesClient.initializeFlexibleSync(
     )
 }
 
-
 val json = Json {
-//            classDiscriminatorMode = ClassDiscriminatorMode.NONE
-    classDiscriminator = ""
+    classDiscriminatorMode = ClassDiscriminatorMode.NONE
     encodeDefaults = true
 }
 
@@ -249,7 +247,8 @@ suspend fun AppServicesClient.addEmailProvider(
                     "runResetFunction": false
                 }
             }
-        """.trimIndent())
+        """.trimIndent()
+    )
 }
 
 private val insertDocument = Function(
