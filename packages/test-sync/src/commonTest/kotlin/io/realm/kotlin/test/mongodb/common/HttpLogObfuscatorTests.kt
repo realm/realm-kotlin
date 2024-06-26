@@ -152,10 +152,11 @@ class HttpLogObfuscatorTests {
             "nullObfuscator",
             object : BaseAppInitializer(
                 syncServerAppName("null-obf"),
-                {
-                    it.addFunction(FIRST_ARG_FUNCTION)
-                    it.addFunction(SUM_FUNCTION)
-                    it.addFunction(NULL_FUNCTION)
+                { app ->
+                    addEmailProvider(app)
+                    app.addFunction(FIRST_ARG_FUNCTION)
+                    app.addFunction(SUM_FUNCTION)
+                    app.addFunction(NULL_FUNCTION)
                 }
             ) {},
             builder = { it.httpLogObfuscator(null) },
