@@ -61,7 +61,6 @@ import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmClass
 import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.schema.ValuePropertyType
-import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
@@ -722,7 +721,7 @@ class SyncedRealmTests {
     fun roundtripCollectionsInMixed() = runBlocking {
         val (email1, password1) = randomEmail() to "password1234"
         val (email2, password2) = randomEmail() to "password1234"
-        val app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
+        val app = TestApp(this::class.simpleName, DefaultFlexibleSyncAppInitializer)
         val user1 = app.createUserAndLogIn(email1, password1)
         val user2 = app.createUserAndLogIn(email2, password2)
 
@@ -805,7 +804,7 @@ class SyncedRealmTests {
     fun collectionsInMixed_asFlow() = runBlocking {
         val (email1, password1) = randomEmail() to "password1234"
         val (email2, password2) = randomEmail() to "password1234"
-        val app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
+        val app = TestApp(this::class.simpleName, DefaultFlexibleSyncAppInitializer)
         val user1 = app.createUserAndLogIn(email1, password1)
         val user2 = app.createUserAndLogIn(email2, password2)
 
