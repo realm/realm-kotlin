@@ -33,6 +33,7 @@ import io.realm.kotlin.test.mongodb.util.BaseAppInitializer
 import io.realm.kotlin.test.mongodb.util.FIRST_ARG_FUNCTION
 import io.realm.kotlin.test.mongodb.util.NULL_FUNCTION
 import io.realm.kotlin.test.mongodb.util.SUM_FUNCTION
+import io.realm.kotlin.test.mongodb.util.addEmailProvider
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
@@ -124,10 +125,11 @@ class HttpLogObfuscatorTests {
     private fun initApp(): TestApp {
         return TestApp(
             this::class.simpleName,
-            object : BaseAppInitializer(syncServerAppName("obfsctr"), {
-                it.addFunction(FIRST_ARG_FUNCTION)
-                it.addFunction(SUM_FUNCTION)
-                it.addFunction(NULL_FUNCTION)
+            object : BaseAppInitializer(syncServerAppName("obfsctr"), { app ->
+                addEmailProvider(app)
+                app.addFunction(FIRST_ARG_FUNCTION)
+                app.addFunction(SUM_FUNCTION)
+                app.addFunction(NULL_FUNCTION)
             }) {}
         )
     }
