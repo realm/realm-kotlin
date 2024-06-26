@@ -27,13 +27,8 @@ actual enum class CoreSyncSessionState(override val nativeValue: Int) : NativeEn
     RLM_SYNC_SESSION_STATE_PAUSED(realm_sync_session_state_e.RLM_SYNC_SESSION_STATE_PAUSED);
 
     companion object {
-        fun of(state: Int): CoreSyncSessionState {
-            for (value in values()) {
-                if (value.nativeValue == state) {
-                    return value
-                }
-            }
-            error("Unknown sync session state: $state")
-        }
+        fun of(state: Int): CoreSyncSessionState =
+            entries.find { it.nativeValue == state }
+                ?: error("Unknown sync session state: $state")
     }
 }

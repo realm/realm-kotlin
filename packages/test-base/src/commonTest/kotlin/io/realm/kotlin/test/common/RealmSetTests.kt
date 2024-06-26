@@ -72,6 +72,7 @@ class RealmSetTests : CollectionQueryTests {
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
 
+    @Suppress("UNCHECKED_CAST")
     private val managedTesters: List<SetApiTester<*, RealmSetContainer>> by lazy {
         descriptors.map {
             val elementType = it.elementType
@@ -797,6 +798,7 @@ internal abstract class ManagedSetTester<T>(
             realm.writeBlocking {
                 val set = typeSafetyManager.createContainerAndGetCollection(this)
                 val element = if (classifier == RealmObject::class) {
+                    @Suppress("UNCHECKED_CAST")
                     copyToRealm(dataSet[0] as RealmObject) as T
                 } else {
                     dataSet[0]

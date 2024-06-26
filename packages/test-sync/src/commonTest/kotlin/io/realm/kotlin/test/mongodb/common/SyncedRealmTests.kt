@@ -20,6 +20,7 @@ package io.realm.kotlin.test.mongodb.common
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.VersionId
+import io.realm.kotlin.entities.JsonStyleRealmObject
 import io.realm.kotlin.entities.sync.BinaryObject
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
@@ -27,7 +28,11 @@ import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
+import io.realm.kotlin.ext.asFlow
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmAnyDictionaryOf
+import io.realm.kotlin.ext.realmAnyListOf
 import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.fileExists
@@ -72,6 +77,9 @@ import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.trySendOrFail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmDictionary
+import io.realm.kotlin.types.RealmList
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -705,6 +713,213 @@ class SyncedRealmTests {
                         }.list
                 assertEquals(1, list.size)
                 assertTrue(SyncObjectWithAllTypes.compareAgainstSampleData(list.first()))
+            }
+        }
+    }
+
+    @Test
+    fun roundtripCollectionsInMixed() = runBlocking {
+        val (email1, password1) = randomEmail() to "password1234"
+        val (email2, password2) = randomEmail() to "password1234"
+        val app = TestApp(this::class.simpleName, DefaultFlexibleSyncAppInitializer)
+        val user1 = app.createUserAndLogIn(email1, password1)
+        val user2 = app.createUserAndLogIn(email2, password2)
+
+        // Create object with all types
+        val selector = ObjectId().toString()
+
+        createFlexibleSyncConfig(
+            user = user1,
+            initialSubscriptions = { realm ->
+                realm.query<JsonStyleRealmObject>("selector = $0", selector).subscribe()
+            }
+        ).let { config ->
+            Realm.open(config).use { realm ->
+                realm.write {
+                    val child = (
+                        JsonStyleRealmObject().apply {
+                            this.id = "CHILD"
+                            this.selector = selector
+                        }
+                        )
+
+                    copyToRealm(
+                        JsonStyleRealmObject().apply {
+                            this.id = "PARENT"
+                            this.selector = selector
+                            value = realmAnyDictionaryOf(
+                                "primitive" to 1,
+                                // List with nested dictionary
+                                "list" to realmAnyListOf(1, "Realm", child, realmAnyDictionaryOf("listkey1" to 1, "listkey2" to "Realm", "listkey3" to child)),
+                                "dictionary" to realmAnyDictionaryOf("dictkey1" to 1, "dictkey2" to "Realm", "dictkey3" to child, "dictkey4" to realmAnyListOf(1, 2, 3))
+                            )
+                        }
+                    )
+                }
+                realm.syncSession.uploadAllLocalChangesOrFail()
+            }
+        }
+        createFlexibleSyncConfig(
+            user = user2,
+            initialSubscriptions = { realm ->
+                realm.query<JsonStyleRealmObject>("selector = $0", selector).subscribe()
+            }
+        ).let { config ->
+            Realm.open(config).use { realm ->
+                realm.syncSession.downloadAllServerChanges(10.seconds)
+                val flow = realm.query<JsonStyleRealmObject>("_id = $0", "PARENT").asFlow()
+                val parent = withTimeout(10.seconds) {
+                    flow.first {
+                        it.list.size >= 1
+                    }.list[0]
+                }
+                parent.let {
+                    val value = it.value!!.asDictionary()
+                    assertEquals(RealmAny.Companion.create(1), value["primitive"])
+                    value["list"]!!.asList().let {
+                        assertEquals(1, it[0]!!.asInt())
+                        assertEquals("Realm", it[1]!!.asString())
+                        assertEquals("CHILD", it[2]!!.asRealmObject<JsonStyleRealmObject>().id)
+                        it[3]!!.asDictionary().let { dict ->
+                            assertEquals(1, dict["listkey1"]!!.asInt())
+                            assertEquals("Realm", dict["listkey2"]!!.asString())
+                            assertEquals("CHILD", dict["listkey3"]!!.asRealmObject<JsonStyleRealmObject>().id)
+                        }
+                        assertEquals("CHILD", it[2]!!.asRealmObject<JsonStyleRealmObject>().id)
+                    }
+                    value["dictionary"]!!.asDictionary().let {
+                        assertEquals(1, it["dictkey1"]!!.asInt())
+                        assertEquals("Realm", it["dictkey2"]!!.asString())
+                        assertEquals("CHILD", it["dictkey3"]!!.asRealmObject<JsonStyleRealmObject>().id)
+                        it["dictkey4"]!!.asList().let {
+                            assertEquals(realmAnyListOf(1, 2, 3).asList(), it)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun collectionsInMixed_asFlow() = runBlocking {
+        val (email1, password1) = randomEmail() to "password1234"
+        val (email2, password2) = randomEmail() to "password1234"
+        val app = TestApp(this::class.simpleName, DefaultFlexibleSyncAppInitializer)
+        val user1 = app.createUserAndLogIn(email1, password1)
+        val user2 = app.createUserAndLogIn(email2, password2)
+
+        // Create object with all types
+        val selector = ObjectId().toString()
+
+        val updateChannel = TestChannel<JsonStyleRealmObject>()
+
+        val configWriter = createFlexibleSyncConfig(
+            user = user1,
+            initialSubscriptions = { realm ->
+                realm.query<JsonStyleRealmObject>("selector = $0", selector).subscribe()
+            }
+        )
+        val configReader = createFlexibleSyncConfig(
+            user = user2,
+            initialSubscriptions = { realm ->
+                realm.query<JsonStyleRealmObject>("selector = $0", selector).subscribe()
+            },
+        ) {
+            this.waitForInitialRemoteData(10.seconds)
+        }
+        Realm.open(configWriter).use { writerRealm ->
+            val source = writerRealm.write {
+                copyToRealm(
+                    JsonStyleRealmObject().apply {
+                        this.selector = selector
+                        value = realmAnyDictionaryOf(
+                            // List with nested dictionary
+                            "list" to realmAnyListOf(
+                                1,
+                                "Realm",
+                                realmAnyDictionaryOf("listkey1" to 1)
+                            ),
+                            // Dictionary with nested list
+                            "dictionary" to realmAnyDictionaryOf(
+                                "dictkey1" to 1,
+                                "dictkey2" to "Realm",
+                                "dictkey3" to realmAnyListOf(1, 2, 3)
+                            )
+                        )
+                    }
+                )
+            }
+            writerRealm.syncSession.uploadAllLocalChangesOrFail()
+
+            Realm.open(configReader).use { readerRealm ->
+                val reader = readerRealm.query<JsonStyleRealmObject>("selector = $0", selector).find().single()
+                val listener = async {
+                    reader.asFlow().collect {
+                        updateChannel.trySendOrFail(it.obj!!)
+                    }
+                }
+                // Flush initial event from channel
+                updateChannel.receiveOrFail()
+
+                // List add
+                writerRealm.write {
+                    findLatest(source)!!.run {
+                        value!!.asDictionary()["list"]!!.asList().add(RealmAny.Companion.create(6))
+                    }
+                }
+                updateChannel.receiveOrFail().run {
+                    val updatedList = value!!.asDictionary()["list"]!!.asList()
+                    assertEquals(4, updatedList.size)
+                    assertEquals(1, updatedList[0]!!.asInt())
+                    assertEquals("Realm", updatedList[1]!!.asString())
+                    assertIs<RealmDictionary<RealmAny>>(updatedList[2]!!.asDictionary())
+                    assertEquals(6, updatedList[3]!!.asInt())
+                }
+
+                // List removal
+                writerRealm.write {
+                    findLatest(source)!!.run {
+                        value!!.asDictionary()["list"]!!.asList().removeAt(1)
+                    }
+                }
+                updateChannel.receiveOrFail().run {
+                    val updatedList = value!!.asDictionary()["list"]!!.asList()
+                    assertEquals(3, updatedList.size)
+                    assertEquals(1, updatedList[0]!!.asInt())
+                    assertIs<RealmDictionary<RealmAny>>(updatedList[1]!!.asDictionary())
+                    assertEquals(6, updatedList[2]!!.asInt())
+                }
+
+                // Dictionary add
+                writerRealm.write {
+                    findLatest(source)!!.run {
+                        value!!.asDictionary()["dictionary"]!!.asDictionary()["dictkey4"] = RealmAny.Companion.create(6)
+                    }
+                }
+                updateChannel.receiveOrFail().run {
+                    val updatedDictionary = value!!.asDictionary()["dictionary"]!!.asDictionary()
+                    assertEquals(4, updatedDictionary.size)
+                    assertEquals(1, updatedDictionary["dictkey1"]!!.asInt())
+                    assertEquals("Realm", updatedDictionary["dictkey2"]!!.asString())
+                    assertIs<RealmList<RealmAny>>(updatedDictionary["dictkey3"]!!.asList())
+                    assertEquals(6, updatedDictionary["dictkey4"]!!.asInt())
+                }
+
+                // Dictionary removal
+                writerRealm.write {
+                    findLatest(source)!!.run {
+                        value!!.asDictionary()["dictionary"]!!.asDictionary().remove("dictkey3")
+                    }
+                }
+                updateChannel.receiveOrFail().run {
+                    val updatedDictionary = value!!.asDictionary()["dictionary"]!!.asDictionary()
+                    assertEquals(3, updatedDictionary.size)
+                    assertEquals(1, updatedDictionary["dictkey1"]!!.asInt())
+                    assertEquals("Realm", updatedDictionary["dictkey2"]!!.asString())
+                    assertEquals(6, updatedDictionary["dictkey4"]!!.asInt())
+                }
+
+                listener.cancel()
             }
         }
     }

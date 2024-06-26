@@ -39,6 +39,7 @@ import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.trySendOrFail
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmList
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
@@ -354,6 +355,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
 
             // Check channel 1 didn't receive the update
             assertEquals(OBJECT_VALUES.size + 1, channel2.receiveOrFail().list.size)
+            @OptIn(ExperimentalCoroutinesApi::class)
             assertTrue(channel1.isEmpty)
 
             observer2.cancel()
@@ -506,15 +508,11 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { listChange ->
             assertIs<UpdatedList<RealmListContainer>>(listChange)
-            when (listChange) {
-                is UpdatedList -> {
-                    assertEquals(1, listChange.changes.size)
-                    // This starts as Realm, so if the first write triggers a change event, it will
-                    // catch it here.
-                    assertEquals("Foo", listChange.list.first().stringField)
-                }
-                else -> fail("Unexpected change: $listChange")
-            }
+
+            assertEquals(1, listChange.changes.size)
+            // This starts as Realm, so if the first write triggers a change event, it will
+            // catch it here.
+            assertEquals("Foo", listChange.list.first().stringField)
         }
         observer.cancel()
         c.close()
@@ -555,12 +553,8 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { listChange ->
             assertIs<UpdatedList<RealmListContainer>>(listChange)
-            when (listChange) {
-                is UpdatedList -> {
-                    assertEquals(1, listChange.changes.size)
-                }
-                else -> fail("Unexpected change: $listChange")
-            }
+
+            assertEquals(1, listChange.changes.size)
         }
         observer.cancel()
         c.close()
@@ -625,16 +619,12 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { listChange ->
             assertIs<UpdatedList<RealmListContainer>>(listChange)
-            when (listChange) {
-                is ListChange -> {
-                    // Core will only report something changed to the top-level property.
-                    assertEquals(1, listChange.changes.size)
-                    // Default value is -1, so if this event is triggered by the first write
-                    // this assert will fail
-                    assertEquals(1, listChange.list.first().id)
-                }
-                else -> fail("Unexpected change: $listChange")
-            }
+
+            // Core will only report something changed to the top-level property.
+            assertEquals(1, listChange.changes.size)
+            // Default value is -1, so if this event is triggered by the first write
+            // this assert will fail
+            assertEquals(1, listChange.list.first().id)
         }
         observer.cancel()
         c.close()
@@ -698,13 +688,9 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { listChange ->
             assertIs<UpdatedList<RealmListContainer>>(listChange)
-            when (listChange) {
-                is ListChange -> {
-                    // Core will only report something changed to the top-level property.
-                    assertEquals(1, listChange.changes.size)
-                }
-                else -> fail("Unexpected change: $listChange")
-            }
+
+            // Core will only report something changed to the top-level property.
+            assertEquals(1, listChange.changes.size)
         }
         observer.cancel()
         c.close()

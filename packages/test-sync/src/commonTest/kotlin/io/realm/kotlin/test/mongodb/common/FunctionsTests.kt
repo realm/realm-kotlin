@@ -202,14 +202,14 @@ class FunctionsTests {
             FunctionsTests::class.simpleName,
             object : BaseAppInitializer(
                 syncServerAppName("funcs"),
-                {
-                    addEmailProvider(it)
-                    it.addFunction(FIRST_ARG_FUNCTION)
-                    it.addFunction(NULL_FUNCTION)
-                    it.addFunction(SUM_FUNCTION)
-                    it.addFunction(ERROR_FUNCTION)
-                    it.addFunction(VOID_FUNCTION)
-                    it.addFunction(AUTHORIZED_ONLY_FUNCTION)
+                { app ->
+                    addEmailProvider(app)
+                    app.addFunction(FIRST_ARG_FUNCTION)
+                    app.addFunction(NULL_FUNCTION)
+                    app.addFunction(SUM_FUNCTION)
+                    app.addFunction(ERROR_FUNCTION)
+                    app.addFunction(VOID_FUNCTION)
+                    app.addFunction(AUTHORIZED_ONLY_FUNCTION)
                 }
             ) {},
             ejson = EJson(

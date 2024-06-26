@@ -111,7 +111,6 @@ open class BaseAppInitializer(
                 with(client) {
                     block?.invoke(this, app)
                 }
-//                app.setDevelopmentMode(true)
 
                 while (!app.initialSyncComplete()) {
                     delay(500)
@@ -122,10 +121,22 @@ open class BaseAppInitializer(
 }
 
 object DefaultPartitionBasedAppInitializer :
-    BaseAppInitializer(TEST_APP_PARTITION, { initializePartitionSync(it) })
+    BaseAppInitializer(
+        TEST_APP_PARTITION,
+        { app ->
+            addEmailProvider(app)
+            initializePartitionSync(app)
+        }
+    )
 
 object DefaultFlexibleSyncAppInitializer :
-    BaseAppInitializer(TEST_APP_FLEX, { initializeFlexibleSync(it) })
+    BaseAppInitializer(
+        TEST_APP_FLEX,
+        { app ->
+            addEmailProvider(app)
+            initializeFlexibleSync(app)
+        }
+    )
 
 @Suppress("LongMethod")
 suspend fun AppServicesClient.initializeFlexibleSync(
@@ -133,8 +144,6 @@ suspend fun AppServicesClient.initializeFlexibleSync(
     recoveryDisabled: Boolean = false,
 ) {
     val databaseName = app.clientAppId
-
-    addEmailProvider(app)
 
     app.setSchema(FLEXIBLE_SYNC_SCHEMA)
 
@@ -171,8 +180,6 @@ suspend fun AppServicesClient.initializePartitionSync(
     app: BaasApp,
     recoveryDisabled: Boolean = false,
 ) {
-    addEmailProvider(app)
-
     val databaseName = app.clientAppId
 
     app.addFunction(canReadPartition)

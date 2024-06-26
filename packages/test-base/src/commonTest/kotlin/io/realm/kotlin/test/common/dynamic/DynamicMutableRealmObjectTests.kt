@@ -587,6 +587,7 @@ class DynamicMutableRealmObjectTests {
                                 clazz
                             )
                             assertEquals(1, valueList.size)
+                            @Suppress("UNCHECKED_CAST")
                             assertEquals(value, valueList[0] as T)
                         }
 

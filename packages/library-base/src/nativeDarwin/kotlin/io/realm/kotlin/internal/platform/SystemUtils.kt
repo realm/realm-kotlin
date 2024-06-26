@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.internal.RealmInstantImpl
@@ -5,6 +20,7 @@ import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.internal.util.Exceptions
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.RealmInstant
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.ObjCObjectVar
 import kotlinx.cinterop.ULongVar
@@ -126,6 +142,7 @@ public actual fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>
     return field.returnType
 }
 
+@OptIn(BetaInteropApi::class)
 private fun preparePath(directoryPath: String, dir: NSURL) {
     val fm = NSFileManager.defaultManager
     memScoped {

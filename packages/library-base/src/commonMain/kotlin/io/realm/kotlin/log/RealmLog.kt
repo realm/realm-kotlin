@@ -174,6 +174,7 @@ public object RealmLog {
     /**
      * Log a message.
      */
+    @Suppress("NOTHING_TO_INLINE")
     internal inline fun doLog(
         category: LogCategory,
         level: LogLevel,
@@ -186,7 +187,7 @@ public object RealmLog {
             level = level,
             throwable = throwable,
             message = message,
-            args = *args
+            args = args
         )
     }
 

@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.com.intellij.mock.MockProject
 import org.jetbrains.kotlin.com.intellij.openapi.extensions.LoadingOrder
-import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
@@ -47,13 +46,14 @@ import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
  * The [RealmObjectCompanion] holds static information about the schema (members, primary key, etc.)
  * and utility methods for constructing objects, etc.
  */
-@AutoService(ComponentRegistrar::class)
+@Suppress("deprecation")
+@AutoService(org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar::class)
 @OptIn(ExperimentalCompilerApi::class)
 // TODO ComponentRegistrar is deprecated. Should be migrated to CompilerPluginRegistrar to support
 //  indicating whether plugin is k2-compatible, etc. See these issues for more context:
 //  - https://youtrack.jetbrains.com/issue/KT-52665/Deprecate-ComponentRegistrar
 //  - https://youtrack.jetbrains.com/issue/KT-55300
-class Registrar : ComponentRegistrar {
+class Registrar : org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar {
     override fun registerProjectComponents(
         project: MockProject,
         configuration: CompilerConfiguration

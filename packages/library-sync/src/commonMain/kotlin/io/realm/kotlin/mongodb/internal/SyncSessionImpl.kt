@@ -142,11 +142,11 @@ internal open class SyncSessionImpl(
             token.value = NotificationToken(
                 RealmInterop.realm_sync_session_register_connection_state_change_callback(
                     nativePointer
-                ) { oldState: Int, newState: Int ->
+                ) { oldState: CoreConnectionState, newState: CoreConnectionState ->
                     trySendWithBufferOverflowCheck(
                         ConnectionStateChange(
-                            connectionStateFrom(CoreConnectionState.of(oldState)),
-                            connectionStateFrom(CoreConnectionState.of(newState))
+                            connectionStateFrom(oldState),
+                            connectionStateFrom(newState)
                         )
                     )
                 }

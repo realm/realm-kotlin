@@ -5,6 +5,8 @@ plugins {
 }
 
 android {
+    namespace = "io.realm.kotlin.benchmarks.android"
+    testNamespace = "io.realm.kotlin.benchmarks.android.test"
     compileSdk = Versions.Android.compileSdkVersion
 
     compileOptions {

@@ -34,6 +34,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.trySendOrFail
 import io.realm.kotlin.types.RealmAny
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
@@ -168,6 +169,7 @@ class RealmAnyNestedListNotificationTest : FlowableTests, DeletableEntityNotific
             }
 
             // Check channel 1 didn't receive the update
+            @OptIn(ExperimentalCoroutinesApi::class)
             assertTrue(channel1.isEmpty)
             // But channel 2 did
             assertEquals(2, channel2.receiveOrFail().list.size)
@@ -251,6 +253,7 @@ class RealmAnyNestedListNotificationTest : FlowableTests, DeletableEntityNotific
         TODO("Not yet implemented")
     }
 
+    @Test
     @Ignore
     override fun closeRealmInsideFlowThrows() {
         TODO("Not yet implemented")

@@ -25,9 +25,10 @@
 * Minimum R8: 8.0.34.
 
 ### Internal
-- None.
+- Reworked test app initializer framework.
 
-## 2.0.1 (YYYY-MM-DD)
+
+## 2.0.1-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking changes
 * None.
@@ -98,11 +99,12 @@
 * Minimum Gradle version: 7.2.
 * Minimum Android Gradle Plugin version: 7.1.3.
 * Minimum Android SDK: 16.
-* Minimum R8: 8.0.34.
+* Minimum R8: 8.3.37.
 
 ### Internal
 * Updated to Realm Core 14.7.0 commit c280bdb17522323d5c30dc32a2b9efc9dc80ca3b.
 * Changed Kotlin compiler testing framework to https://github.com/zacsweers/kotlin-compile-testing
+* Updated to Detekt 1.23.6.
 
 
 ## 1.16.0 (2024-05-01)

@@ -121,7 +121,7 @@ class SyncEnumTests {
     @Test
     fun syncSessionResyncMode() {
         checkEnum(realm_sync_session_resync_mode_e::class) { nativeValue ->
-            SyncSessionResyncMode.fromInt(nativeValue)
+            SyncSessionResyncMode.of(nativeValue)
         }
     }
 

@@ -20,6 +20,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.JsonStyleRealmObject
 import io.realm.kotlin.ext.asFlow
+import io.realm.kotlin.ext.realmAnyDictionaryOf
 import io.realm.kotlin.ext.realmAnyListOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.DeletedObject
@@ -34,6 +35,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
@@ -94,6 +96,61 @@ class RealmAnyNestedCollectionNotificationTest {
             assertTrue(changedFields.contains("value"))
             val nestedList = obj.value!!.asList().first()!!.asList()
             assertEquals(listOf(1, 4, 3), nestedList.map { it!!.asInt() })
+        }
+
+        // List operations
+        realm.write {
+            findLatest(o)!!.value = realmAnyListOf(1, 2, 3)
+        }
+        channel.receiveOrFail().apply {
+            assertTrue { this is UpdatedObject<JsonStyleRealmObject> }
+            assertContentEquals(realmAnyListOf(1, 2, 3).asList(), this.obj!!.value!!.asList())
+        }
+
+        // List add
+        realm.write {
+            findLatest(o)!!.value!!.asList().add(RealmAny.create("Realm"))
+        }
+        channel.receiveOrFail().apply {
+            assertTrue { this is UpdatedObject<JsonStyleRealmObject> }
+            assertContentEquals(realmAnyListOf(1, 2, 3, "Realm").asList(), this.obj!!.value!!.asList())
+        }
+
+        // List remove
+        realm.write {
+            findLatest(o)!!.value!!.asList().remove(RealmAny.create(2))
+        }
+        channel.receiveOrFail().apply {
+            assertTrue { this is UpdatedObject<JsonStyleRealmObject> }
+            assertContentEquals(realmAnyListOf(1, 3, "Realm").asList(), this.obj!!.value!!.asList())
+        }
+
+        // Dictionary operations
+        realm.write {
+            findLatest(o)!!.value = realmAnyDictionaryOf("key1" to 1, "key2" to 2, "key3" to 3)
+        }
+
+        channel.receiveOrFail().apply {
+            assertTrue { this is UpdatedObject<JsonStyleRealmObject> }
+            assertEquals(realmAnyDictionaryOf("key1" to 1, "key2" to 2, "key3" to 3).asDictionary(), this.obj!!.value!!.asDictionary())
+        }
+
+        realm.write {
+            findLatest(o)!!.value!!.asDictionary()["key4"] = RealmAny.create("Realm")
+        }
+
+        channel.receiveOrFail().apply {
+            assertTrue { this is UpdatedObject<JsonStyleRealmObject> }
+            assertEquals(realmAnyDictionaryOf("key1" to 1, "key2" to 2, "key3" to 3, "key4" to "Realm").asDictionary(), this.obj!!.value!!.asDictionary())
+        }
+
+        realm.write {
+            findLatest(o)!!.value!!.asDictionary().remove("key2")
+        }
+
+        channel.receiveOrFail().apply {
+            assertTrue { this is UpdatedObject<JsonStyleRealmObject> }
+            assertEquals(realmAnyDictionaryOf("key1" to 1, "key3" to 3, "key4" to "Realm").asDictionary(), this.obj!!.value!!.asDictionary())
         }
 
         realm.write {

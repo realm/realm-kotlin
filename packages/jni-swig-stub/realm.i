@@ -37,6 +37,7 @@ using namespace realm::jni_util;
             // (calling SoLoader directly will create a circular dependency with `jvmMain`)
             try {
                 Class<?> classToLoad = Class.forName("io.realm.kotlin.jvm.SoLoader");
+                @SuppressWarnings("deprecation")
                 Object instance = classToLoad.newInstance();
                 java.lang.reflect.Method loadMethod = classToLoad.getDeclaredMethod("load");
                 loadMethod.invoke(instance);
@@ -56,6 +57,13 @@ realm_string_t rlm_str(const char* str)
 std::string rlm_stdstr(realm_string_t val)
 {
     return std::string(val.data, 0, val.size);
+}
+%}
+
+%typemap(javafinalize) SWIGTYPE %{
+@SuppressWarnings({"deprecation", "removal"})
+protected void finalize() {
+    delete();
 }
 %}
 

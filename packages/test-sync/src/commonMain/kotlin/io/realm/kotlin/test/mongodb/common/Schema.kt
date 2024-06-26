@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.mongodb.common
 
+import io.realm.kotlin.entities.JsonStyleRealmObject
 import io.realm.kotlin.entities.Location
 import io.realm.kotlin.entities.sync.BinaryObject
 import io.realm.kotlin.entities.sync.COLLECTION_SCHEMAS
@@ -50,11 +51,12 @@ private val DEFAULT_SCHEMAS = setOf(
     SyncPerson::class,
     SyncRestaurant::class,
     Location::class,
+    JsonStyleRealmObject::class,
 )
 
 val PARTITION_BASED_SCHEMA = DEFAULT_SCHEMAS
 // Amount of schema classes that should be created on the server. EmbeddedRealmObjects and
 // AsymmetricRealmObjects are not included in this count.
 // Run FlexibleSyncSchemaTests.flexibleSyncSchemaCount for verification.
-const val FLEXIBLE_SYNC_SCHEMA_COUNT = 14
+const val FLEXIBLE_SYNC_SCHEMA_COUNT = 15
 val FLEXIBLE_SYNC_SCHEMA = DEFAULT_SCHEMAS + ASYMMETRIC_SCHEMAS + COLLECTION_SCHEMAS

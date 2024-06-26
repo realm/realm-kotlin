@@ -125,11 +125,11 @@ class HttpLogObfuscatorTests {
     private fun initApp(): TestApp {
         return TestApp(
             this::class.simpleName,
-            object : BaseAppInitializer(syncServerAppName("obfsctr"), {
-                addEmailProvider(it)
-                it.addFunction(FIRST_ARG_FUNCTION)
-                it.addFunction(SUM_FUNCTION)
-                it.addFunction(NULL_FUNCTION)
+            object : BaseAppInitializer(syncServerAppName("obfsctr"), { app ->
+                addEmailProvider(app)
+                app.addFunction(FIRST_ARG_FUNCTION)
+                app.addFunction(SUM_FUNCTION)
+                app.addFunction(NULL_FUNCTION)
             }) {}
         )
     }
@@ -152,11 +152,11 @@ class HttpLogObfuscatorTests {
             "nullObfuscator",
             object : BaseAppInitializer(
                 syncServerAppName("null-obf"),
-                {
-                    addEmailProvider(it)
-                    it.addFunction(FIRST_ARG_FUNCTION)
-                    it.addFunction(SUM_FUNCTION)
-                    it.addFunction(NULL_FUNCTION)
+                { app ->
+                    addEmailProvider(app)
+                    app.addFunction(FIRST_ARG_FUNCTION)
+                    app.addFunction(SUM_FUNCTION)
+                    app.addFunction(NULL_FUNCTION)
                 }
             ) {},
             builder = { it.httpLogObfuscator(null) },
