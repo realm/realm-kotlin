@@ -30,6 +30,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmAny
+import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -527,26 +528,26 @@ class RealmAnyNestedCollectionTests {
 
     @Test
     fun query() = runBlocking<Unit> {
+        var listId: ObjectId? = null
+        var dictId: ObjectId? = null
+        var embeddedId: ObjectId? = null
         realm.write {
-            copyToRealm(
+            listId = copyToRealm(
                 JsonStyleRealmObject().apply {
-                    id = "LIST"
                     value = realmAnyListOf(4, 5, 6)
                 }
-            )
-            copyToRealm(
+            ).id
+            dictId = copyToRealm(
                 JsonStyleRealmObject().apply {
-                    id = "DICT"
                     value = realmAnyDictionaryOf(
                         "key1" to 7,
                         "key2" to 8,
                         "key3" to 9,
                     )
                 }
-            )
-            copyToRealm(
+            ).id
+            embeddedId = copyToRealm(
                 JsonStyleRealmObject().apply {
-                    id = "EMBEDDED"
                     value = realmAnyListOf(
                         listOf(4, 5, 6),
                         mapOf(
@@ -556,35 +557,35 @@ class RealmAnyNestedCollectionTests {
                         )
                     )
                 }
-            )
+            ).id
         }
 
         assertEquals(3, realm.query<JsonStyleRealmObject>().find().size)
 
         // Matching lists
         realm.query<JsonStyleRealmObject>("value[0] == 4").find().single().run {
-            assertEquals("LIST", id)
+            assertEquals(listId, id)
         }
         realm.query<JsonStyleRealmObject>("value[*] == 4").find().single().run {
-            assertEquals("LIST", id)
+            assertEquals(listId, id)
         }
         realm.query<JsonStyleRealmObject>("value[*] == {4, 5, 6}").find().single().run {
-            assertEquals("LIST", id)
+            assertEquals(listId, id)
         }
 
         // Matching dictionaries
         realm.query<JsonStyleRealmObject>("value.key1 == 7").find().single().run {
-            assertEquals("DICT", id)
+            assertEquals(dictId, id)
         }
         realm.query<JsonStyleRealmObject>("value['key1'] == 7").find().single().run {
-            assertEquals("DICT", id)
+            assertEquals(dictId, id)
         }
         realm.query<JsonStyleRealmObject>("value[*] == 7").find().single().run {
-            assertEquals("DICT", id)
+            assertEquals(dictId, id)
         }
         assertEquals(0, realm.query<JsonStyleRealmObject>("value.unknown == 3").find().size)
         realm.query<JsonStyleRealmObject>("value.@keys == 'key1'").find().single().run {
-            assertEquals("DICT", id)
+            assertEquals(dictId, id)
         }
         assertEquals(0, realm.query<JsonStyleRealmObject>("value.@keys == 'unknown'").find().size)
 
@@ -593,19 +594,19 @@ class RealmAnyNestedCollectionTests {
 
         // Matching across all elements and in nested structures
         realm.query<JsonStyleRealmObject>("value[*][*] == 4").find().single().run {
-            assertEquals("EMBEDDED", id)
+            assertEquals(embeddedId, id)
         }
         realm.query<JsonStyleRealmObject>("value[*][*] == 7").find().single().run {
-            assertEquals("EMBEDDED", id)
+            assertEquals(embeddedId, id)
         }
         realm.query<JsonStyleRealmObject>("value[*].@keys == 'key1'").find().single().run {
-            assertEquals("EMBEDDED", id)
+            assertEquals(embeddedId, id)
         }
         realm.query<JsonStyleRealmObject>("value[*].key3[0] == 9").find().single().run {
-            assertEquals("EMBEDDED", id)
+            assertEquals(embeddedId, id)
         }
         realm.query<JsonStyleRealmObject>("value[0][*] == {4, 5, 6}").find().single().run {
-            assertEquals("EMBEDDED", id)
+            assertEquals(embeddedId, id)
         }
         // FIXME Core issue https://github.com/realm/realm-core/issues/7393
         // realm.query<JsonStyleRealmObject>("value[*][*] == {4, 5, 6}").find().single().run {
