@@ -30,8 +30,8 @@ gradlePlugin {
 }
 
 java {
-    sourceCompatibility = Versions.sourceCompatibilityVersion
-    targetCompatibility = Versions.targetCompatibilityVersion
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 repositories {
