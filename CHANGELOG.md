@@ -4,7 +4,7 @@
 - None.
 
 ### Enhancements
-- None.
+- Avoid exporting Core's symbols so we can build statically Kotlin SDK with other SDKs like Swift in the same project [RKOTLIN-877](https://jira.mongodb.org/browse/RKOTLIN-877).
 
 ### Fixed
 - None.
