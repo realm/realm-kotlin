@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("invisible_member", "invisible_reference")
 
 package io.realm.kotlin.test.mongodb.util
 
@@ -35,18 +36,23 @@ import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
+import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.mongodb.sync.SyncMode
+import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.test.mongodb.SyncServerConfig
 import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
-import io.realm.kotlin.test.mongodb.common.FLEXIBLE_SYNC_SCHEMA_COUNT
+import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.ClassDiscriminatorMode
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -57,15 +63,23 @@ import kotlinx.serialization.json.add
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.serializer
+import kotlin.reflect.KClass
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
 private const val PRIVATE_PATH = "/api/private/v1.0"
+
+@OptIn(ExperimentalSerializationApi::class)
+private val json = Json {
+    classDiscriminatorMode = ClassDiscriminatorMode.NONE
+    encodeDefaults = true
+}
 
 data class SyncPermissions(
     val read: Boolean,
@@ -124,6 +138,203 @@ data class BaasApp(
     val privateUrl: String
         get() = client.baseUrl + PRIVATE_PATH + "/groups/${this.groupId}/apps/${this._id}"
 }
+
+@Serializable
+data class Schema(
+    val metadata: SchemaMetadata = SchemaMetadata(
+        database = "database",
+        collection = "title"
+    ),
+    val schema: SchemaData,
+    val relationships: Map<String, SchemaRelationship> = emptyMap(),
+) {
+    constructor(
+        database: String,
+        schema: SchemaData,
+        relationships: Map<String, SchemaRelationship>,
+    ) : this(
+        metadata = SchemaMetadata(
+            database = database,
+            collection = schema.title
+        ),
+        schema = schema,
+        relationships = relationships
+    )
+}
+
+@Serializable
+data class SchemaMetadata(
+    var database: String = "",
+    @SerialName("data_source")
+    var dataSource: String = "BackingDB",
+    var collection: String = "SyncDog",
+)
+
+@Serializable
+data class SchemaRelationship(
+    @SerialName("source_key")
+    val sourceKey: String,
+    @SerialName("foreign_key")
+    val foreignKey: String,
+    @SerialName("is_list")
+    val isList: Boolean,
+    val ref: String = "",
+) {
+    constructor(
+        target: String,
+        database: String,
+        sourceKey: String,
+        foreignKey: String,
+        isList: Boolean,
+    ) : this(
+        sourceKey = sourceKey,
+        foreignKey = foreignKey,
+        isList = isList,
+        ref = "#/relationship/BackingDB/$database/$target"
+    )
+}
+
+@Serializable
+sealed interface SchemaPropertyType {
+    @Transient val isRequired: Boolean
+}
+
+@Serializable
+class ObjectReferenceType(
+    @Transient val sourceKey: String = "",
+    @Transient val targetKey: String = "",
+    @Transient val target: String = "",
+    @Transient val isList: Boolean = false,
+    val bsonType: PrimitivePropertyType.Type,
+) : SchemaPropertyType {
+    constructor(sourceKey: String, targetSchema: RealmClassImpl, isCollection: Boolean) : this(
+        sourceKey = sourceKey,
+        targetKey = targetSchema.cinteropClass.primaryKey,
+        target = targetSchema.name,
+        bsonType = targetSchema.cinteropProperties
+            .first { it.name == targetSchema.cinteropClass.primaryKey }
+            .type
+            .toSchemaType(),
+        isList = isCollection
+    )
+
+    @Transient
+    override val isRequired: Boolean = false
+}
+
+@Serializable
+data class SchemaData(
+    var title: String = "",
+    var properties: Map<String, SchemaPropertyType> = mutableMapOf(),
+    val required: List<String> = mutableListOf(),
+    @Transient val kind: RealmClassKind = RealmClassKind.STANDARD,
+    val type: PrimitivePropertyType.Type = PrimitivePropertyType.Type.OBJECT,
+) : SchemaPropertyType {
+    @Transient
+    override val isRequired: Boolean = false
+}
+
+@Serializable
+data class CollectionPropertyType(
+    val items: SchemaPropertyType,
+    val uniqueItems: Boolean = false,
+) : SchemaPropertyType {
+    val bsonType = PrimitivePropertyType.Type.ARRAY
+    @Transient
+    override val isRequired: Boolean = false
+}
+
+@Serializable
+data class MapPropertyType(
+    val additionalProperties: SchemaPropertyType,
+) : SchemaPropertyType {
+    val bsonType = PrimitivePropertyType.Type.OBJECT
+    @Transient
+    override val isRequired: Boolean = false
+}
+
+@Serializable
+open class PrimitivePropertyType(
+    val bsonType: Type,
+    @Transient override val isRequired: Boolean = false,
+) : SchemaPropertyType {
+
+    enum class Type {
+        @SerialName("string")
+        STRING,
+
+        @SerialName("object")
+        OBJECT,
+
+        @SerialName("array")
+        ARRAY,
+
+        @SerialName("objectId")
+        OBJECT_ID,
+
+        @SerialName("boolean")
+        BOOLEAN,
+
+        @SerialName("bool")
+        BOOL,
+
+        @SerialName("null")
+        NULL,
+
+        @SerialName("regex")
+        REGEX,
+
+        @SerialName("date")
+        DATE,
+
+        @SerialName("timestamp")
+        TIMESTAMP,
+
+        @SerialName("int")
+        INT,
+
+        @SerialName("long")
+        LONG,
+
+        @SerialName("decimal")
+        DECIMAL,
+
+        @SerialName("double")
+        DOUBLE,
+
+        @SerialName("number")
+        NUMBER,
+
+        @SerialName("binData")
+        BIN_DATA,
+
+        @SerialName("uuid")
+        UUID,
+
+        @SerialName("mixed")
+        MIXED,
+
+        @SerialName("float")
+        FLOAT;
+    }
+}
+
+fun PropertyType.toSchemaType() =
+    when (this) {
+        PropertyType.RLM_PROPERTY_TYPE_BOOL -> PrimitivePropertyType.Type.BOOL
+        PropertyType.RLM_PROPERTY_TYPE_INT -> PrimitivePropertyType.Type.INT
+        PropertyType.RLM_PROPERTY_TYPE_STRING -> PrimitivePropertyType.Type.STRING
+        PropertyType.RLM_PROPERTY_TYPE_BINARY -> PrimitivePropertyType.Type.BIN_DATA
+        PropertyType.RLM_PROPERTY_TYPE_OBJECT -> PrimitivePropertyType.Type.OBJECT
+        PropertyType.RLM_PROPERTY_TYPE_FLOAT -> PrimitivePropertyType.Type.FLOAT
+        PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> PrimitivePropertyType.Type.DOUBLE
+        PropertyType.RLM_PROPERTY_TYPE_DECIMAL128 -> PrimitivePropertyType.Type.DECIMAL
+        PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP -> PrimitivePropertyType.Type.DATE
+        PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID -> PrimitivePropertyType.Type.OBJECT_ID
+        PropertyType.RLM_PROPERTY_TYPE_UUID -> PrimitivePropertyType.Type.UUID
+        PropertyType.RLM_PROPERTY_TYPE_MIXED -> PrimitivePropertyType.Type.MIXED
+        else -> throw IllegalArgumentException("Unsupported type")
+    }
 
 /**
  * Client to interact with App Services Server. It allows to create Applications and tweak their
@@ -189,6 +400,31 @@ class AppServicesClient(
         }
     }
 
+    suspend fun BaasApp.setSchema(
+        schema: Set<KClass<out BaseRealmObject>>,
+        extraProperties: Map<String, PrimitivePropertyType.Type> = emptyMap()
+    ) {
+        val schemas = SchemaProcessor.process(
+            databaseName = clientAppId,
+            classes = schema,
+            extraProperties = extraProperties
+        )
+
+        // First we create the schemas without the relationships
+        val ids: Map<String, String> = schemas.entries
+            .associate { (name, schema: Schema) ->
+                name to addSchema(schema = schema.copy(relationships = emptyMap()))
+            }
+
+        // then we update the schema to add the relationships
+        schemas.forEach { (name, schema) ->
+            updateSchema(
+                id = ids[name]!!,
+                schema = schema
+            )
+        }
+    }
+
     suspend fun BaasApp.addFunction(function: Function): Function =
         withContext(dispatcher) {
             httpClient.typedRequest<Function>(
@@ -200,15 +436,31 @@ class AppServicesClient(
             }
         }
 
-    suspend fun BaasApp.addSchema(schema: String): JsonObject =
+    suspend fun BaasApp.updateSchema(
+        id: String,
+        schema: Schema,
+    ): HttpResponse =
+        withContext(dispatcher) {
+            httpClient.request(
+                "$url/schemas/$id"
+            ) {
+                this.method = HttpMethod.Put
+                setBody(json.encodeToJsonElement(schema))
+                contentType(ContentType.Application.Json)
+            }
+        }
+
+    suspend fun BaasApp.addSchema(schema: Schema): String =
         withContext(dispatcher) {
             httpClient.typedRequest<JsonObject>(
                 Post,
                 "$url/schemas"
             ) {
-                setBody(Json.parseToJsonElement(schema))
+                setBody(json.encodeToJsonElement(schema))
                 contentType(ContentType.Application.Json)
             }
+        }.let { jsonObject: JsonObject ->
+            jsonObject["_id"]!!.jsonPrimitive.content
         }
 
     suspend fun BaasApp.addService(service: String): Service =
@@ -555,22 +807,8 @@ class AppServicesClient(
                     Get,
                     "$url/sync/progress"
                 ).let { obj: JsonObject ->
-                    val statuses: JsonElement = obj["progress"]!!
-                    when (statuses) {
-                        is JsonObject -> {
-                            if (statuses.keys.isEmpty()) {
-                                // It might take a few seconds to register the Schemas, so treat
-                                // "empty" progress as initial sync not being complete (as we always
-                                // have at least one pre-defined schema).
-                                false
-                            }
-                            val bootstrapComplete: List<Boolean> = statuses.keys.map { schemaClass ->
-                                statuses[schemaClass]!!.jsonObject["complete"]?.jsonPrimitive?.boolean == true
-                            }
-                            bootstrapComplete.all { it } && statuses.size == FLEXIBLE_SYNC_SCHEMA_COUNT
-                        }
-                        else -> false
-                    }
+                    println(obj)
+                    obj["accepting_clients"]?.jsonPrimitive?.boolean ?: false
                 }
             } catch (ex: IllegalStateException) {
                 if (ex.message!!.contains("there are no mongodb/atlas services with provided sync state")) {
@@ -653,6 +891,7 @@ class AppServicesClient(
             unauthorizedClient.close()
 
             val httpClient = defaultClient("realm-baas-authorized", debug) {
+                expectSuccess = true
                 defaultRequest {
                     headers {
                         append("Authorization", "Bearer $accessToken")
