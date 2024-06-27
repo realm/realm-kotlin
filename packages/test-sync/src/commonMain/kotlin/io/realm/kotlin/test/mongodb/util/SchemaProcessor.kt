@@ -31,7 +31,7 @@ class SchemaProcessor private constructor(
                 .filterNot { (_, schema) -> schema.kind == RealmClassKind.EMBEDDED }
                 .associate { (name, schema) ->
                     // add metadata
-                    name to Schema.create(
+                    name to Schema(
                         databaseName,
                         schema,
                         processor.processedRelationships[name]!!

@@ -46,11 +46,13 @@ import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.ClassDiscriminatorMode
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -73,7 +75,11 @@ import kotlin.reflect.KClass
 private const val ADMIN_PATH = "/api/admin/v3.0"
 private const val PRIVATE_PATH = "/api/private/v1.0"
 
-private val JsonDefaults: Json = Json { encodeDefaults = true }
+@OptIn(ExperimentalSerializationApi::class)
+private val json = Json {
+    classDiscriminatorMode = ClassDiscriminatorMode.NONE
+    encodeDefaults = true
+}
 
 data class SyncPermissions(
     val read: Boolean,
@@ -142,20 +148,18 @@ data class Schema(
     val schema: SchemaData,
     val relationships: Map<String, SchemaRelationship> = emptyMap(),
 ) {
-    companion object {
-        fun create(
-            database: String,
-            schema: SchemaData,
-            relationships: Map<String, SchemaRelationship>
-        ) = Schema(
-            metadata = SchemaMetadata(
-                database = database,
-                collection = schema.title
-            ),
-            schema = schema,
-            relationships = relationships
-        )
-    }
+    constructor(
+        database: String,
+        schema: SchemaData,
+        relationships: Map<String, SchemaRelationship>,
+    ) : this(
+        metadata = SchemaMetadata(
+            database = database,
+            collection = schema.title
+        ),
+        schema = schema,
+        relationships = relationships
+    )
 }
 
 @Serializable
@@ -168,16 +172,26 @@ data class SchemaMetadata(
 
 @Serializable
 data class SchemaRelationship(
-    @Transient val target: String = "",
-    @Transient val database: String = "",
     @SerialName("source_key")
     val sourceKey: String,
     @SerialName("foreign_key")
     val foreignKey: String,
     @SerialName("is_list")
-    val isList: Boolean
+    val isList: Boolean,
+    val ref: String = "",
 ) {
-    val ref: String = "#/relationship/BackingDB/$database/$target"
+    constructor(
+        target: String,
+        database: String,
+        sourceKey: String,
+        foreignKey: String,
+        isList: Boolean,
+    ) : this(
+        sourceKey = sourceKey,
+        foreignKey = foreignKey,
+        isList = isList,
+        ref = "#/relationship/BackingDB/$database/$target"
+    )
 }
 
 @Serializable
