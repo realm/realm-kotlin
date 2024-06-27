@@ -61,7 +61,7 @@ class SoLoader {
         // path should be <default user lib dir>/io.realm.kotlin/libraryVersion]/librealmffi.so
         // if the full path exists then load it otherwise unpack and load it.
         val libraryInstallationLocation: File = defaultAbsolutePath(libraryName)
-        if (!libraryInstallationLocation.exists()) {
+        if (!libraryInstallationLocation.exists() || SDK_VERSION.endsWith("-SNAPSHOT", ignoreCase = true)) {
             unpackAndInstall(libraryName, libraryInstallationLocation)
         }
         @Suppress("UnsafeDynamicallyLoadedCode")
