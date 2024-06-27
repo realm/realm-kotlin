@@ -26,10 +26,10 @@ import io.realm.kotlin.mongodb.sync.Progress
 import io.realm.kotlin.mongodb.sync.ProgressMode
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.syncSession
-import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
+import io.realm.kotlin.test.mongodb.util.DefaultFlexibleSyncAppInitializer
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
@@ -66,7 +66,7 @@ class FLXProgressListenerTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
+        app = TestApp(this::class.simpleName, DefaultFlexibleSyncAppInitializer)
         partitionValue = org.mongodb.kbson.ObjectId().toString()
     }
 
@@ -233,7 +233,7 @@ class FLXProgressListenerTests {
     @Test
     fun completesOnClose() = runBlocking {
         val channel = TestChannel<Boolean>(capacity = 5, onBufferOverflow = BufferOverflow.DROP_OLDEST, failIfBufferIsEmptyOnCancel = false)
-        TestApp("completesOnClose", TEST_APP_FLEX).use { app ->
+        TestApp("completesOnClose", DefaultFlexibleSyncAppInitializer).use { app ->
             val user = app.createUserAndLogIn()
             val realm = Realm.open(createSyncConfig(user))
             try {

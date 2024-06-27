@@ -10,13 +10,13 @@ import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyConfirmedException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.kotlin.mongodb.exceptions.UserNotFoundException
-import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.syncServerAppName
 import io.realm.kotlin.test.mongodb.util.BaasApp
-import io.realm.kotlin.test.mongodb.util.Service
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.addEmailProvider
+import io.realm.kotlin.test.mongodb.util.BaseAppInitializer
+import io.realm.kotlin.test.mongodb.util.DefaultPartitionBasedAppInitializer
+import io.realm.kotlin.test.mongodb.util.addEmailProvider
 import io.realm.kotlin.test.util.TestHelper
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -32,7 +32,7 @@ class EmailPasswordAuthWithAutoConfirmTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName, appName = TEST_APP_PARTITION)
+        app = TestApp(this::class.simpleName, DefaultPartitionBasedAppInitializer)
     }
 
     @AfterTest
@@ -243,9 +243,13 @@ class EmailPasswordAuthWithEmailConfirmTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName, appName = syncServerAppName("em-cnfrm"), initialSetup = { app: BaasApp, service: Service ->
-            addEmailProvider(app, autoConfirm = false)
-        })
+        app = TestApp(
+            this::class.simpleName,
+            object : BaseAppInitializer(
+                syncServerAppName("em-cnfrm"),
+                { app: BaasApp -> addEmailProvider(app, autoConfirm = false) }
+            ) {}
+        )
     }
 
     @AfterTest
@@ -281,9 +285,15 @@ class EmailPasswordAuthWithCustomFunctionTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName, appName = syncServerAppName("em-cstm"), initialSetup = { app: BaasApp, service: Service ->
-            addEmailProvider(app, autoConfirm = false, runConfirmationFunction = true)
-        })
+        app = TestApp(
+            this::class.simpleName,
+            object : BaseAppInitializer(
+                syncServerAppName("em-cstm"),
+                { app ->
+                    addEmailProvider(app, autoConfirm = false, runConfirmationFunction = true)
+                }
+            ) {}
+        )
     }
 
     @AfterTest

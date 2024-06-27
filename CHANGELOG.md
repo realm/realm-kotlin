@@ -25,9 +25,10 @@
 * Minimum R8: 8.0.34.
 
 ### Internal
-- None.
+- Reworked test app initializer framework.
 
-## 2.0.1 (YYYY-MM-DD)
+
+## 2.0.1-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking changes
 * None.

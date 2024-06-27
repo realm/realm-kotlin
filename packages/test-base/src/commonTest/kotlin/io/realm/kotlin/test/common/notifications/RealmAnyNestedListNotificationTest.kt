@@ -84,7 +84,6 @@ class RealmAnyNestedListNotificationTest : FlowableTests, DeletableEntityNotific
         val o: JsonStyleRealmObject = realm.write {
             copyToRealm(
                 JsonStyleRealmObject().apply {
-                    id = "LIST"
                     value = realmAnyListOf(realmAnyListOf(1, 2, 3))
                 }
             )
@@ -281,7 +280,7 @@ class RealmAnyNestedListNotificationTest : FlowableTests, DeletableEntityNotific
                 val asList = findLatest(parent)!!.value!!.asList()
                 println(asList.size)
                 asList.add(
-                    RealmAny.create(JsonStyleRealmObject().apply { id = "CHILD" })
+                    RealmAny.create(JsonStyleRealmObject())
                 )
             }
             channel.receiveOrFail(message = "List add").let {

@@ -40,15 +40,14 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.syncServerAppName
-import io.realm.kotlin.test.mongodb.util.BaasApp
-import io.realm.kotlin.test.mongodb.util.Service
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.AUTHORIZED_ONLY_FUNCTION
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.ERROR_FUNCTION
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.FIRST_ARG_FUNCTION
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.NULL_FUNCTION
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.SUM_FUNCTION
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.VOID_FUNCTION
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
+import io.realm.kotlin.test.mongodb.util.AUTHORIZED_ONLY_FUNCTION
+import io.realm.kotlin.test.mongodb.util.BaseAppInitializer
+import io.realm.kotlin.test.mongodb.util.ERROR_FUNCTION
+import io.realm.kotlin.test.mongodb.util.FIRST_ARG_FUNCTION
+import io.realm.kotlin.test.mongodb.util.NULL_FUNCTION
+import io.realm.kotlin.test.mongodb.util.SUM_FUNCTION
+import io.realm.kotlin.test.mongodb.util.VOID_FUNCTION
+import io.realm.kotlin.test.mongodb.util.addEmailProvider
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.RealmAny
@@ -201,7 +200,18 @@ class FunctionsTests {
     fun setup() {
         app = TestApp(
             FunctionsTests::class.simpleName,
-            syncServerAppName("funcs"),
+            object : BaseAppInitializer(
+                syncServerAppName("funcs"),
+                { app ->
+                    addEmailProvider(app)
+                    app.addFunction(FIRST_ARG_FUNCTION)
+                    app.addFunction(NULL_FUNCTION)
+                    app.addFunction(SUM_FUNCTION)
+                    app.addFunction(ERROR_FUNCTION)
+                    app.addFunction(VOID_FUNCTION)
+                    app.addFunction(AUTHORIZED_ONLY_FUNCTION)
+                }
+            ) {},
             ejson = EJson(
                 serializersModule = SerializersModule {
                     polymorphic(RealmObject::class) {
@@ -209,15 +219,7 @@ class FunctionsTests {
                     }
                 }
             )
-        ) { app: BaasApp, service: Service ->
-            initializeDefault(app, service)
-            app.addFunction(FIRST_ARG_FUNCTION)
-            app.addFunction(NULL_FUNCTION)
-            app.addFunction(SUM_FUNCTION)
-            app.addFunction(ERROR_FUNCTION)
-            app.addFunction(VOID_FUNCTION)
-            app.addFunction(AUTHORIZED_ONLY_FUNCTION)
-        }
+        )
         anonUser = runBlocking {
             app.login(Credentials.anonymous())
         }

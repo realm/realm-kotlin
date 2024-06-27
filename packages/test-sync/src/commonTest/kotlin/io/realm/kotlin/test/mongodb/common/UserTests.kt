@@ -39,6 +39,7 @@ import io.realm.kotlin.test.mongodb.common.mongo.CustomDataType
 import io.realm.kotlin.test.mongodb.common.mongo.TEST_SERVICE_NAME
 import io.realm.kotlin.test.mongodb.common.mongo.customEjsonSerializer
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
+import io.realm.kotlin.test.mongodb.util.DefaultPartitionBasedAppInitializer
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import kotlinx.serialization.SerialName
@@ -71,7 +72,7 @@ class UserTests {
 
     @BeforeTest
     fun setUp() {
-        app = TestApp(this::class.simpleName)
+        app = TestApp(this::class.simpleName, DefaultPartitionBasedAppInitializer)
     }
 
     @AfterTest

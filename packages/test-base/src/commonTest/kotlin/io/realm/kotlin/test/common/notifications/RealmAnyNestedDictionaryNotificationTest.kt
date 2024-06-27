@@ -84,7 +84,6 @@ class RealmAnyNestedDictionaryNotificationTest : FlowableTests, DeletableEntityN
         val o: JsonStyleRealmObject = realm.write {
             copyToRealm(
                 JsonStyleRealmObject().apply {
-                    id = "DICTIONARY"
                     value = realmAnyDictionaryOf(
                         "root" to realmAnyDictionaryOf(
                             "key1" to 1,

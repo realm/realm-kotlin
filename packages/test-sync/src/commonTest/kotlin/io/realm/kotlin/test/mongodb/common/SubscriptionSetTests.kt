@@ -24,12 +24,12 @@ import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.Subscription
 import io.realm.kotlin.mongodb.sync.SubscriptionSetState
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
-import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
-import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.waitForSynchronizationOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
+import io.realm.kotlin.test.mongodb.util.DefaultFlexibleSyncAppInitializer
+import io.realm.kotlin.test.mongodb.util.DefaultPartitionBasedAppInitializer
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
 import kotlin.test.AfterTest
@@ -56,7 +56,7 @@ class SubscriptionSetTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
+        app = TestApp(this::class.simpleName, DefaultFlexibleSyncAppInitializer)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -89,7 +89,7 @@ class SubscriptionSetTests {
 
     @Test
     fun subscriptions_failOnNonFlexibleSyncRealms() {
-        TestApp(this::class.simpleName, appName = TEST_APP_PARTITION).use { testApp ->
+        TestApp(this::class.simpleName, DefaultPartitionBasedAppInitializer).use { testApp ->
             val (email, password) = TestHelper.randomEmail() to "password1234"
             val user = runBlocking {
                 testApp.createUserAndLogIn(email, password)

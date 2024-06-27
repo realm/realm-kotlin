@@ -34,6 +34,7 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
+import io.realm.kotlin.test.mongodb.util.DefaultPartitionBasedAppInitializer
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
@@ -167,9 +168,11 @@ class AppConfigurationTests {
     @Test
     fun syncRootDirectory_appendDirectoryToPath() = runBlocking {
         val expectedRoot = pathOf(appFilesDirectory(), "myCustomDir")
-        TestApp("syncRootDirectory_appendDirectoryToPath", builder = {
-            it.syncRootDirectory(expectedRoot)
-        }).use { app ->
+        TestApp(
+            "syncRootDirectory_appendDirectoryToPath",
+            DefaultPartitionBasedAppInitializer,
+            builder = { it.syncRootDirectory(expectedRoot) }
+        ).use { app ->
             val (email, password) = TestHelper.randomEmail() to "password1234"
             val user = app.createUserAndLogIn(email, password)
             assertEquals(expectedRoot, app.configuration.syncRootDirectory)
@@ -387,6 +390,8 @@ class AppConfigurationTests {
     fun customHeadersTest() = runBlocking {
         TestApp(
             "customHeadersTest",
+            DefaultPartitionBasedAppInitializer,
+            debug = true,
             builder = { builder ->
                 builder.customRequestHeaders {
                     put(CUSTOM_HEADER_NAME, CUSTOM_HEADER_VALUE)

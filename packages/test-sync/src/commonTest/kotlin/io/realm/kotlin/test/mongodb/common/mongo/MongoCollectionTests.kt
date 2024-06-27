@@ -48,12 +48,12 @@ import io.realm.kotlin.mongodb.mongo.realmSerializerModule
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.notifications.ResultsChange
-import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.FLEXIBLE_SYNC_SCHEMA
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.common.utils.retry
+import io.realm.kotlin.test.mongodb.util.DefaultFlexibleSyncAppInitializer
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.BaseRealmObject
@@ -158,7 +158,7 @@ sealed class MongoCollectionTests {
     open fun setUp() {
         app = TestApp(
             testId = this::class.simpleName,
-            appName = TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it.httpLogObfuscator(null)
             }

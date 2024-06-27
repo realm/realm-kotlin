@@ -23,9 +23,10 @@ import io.realm.kotlin.types.annotations.PrimaryKey
 import org.mongodb.kbson.ObjectId
 
 class JsonStyleRealmObject : RealmObject {
+    // Act as partition key to separate individual test runs
+    var selector: String = "DEFAULT"
     @PrimaryKey
     @PersistedName("_id")
-    var id: String = ObjectId().toHexString()
-    var selector: String = "DEFAULT"
+    var id: ObjectId = ObjectId()
     var value: RealmAny? = null
 }
