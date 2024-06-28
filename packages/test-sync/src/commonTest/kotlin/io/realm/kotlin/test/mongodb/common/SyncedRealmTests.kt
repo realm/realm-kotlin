@@ -727,6 +727,8 @@ class SyncedRealmTests {
 
         // Create object with all types
         val selector = ObjectId().toString()
+        var parentId: ObjectId? = null
+        var childId: ObjectId? = null
 
         createFlexibleSyncConfig(
             user = user1,
@@ -738,14 +740,13 @@ class SyncedRealmTests {
                 realm.write {
                     val child = (
                         JsonStyleRealmObject().apply {
-                            this.id = "CHILD"
                             this.selector = selector
                         }
                         )
+                    childId = child.id
 
-                    copyToRealm(
+                    parentId = copyToRealm(
                         JsonStyleRealmObject().apply {
-                            this.id = "PARENT"
                             this.selector = selector
                             value = realmAnyDictionaryOf(
                                 "primitive" to 1,
@@ -754,7 +755,7 @@ class SyncedRealmTests {
                                 "dictionary" to realmAnyDictionaryOf("dictkey1" to 1, "dictkey2" to "Realm", "dictkey3" to child, "dictkey4" to realmAnyListOf(1, 2, 3))
                             )
                         }
-                    )
+                    ).id
                 }
                 realm.syncSession.uploadAllLocalChangesOrFail()
             }
@@ -766,31 +767,37 @@ class SyncedRealmTests {
             }
         ).let { config ->
             Realm.open(config).use { realm ->
+                println("download changes")
                 realm.syncSession.downloadAllServerChanges(10.seconds)
-                val flow = realm.query<JsonStyleRealmObject>("_id = $0", "PARENT").asFlow()
+                println("downloaded changes")
+                val flow = realm.query<JsonStyleRealmObject>("_id = $0", parentId).asFlow()
                 val parent = withTimeout(10.seconds) {
-                    flow.first {
+                    println("get object")
+                    val x = flow.first {
                         it.list.size >= 1
                     }.list[0]
+                    println("x")
+                    x
                 }
+                println("get parent")
                 parent.let {
                     val value = it.value!!.asDictionary()
                     assertEquals(RealmAny.Companion.create(1), value["primitive"])
                     value["list"]!!.asList().let {
                         assertEquals(1, it[0]!!.asInt())
                         assertEquals("Realm", it[1]!!.asString())
-                        assertEquals("CHILD", it[2]!!.asRealmObject<JsonStyleRealmObject>().id)
+                        assertEquals(childId, it[2]!!.asRealmObject<JsonStyleRealmObject>().id)
                         it[3]!!.asDictionary().let { dict ->
                             assertEquals(1, dict["listkey1"]!!.asInt())
                             assertEquals("Realm", dict["listkey2"]!!.asString())
-                            assertEquals("CHILD", dict["listkey3"]!!.asRealmObject<JsonStyleRealmObject>().id)
+                            assertEquals(childId, dict["listkey3"]!!.asRealmObject<JsonStyleRealmObject>().id)
                         }
-                        assertEquals("CHILD", it[2]!!.asRealmObject<JsonStyleRealmObject>().id)
+                        assertEquals(childId, it[2]!!.asRealmObject<JsonStyleRealmObject>().id)
                     }
                     value["dictionary"]!!.asDictionary().let {
                         assertEquals(1, it["dictkey1"]!!.asInt())
                         assertEquals("Realm", it["dictkey2"]!!.asString())
-                        assertEquals("CHILD", it["dictkey3"]!!.asRealmObject<JsonStyleRealmObject>().id)
+                        assertEquals(childId, it["dictkey3"]!!.asRealmObject<JsonStyleRealmObject>().id)
                         it["dictkey4"]!!.asList().let {
                             assertEquals(realmAnyListOf(1, 2, 3).asList(), it)
                         }

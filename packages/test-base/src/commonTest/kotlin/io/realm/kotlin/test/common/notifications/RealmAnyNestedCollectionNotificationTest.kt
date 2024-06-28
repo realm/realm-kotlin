@@ -71,7 +71,6 @@ class RealmAnyNestedCollectionNotificationTest {
         val o: JsonStyleRealmObject = realm.write {
             copyToRealm(
                 JsonStyleRealmObject().apply {
-                    id = "SET"
                     value = realmAnyListOf(realmAnyListOf(1, 2, 3))
                 }
             )

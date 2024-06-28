@@ -133,7 +133,7 @@ object Versions {
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
     const val okio = "3.2.0" // https://square.github.io/okio/#releases
     const val relinker = "1.4.5" // https://github.com/KeepSafe/ReLinker
-    const val serialization = "1.7.0" // https://kotlinlang.org/docs/releases.html#release-details
+    const val serialization = "1.7.1" // https://kotlinlang.org/docs/releases.html#release-details
     const val shadowJar =  "6.1.0" // https://mvnrepository.com/artifact/com.github.johnrengelman.shadow/com.github.johnrengelman.shadow.gradle.plugin?repo=gradle-plugins
     const val snakeYaml = "1.33" // https://github.com/snakeyaml/snakeyaml
     val sourceCompatibilityVersion = JavaVersion.VERSION_1_8 // Language level of any Java source code.
