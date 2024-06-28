@@ -117,14 +117,6 @@ class SyncSchemaMigrationTests {
                             "is_recovery_mode_disabled": false,
                             "queryable_fields_names": [
                                 "name",
-                                "section",
-                                "stringField",
-                                "location",
-                                "selector"
-                            ],
-                            "asymmetric_tables": [
-                                "AsymmetricA",
-                                "Measurement"
                             ]
                         }
                     }
