@@ -1163,7 +1163,7 @@ jobs:
         if: always() || failure()
         with:
           name: Unit Test Results - Android Sync (Emulator Android 15 - 16KB Page Size)
-          path: ./packages/test-sync/build/**/TEST-*.xml
+          path: ./packages/test-base/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
