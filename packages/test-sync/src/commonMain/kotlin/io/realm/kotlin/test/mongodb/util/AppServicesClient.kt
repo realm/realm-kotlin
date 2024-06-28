@@ -71,6 +71,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration.Companion.minutes
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
 private const val PRIVATE_PATH = "/api/private/v1.0"
@@ -403,7 +405,7 @@ class AppServicesClient(
     suspend fun BaasApp.setSchema(
         schema: Set<KClass<out BaseRealmObject>>,
         extraProperties: Map<String, PrimitivePropertyType.Type> = emptyMap()
-    ) {
+    ): Map<String, String> {
         val schemas = SchemaProcessor.process(
             databaseName = clientAppId,
             classes = schema,
@@ -423,6 +425,29 @@ class AppServicesClient(
                 schema = schema
             )
         }
+
+        return ids
+    }
+
+    suspend fun BaasApp.updateSchema(
+        ids: Map<String, String>,
+        schema: Set<KClass<out BaseRealmObject>>,
+        extraProperties: Map<String, PrimitivePropertyType.Type> = emptyMap()
+    ) {
+        val schemas = SchemaProcessor.process(
+            databaseName = clientAppId,
+            classes = schema,
+            extraProperties = extraProperties
+        )
+
+        // then we update the schema to add the relationships
+        schemas.forEach { (name, schema) ->
+            updateSchema(
+                id = ids[name]!!,
+                schema = schema,
+                bypassServiceChange = true
+            )
+        }
     }
 
     suspend fun BaasApp.addFunction(function: Function): Function =
@@ -436,13 +461,44 @@ class AppServicesClient(
             }
         }
 
-    suspend fun BaasApp.updateSchema(
+    suspend fun BaasApp.waitForSchemaVersion(expectedVersion: Int) {
+        return withTimeout(1.minutes) {
+            withContext(dispatcher) {
+                while (true) {
+                    val response = httpClient.typedRequest<JsonObject>(
+                        Get,
+                        "$url/sync/schemas/versions"
+                    )
+
+                    response["versions"]!!.jsonArray.forEach { version ->
+                        if (version.jsonObject["version_major"]!!.jsonPrimitive.int >= expectedVersion) {
+                            return@withContext
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    suspend fun BaasApp.deleteSchema(
         id: String,
-        schema: Schema,
     ): HttpResponse =
         withContext(dispatcher) {
             httpClient.request(
-                "$url/schemas/$id"
+                "$url/schemas/$id"//?bypass_service_change=SyncSchemaVersionIncrease}"
+            ) {
+                this.method = HttpMethod.Delete
+            }
+        }
+
+    suspend fun BaasApp.updateSchema(
+        id: String,
+        schema: Schema,
+        bypassServiceChange: Boolean = false,
+    ): HttpResponse =
+        withContext(dispatcher) {
+            httpClient.request(
+                "$url/schemas/$id${if (bypassServiceChange) "?bypass_service_change=SyncSchemaVersionIncrease" else ""}"
             ) {
                 this.method = HttpMethod.Put
                 setBody(json.encodeToJsonElement(schema))

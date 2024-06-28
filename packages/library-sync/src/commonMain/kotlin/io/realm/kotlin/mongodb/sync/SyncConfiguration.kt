@@ -18,6 +18,7 @@ package io.realm.kotlin.mongodb.sync
 import io.realm.kotlin.Configuration
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
+import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.ConfigurationImpl
 import io.realm.kotlin.internal.ContextLogger
@@ -451,6 +452,21 @@ public interface SyncConfiguration : Configuration {
                 initialSubscriptionBlock,
                 rerunOnOpen
             )
+        }
+
+        /**
+         * Sets the schema version of the Realm. This must be equal to or higher than the schema
+         * version of the existing Realm file, if any. If the schema version is higher than the
+         * already existing Realm, a migration is needed.
+         */
+        public fun schemaVersion(schemaVersion: Long, timeout: Duration = Duration.INFINITE): Builder {
+            if (schemaVersion < 0) {
+                throw IllegalArgumentException("Realm schema version numbers must be 0 (zero) or higher. Yours was: $schemaVersion")
+            }
+            return apply {
+                this.schemaVersion = schemaVersion
+                this.waitForServerChanges = InitialRemoteDataConfiguration(timeout)
+            }
         }
 
         @Suppress("LongMethod")

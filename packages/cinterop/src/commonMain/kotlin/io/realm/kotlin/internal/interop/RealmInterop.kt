@@ -227,6 +227,8 @@ expect object RealmInterop {
     // dispatcher. The realm itself must also be opened on the same thread
     fun realm_open(config: RealmConfigurationPointer, scheduler: RealmSchedulerPointer): Pair<LiveRealmPointer, Boolean>
 
+    fun realm_open(config: RealmConfigurationPointer): LiveRealmPointer
+
     // Opening a Realm asynchronously. Only supported for synchronized realms.
     fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer
     fun realm_async_open_task_start(task: RealmAsyncOpenTaskPointer, callback: AsyncOpenCallback)

@@ -241,6 +241,13 @@ actual object RealmInterop {
         return Pair(realmPtr, fileCreated)
     }
 
+    actual fun realm_open(
+        config: RealmConfigurationPointer,
+    ): LiveRealmPointer {
+        val realmPtr = LongPointerWrapper<LiveRealmT>(realmc.realm_open(config.cptr()))
+        return realmPtr
+    }
+
     actual fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer {
         return LongPointerWrapper(realmc.realm_open_synchronized(config.cptr()))
     }
