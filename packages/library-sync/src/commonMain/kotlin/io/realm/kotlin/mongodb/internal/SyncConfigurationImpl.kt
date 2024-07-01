@@ -189,7 +189,6 @@ internal class SyncConfigurationImpl(
             }
         }
 
-
     override suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {
         // Create or update subscriptions for Flexible Sync realms as needed.
         initialSubscriptions?.let { initialSubscriptionsConfig ->
