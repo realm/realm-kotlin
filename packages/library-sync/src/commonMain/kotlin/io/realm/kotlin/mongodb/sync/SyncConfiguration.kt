@@ -18,7 +18,6 @@ package io.realm.kotlin.mongodb.sync
 import io.realm.kotlin.Configuration
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
-import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.ConfigurationImpl
 import io.realm.kotlin.internal.ContextLogger
@@ -104,6 +103,22 @@ public fun interface InitialSubscriptionsCallback {
  * enabled.
  */
 public data class InitialRemoteDataConfiguration(
+
+    /**
+     * The timeout used when downloading any initial data server the first time the
+     * Realm is opened.
+     *
+     * If the timeout is hit, opening a Realm will throw an
+     * [io.realm.mongodb.exceptions.DownloadingRealmTimeOutException].
+     */
+    val timeout: Duration = Duration.INFINITE
+)
+
+/**
+ * Configuration options if [SyncConfiguration.Builder.waitForInitialRemoteData] is
+ * enabled.
+ */
+public data class SyncMigrationRemoteDataConfiguration(
 
     /**
      * The timeout used when downloading any initial data server the first time the
@@ -206,6 +221,11 @@ public interface SyncConfiguration : Configuration {
     public val initialRemoteData: InitialRemoteDataConfiguration?
 
     /**
+     * TODO
+     */
+    public val schemaMigrationRemoteData: SyncMigrationRemoteDataConfiguration?
+
+    /**
      * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be
      * created using the [SyncConfiguration.create] function.
      */
@@ -223,6 +243,7 @@ public interface SyncConfiguration : Configuration {
         private var syncClientResetStrategy: SyncClientResetStrategy? = null
         private var initialSubscriptions: InitialSubscriptionsConfiguration? = null
         private var waitForServerChanges: InitialRemoteDataConfiguration? = null
+        private var waitForSchemaMigration: SyncMigrationRemoteDataConfiguration? = null
 
         /**
          * Creates a [SyncConfiguration.Builder] for Flexible Sync. Flexible Sync must be enabled
@@ -465,7 +486,7 @@ public interface SyncConfiguration : Configuration {
             }
             return apply {
                 this.schemaVersion = schemaVersion
-                this.waitForServerChanges = InitialRemoteDataConfiguration(timeout)
+                this.waitForSchemaMigration = SyncMigrationRemoteDataConfiguration(timeout)
             }
         }
 
@@ -552,7 +573,8 @@ public interface SyncConfiguration : Configuration {
                 errorHandler!!, // It will never be null: either default or user-provided
                 syncClientResetStrategy!!, // It will never be null: either default or user-provided
                 initialSubscriptions,
-                waitForServerChanges
+                waitForServerChanges,
+                waitForSchemaMigration,
             )
         }
 

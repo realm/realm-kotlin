@@ -15,4 +15,8 @@
  */
 package io.realm.kotlin.internal.interop
 
-class InvalidSchemaException(override val message: String?) : IllegalStateException()
+/**
+ * Exception thrown when there is a mismatch between the schema version defined in the configuration
+ * and the persisted one.
+ */
+class InvalidSchemaVersionException(override val message: String?) : IllegalStateException()
