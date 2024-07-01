@@ -192,7 +192,7 @@ actual enum class ErrorCode(
 
     actual companion object {
         actual fun of(nativeValue: Int): ErrorCode? =
-            values().firstOrNull { value ->
+            entries.firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
     }

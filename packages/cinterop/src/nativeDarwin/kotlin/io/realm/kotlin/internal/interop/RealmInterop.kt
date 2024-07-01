@@ -556,6 +556,11 @@ actual object RealmInterop {
         return Pair(realmPtr, fileCreated.value)
     }
 
+    actual fun realm_open(config: RealmConfigurationPointer): LiveRealmPointer {
+        val realmPtr = CPointerWrapper<LiveRealmT>(realm_wrapper.realm_open(config.cptr()))
+        return realmPtr
+    }
+
     actual fun realm_create_scheduler(): RealmSchedulerPointer {
         // If there is no notification dispatcher use the default scheduler.
         // Re-verify if this is actually needed when notification scheduler is fully in place.

@@ -98,6 +98,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
                                 channel.trySend(false)
                             }
                             else -> {
+                                println("STATE $state")
                                 // Ignore all other states, wait for either complete or error.
                             }
                         }

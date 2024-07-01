@@ -23,13 +23,17 @@ import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.TypedFrozenRealmImpl
 import io.realm.kotlin.internal.interop.AsyncOpenCallback
 import io.realm.kotlin.internal.interop.FrozenRealmPointer
+import io.realm.kotlin.internal.interop.InvalidSchemaVersionException
 import io.realm.kotlin.internal.interop.LiveRealmPointer
+import io.realm.kotlin.internal.interop.LiveRealmT
+import io.realm.kotlin.internal.interop.NativePointer
 import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmAsyncOpenTaskPointer
 import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmSyncSessionPointer
+import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.interop.SyncAfterClientResetHandler
 import io.realm.kotlin.internal.interop.SyncBeforeClientResetHandler
 import io.realm.kotlin.internal.interop.SyncErrorCallback
@@ -47,6 +51,7 @@ import io.realm.kotlin.mongodb.sync.RecoverOrDiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.RecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncClientResetStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.mongodb.sync.SyncMigrationRemoteDataConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
 import kotlinx.atomicfu.AtomicBoolean
@@ -69,7 +74,8 @@ internal class SyncConfigurationImpl(
     override val errorHandler: SyncSession.ErrorHandler,
     override val syncClientResetStrategy: SyncClientResetStrategy,
     override val initialSubscriptions: InitialSubscriptionsConfiguration?,
-    override val initialRemoteData: InitialRemoteDataConfiguration?
+    override val initialRemoteData: InitialRemoteDataConfiguration?,
+    override val schemaMigrationRemoteData: SyncMigrationRemoteDataConfiguration?,
 ) : InternalConfiguration by configuration, SyncConfiguration {
 
     override suspend fun openRealm(realm: RealmImpl): Pair<FrozenRealmReference, Boolean> {
@@ -84,14 +90,23 @@ internal class SyncConfigurationImpl(
         // unnecessary pressure on the server.
         val fileExists: Boolean = fileExists(configuration.path)
         val asyncOpenCreatedRealmFile: AtomicBoolean = atomic(false)
-        if (initialRemoteData != null && !fileExists) {
+
+        if ((!fileExists && initialRemoteData != null) || (fileExists && isSyncMigrationPending())) {
+            // There are two different timeout:
+            // - initial remote data timeout, when it is the first time we open the Realm.
+            // - schema migration timeout, when a sync schema migration is required.
+            val timeout = if (fileExists)
+                schemaMigrationRemoteData!!.timeout
+            else
+                initialRemoteData!!.timeout
+
             // Channel to work around not being able to use `suspendCoroutine` to wrap the callback, as
             // that results in the `Continuation` being frozen, which breaks it.
             val channel = Channel<Any>(1)
             val taskPointer: AtomicRef<RealmAsyncOpenTaskPointer?> = atomic(null)
             try {
-                val result: Any = withTimeout(initialRemoteData.timeout.inWholeMilliseconds) {
-                    withContext(realm.notificationScheduler.dispatcher) {
+                val result: Any = withTimeout(timeout.inWholeMilliseconds) {
+                    withContext(realm.writeScheduler.dispatcher) {
                         val callback = AsyncOpenCallback { error: Throwable? ->
                             if (error != null) {
                                 channel.trySend(error)
@@ -99,7 +114,6 @@ internal class SyncConfigurationImpl(
                                 channel.trySend(true)
                             }
                         }
-
                         val configPtr = createNativeConfiguration()
                         taskPointer.value = RealmInterop.realm_open_synchronized(configPtr)
                         RealmInterop.realm_async_open_task_start(taskPointer.value!!, callback)
@@ -111,6 +125,7 @@ internal class SyncConfigurationImpl(
                         // Track whether or not async open created the file.
                         asyncOpenCreatedRealmFile.value = true
                     }
+
                     is Throwable -> throw result
                     else -> throw IllegalStateException("Unexpected value: $result")
                 }
@@ -137,6 +152,42 @@ internal class SyncConfigurationImpl(
         val result: Pair<FrozenRealmReference, Boolean> = configuration.openRealm(realm)
         return Pair(result.first, result.second || asyncOpenCreatedRealmFile.value)
     }
+
+    /**
+     * Checks whether a sync Realm requires a migration, this happens when the schema version provided in
+     * the config differs from the Realm one.
+     *
+     * Opening a Realm with a config set to SchemaMode::Immutable would validate that the schema versions
+     * match throwing an error if they differ.
+     *
+     * Immutable schema mode is only compatible with local Realms.
+     */
+    internal fun isSyncMigrationPending(): Boolean =
+        if (!fileExists(configuration.path)) {
+            false
+        } else {
+            try {
+                logger.debug("Checking if a sync migration is pending")
+                // We need to open synced Realm as local to be able to use `RLM_SCHEMA_MODE_IMMUTABLE`
+                // RLM_SCHEMA_MODE_IMMUTABLE would throw if the persisted realm and configured schema versions
+                // differ.
+                val config = configuration.createNativeConfiguration()
+                RealmInterop.realm_config_set_schema_mode(
+                    config = config,
+                    mode = SchemaMode.RLM_SCHEMA_MODE_IMMUTABLE
+                )
+
+                val realmPtr: NativePointer<LiveRealmT> = RealmInterop.realm_open(config)
+                RealmInterop.realm_close(realmPtr)
+                logger.debug("Sync migration not required")
+                false
+            } catch (e: InvalidSchemaVersionException) {
+                logger.debug("Sync migration required: ${e.message}")
+                true
+            } catch (e: Exception) {
+                false
+            }
+        }
 
     override suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {
         // Create or update subscriptions for Flexible Sync realms as needed.
@@ -173,7 +224,7 @@ internal class SyncConfigurationImpl(
         return syncInitializer(ptr)
     }
 
-    private val syncInitializer: (RealmConfigurationPointer) -> RealmConfigurationPointer
+    private var syncInitializer: (RealmConfigurationPointer) -> RealmConfigurationPointer
 
     init {
         // We need to freeze `errorHandler` reference on initial thread
@@ -184,12 +235,16 @@ internal class SyncConfigurationImpl(
         val initializerHelper = when (resetStrategy) {
             is DiscardUnsyncedChangesStrategy ->
                 DiscardUnsyncedChangesHelper(resetStrategy, configuration)
+
             is ManuallyRecoverUnsyncedChangesStrategy ->
                 ManuallyRecoverUnsyncedChangesHelper(resetStrategy)
+
             is RecoverUnsyncedChangesStrategy ->
                 RecoverUnsyncedChangesHelper(resetStrategy, configuration)
+
             is RecoverOrDiscardUnsyncedChangesStrategy ->
                 RecoverOrDiscardUnsyncedChangesHelper(resetStrategy, configuration)
+
             else -> throw IllegalArgumentException("Unsupported client reset strategy: $resetStrategy")
         }
 
@@ -263,7 +318,7 @@ private interface ClientResetStrategyHelper {
 
 private abstract class OnBeforeOnAfterHelper<T : SyncClientResetStrategy> constructor(
     val strategy: T,
-    val configuration: InternalConfiguration
+    val configuration: InternalConfiguration,
 ) : ClientResetStrategyHelper {
 
     abstract fun getResyncMode(): SyncSessionResyncMode
@@ -285,7 +340,7 @@ private abstract class OnBeforeOnAfterHelper<T : SyncClientResetStrategy> constr
 
 private class RecoverOrDiscardUnsyncedChangesHelper constructor(
     strategy: RecoverOrDiscardUnsyncedChangesStrategy,
-    configuration: InternalConfiguration
+    configuration: InternalConfiguration,
 ) : OnBeforeOnAfterHelper<RecoverOrDiscardUnsyncedChangesStrategy>(strategy, configuration) {
 
     override fun getResyncMode(): SyncSessionResyncMode =
@@ -303,7 +358,7 @@ private class RecoverOrDiscardUnsyncedChangesHelper constructor(
             override fun onAfterReset(
                 realmBefore: FrozenRealmPointer,
                 realmAfter: LiveRealmPointer,
-                didRecover: Boolean
+                didRecover: Boolean,
             ) {
                 // Needed to allow writes on the Mutable after Realm
                 RealmInterop.realm_begin_write(realmAfter)
@@ -338,7 +393,7 @@ private class RecoverOrDiscardUnsyncedChangesHelper constructor(
     override fun onSyncError(
         session: SyncSession,
         appPointer: RealmAppPointer,
-        error: SyncError
+        error: SyncError,
     ) {
         // If there is a user exception we appoint it as the cause of the client reset
         strategy.onManualResetFallback(
@@ -350,7 +405,7 @@ private class RecoverOrDiscardUnsyncedChangesHelper constructor(
 
 private class RecoverUnsyncedChangesHelper constructor(
     strategy: RecoverUnsyncedChangesStrategy,
-    configuration: InternalConfiguration
+    configuration: InternalConfiguration,
 ) : OnBeforeOnAfterHelper<RecoverUnsyncedChangesStrategy>(strategy, configuration) {
 
     override fun getResyncMode(): SyncSessionResyncMode =
@@ -368,7 +423,7 @@ private class RecoverUnsyncedChangesHelper constructor(
             override fun onAfterReset(
                 realmBefore: FrozenRealmPointer,
                 realmAfter: LiveRealmPointer,
-                didRecover: Boolean
+                didRecover: Boolean,
             ) {
                 // Needed to allow writes on the Mutable after Realm
                 RealmInterop.realm_begin_write(realmAfter)
@@ -400,7 +455,7 @@ private class RecoverUnsyncedChangesHelper constructor(
     override fun onSyncError(
         session: SyncSession,
         appPointer: RealmAppPointer,
-        error: SyncError
+        error: SyncError,
     ) {
         // If there is a user exception we appoint it as the cause of the client reset
         strategy.onManualResetFallback(
@@ -412,7 +467,7 @@ private class RecoverUnsyncedChangesHelper constructor(
 
 private class DiscardUnsyncedChangesHelper constructor(
     strategy: DiscardUnsyncedChangesStrategy,
-    configuration: InternalConfiguration
+    configuration: InternalConfiguration,
 ) : OnBeforeOnAfterHelper<DiscardUnsyncedChangesStrategy>(strategy, configuration) {
 
     override fun getResyncMode(): SyncSessionResyncMode =
@@ -430,7 +485,7 @@ private class DiscardUnsyncedChangesHelper constructor(
             override fun onAfterReset(
                 realmBefore: FrozenRealmPointer,
                 realmAfter: LiveRealmPointer,
-                didRecover: Boolean
+                didRecover: Boolean,
             ) {
                 // Needed to allow writes on the Mutable after Realm
                 RealmInterop.realm_begin_write(realmAfter)
@@ -462,7 +517,7 @@ private class DiscardUnsyncedChangesHelper constructor(
     override fun onSyncError(
         session: SyncSession,
         appPointer: RealmAppPointer,
-        error: SyncError
+        error: SyncError,
     ) {
         strategy.onManualResetFallback(
             session,
@@ -472,7 +527,7 @@ private class DiscardUnsyncedChangesHelper constructor(
 }
 
 private class ManuallyRecoverUnsyncedChangesHelper(
-    val strategy: ManuallyRecoverUnsyncedChangesStrategy
+    val strategy: ManuallyRecoverUnsyncedChangesStrategy,
 ) : ClientResetStrategyHelper {
 
     override fun initialize(nativeSyncConfig: RealmSyncConfigurationPointer) {
@@ -485,7 +540,7 @@ private class ManuallyRecoverUnsyncedChangesHelper(
     override fun onSyncError(
         session: SyncSession,
         appPointer: RealmAppPointer,
-        error: SyncError
+        error: SyncError,
     ) {
         strategy.onClientReset(
             session,

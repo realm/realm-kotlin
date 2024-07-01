@@ -210,7 +210,7 @@ class AppAdminImpl(
 
     override suspend fun waitForSyncBootstrap() {
         baasClient.run {
-            var limit = 300
+            val limit = 300
             var i = 0
             while (!app.initialSyncComplete() && i < limit) {
                 delay(1.seconds)
