@@ -80,7 +80,6 @@ jobs:
           cd ~
           curl -L ${{ vars.VERSION_SWIG}} > swig.rb && HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true brew install swig.rb
 
-
       - name: Build JNI Stub
         working-directory: ./packages
         run: ./gradlew :jni-swig-stub:assemble -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
@@ -93,7 +92,7 @@ jobs:
           retention-days: 1
 
   build-jvm-linux-native-lib:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [check-cache, build-jni-swig-stub]
     if: |
       always() && 
@@ -119,26 +118,9 @@ jobs:
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
-      - name: Restore JNI Swig Stubs
-        uses: actions/download-artifact@v3
-        with:
-          name: jni-stub-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/jni-swig-stub/build/generated/sources/jni
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v3
-        with:
-          tags: jvm-native-lib-linux:latest
-          file: ./packages/cinterop/src/jvmMain/generic.Dockerfile
-          push: false
-
       - name: Build native lib
-        uses: addnab/docker-run-action@v3
-        with:
-          image: jvm-native-lib-linux:latest
-          shell: bash
-          options: -v ${{ github.workspace }}:/work
-          run: |
+        working-directory: ./packages/cinterop
+        run: |
             cd /work/packages/cinterop
             mkdir build
             cd build
@@ -151,6 +133,39 @@ jobs:
             -DREALM_BUILD_LIB_ONLY=true \
             ../../src/jvm
             make -j8
+
+      - name: Restore JNI Swig Stubs
+        uses: actions/download-artifact@v3
+        with:
+          name: jni-stub-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/jni-swig-stub/build/generated/sources/jni
+
+      # - name: Build Docker image
+      #   uses: docker/build-push-action@v3
+      #   with:
+      #     tags: jvm-native-lib-linux:latest
+      #     file: ./packages/cinterop/src/jvmMain/generic.Dockerfile
+      #     push: false
+
+      # - name: Build native lib
+      #   uses: addnab/docker-run-action@v3
+      #   with:
+      #     image: jvm-native-lib-linux:latest
+      #     shell: bash
+      #     options: -v ${{ github.workspace }}:/work
+      #     run: |
+      #       cd /work/packages/cinterop
+      #       mkdir build
+      #       cd build
+      #       rm -rf realmLinuxBuild
+      #       mkdir realmLinuxBuild
+      #       cd realmLinuxBuild
+      #       cmake -DCMAKE_BUILD_TYPE=Release \
+      #       -DREALM_ENABLE_SYNC=1 \
+      #       -DREALM_NO_TESTS=1 \
+      #       -DREALM_BUILD_LIB_ONLY=true \
+      #       ../../src/jvm
+      #       make -j8
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
