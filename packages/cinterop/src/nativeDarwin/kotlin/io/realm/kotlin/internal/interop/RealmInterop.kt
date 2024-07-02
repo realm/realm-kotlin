@@ -2612,6 +2612,10 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_client_config_set_fast_reconnect_limit(syncClientConfig.cptr(), timeoutMs)
     }
 
+    actual fun realm_get_persisted_schema_version(
+        config: RealmConfigurationPointer
+    ): Long = realm_wrapper.realm_get_persisted_schema_version(config.cptr()).toLong()
+
     actual fun realm_sync_config_set_error_handler(
         syncConfig: RealmSyncConfigurationPointer,
         errorHandler: SyncErrorCallback

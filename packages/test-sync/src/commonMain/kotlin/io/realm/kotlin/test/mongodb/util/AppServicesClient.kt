@@ -485,7 +485,7 @@ class AppServicesClient(
     ): HttpResponse =
         withContext(dispatcher) {
             httpClient.request(
-                "$url/schemas/$id" // ?bypass_service_change=SyncSchemaVersionIncrease}"
+                "$url/schemas/$id?bypass_service_change=SyncSchemaVersionIncrease"
             ) {
                 this.method = HttpMethod.Delete
             }

@@ -1445,6 +1445,10 @@ actual object RealmInterop {
         realmc.realm_sync_client_config_set_fast_reconnect_limit(syncClientConfig.cptr(), timeoutMs.toLong())
     }
 
+    actual fun realm_get_persisted_schema_version(
+        config: RealmConfigurationPointer
+    ): Long = realmc.realm_get_persisted_schema_version(config.cptr())
+
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer {
         return LongPointerWrapper(realmc.realm_network_transport_new(networkTransport))
     }

@@ -23,17 +23,13 @@ import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.TypedFrozenRealmImpl
 import io.realm.kotlin.internal.interop.AsyncOpenCallback
 import io.realm.kotlin.internal.interop.FrozenRealmPointer
-import io.realm.kotlin.internal.interop.InvalidSchemaVersionException
 import io.realm.kotlin.internal.interop.LiveRealmPointer
-import io.realm.kotlin.internal.interop.LiveRealmT
-import io.realm.kotlin.internal.interop.NativePointer
 import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmAsyncOpenTaskPointer
 import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmSyncSessionPointer
-import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.interop.SyncAfterClientResetHandler
 import io.realm.kotlin.internal.interop.SyncBeforeClientResetHandler
 import io.realm.kotlin.internal.interop.SyncErrorCallback
@@ -91,7 +87,12 @@ internal class SyncConfigurationImpl(
         val fileExists: Boolean = fileExists(configuration.path)
         val asyncOpenCreatedRealmFile: AtomicBoolean = atomic(false)
 
-        if ((!fileExists && initialRemoteData != null) || (fileExists && isSyncMigrationPending())) {
+        val configPtr = createNativeConfiguration()
+
+        if (
+            (!fileExists && initialRemoteData != null) ||
+            (fileExists && isSyncMigrationPending(configPtr))
+        ) {
             // There are two different timeout:
             // - initial remote data timeout, when it is the first time we open the Realm.
             // - schema migration timeout, when a sync schema migration is required.
@@ -114,7 +115,7 @@ internal class SyncConfigurationImpl(
                                 channel.trySend(true)
                             }
                         }
-                        val configPtr = createNativeConfiguration()
+
                         taskPointer.value = RealmInterop.realm_open_synchronized(configPtr)
                         RealmInterop.realm_async_open_task_start(taskPointer.value!!, callback)
                         channel.receive()
@@ -155,38 +156,13 @@ internal class SyncConfigurationImpl(
 
     /**
      * Checks whether a sync Realm requires a migration, this happens when the schema version provided in
-     * the config differs from the Realm one.
-     *
-     * Opening a Realm with a config set to SchemaMode::Immutable would validate that the schema versions
-     * match throwing an error if they differ.
-     *
-     * Immutable schema mode is only compatible with local Realms.
+     * the config differs from the persisted one.
      */
-    internal fun isSyncMigrationPending(): Boolean =
-        if (!fileExists(configuration.path)) {
-            false
+    internal fun isSyncMigrationPending(configPtr: RealmConfigurationPointer): Boolean =
+        if (fileExists(configuration.path)) {
+            RealmInterop.realm_get_persisted_schema_version(configPtr) != configuration.schemaVersion
         } else {
-            try {
-                logger.debug("Checking if a sync migration is pending")
-                // We need to open synced Realm as local to be able to use `RLM_SCHEMA_MODE_IMMUTABLE`
-                // RLM_SCHEMA_MODE_IMMUTABLE would throw if the persisted realm and configured schema versions
-                // differ.
-                val config = configuration.createNativeConfiguration()
-                RealmInterop.realm_config_set_schema_mode(
-                    config = config,
-                    mode = SchemaMode.RLM_SCHEMA_MODE_IMMUTABLE
-                )
-
-                val realmPtr: NativePointer<LiveRealmT> = RealmInterop.realm_open(config)
-                RealmInterop.realm_close(realmPtr)
-                logger.debug("Sync migration not required")
-                false
-            } catch (e: InvalidSchemaVersionException) {
-                logger.debug("Sync migration required: ${e.message}")
-                true
-            } catch (e: Exception) {
-                false
-            }
+            false
         }
 
     override suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {

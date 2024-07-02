@@ -1,3 +1,18 @@
+/*
+ * Copyright 2024 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 @file:Suppress("invisible_member", "invisible_reference")
 
 package io.realm.kotlin.test.mongodb.common
@@ -5,8 +20,6 @@ package io.realm.kotlin.test.mongodb.common
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.BadFlexibleSyncQueryException
@@ -91,32 +104,45 @@ class DogV3 : RealmObject {
     var breed: ObjectId = ObjectId()
 }
 
+@PersistedName("Cat")
+class CatV0 : RealmObject {
+    @PrimaryKey
+    var _id: BsonObjectId = BsonObjectId()
+
+    var owner: String = ""
+
+    var name: String? = ""
+}
+
 class SyncSchemaMigrationTests {
 
     private lateinit var user: User
     private lateinit var app: App
 
     fun createSyncConfig(
-        schema: KClass<out RealmObject>,
+        dogSchema: KClass<out RealmObject>,
+        catSchema: KClass<out RealmObject>? = null,
         version: Long,
     ) = SyncConfiguration
         .Builder(
-            schema = setOf(schema),
+            schema = setOfNotNull(dogSchema, catSchema),
             user = user,
         )
         .waitForInitialRemoteData(timeout = 30.seconds)
         .initialSubscriptions(false) { realm ->
-            add(realm.query(schema, "owner = $0", user.id))
+            add(realm.query(dogSchema, "owner = $0", user.id))
+            catSchema?.let {
+                add(realm.query(catSchema, "owner = $0", user.id))
+            }
         }
         .schemaVersion(version, timeout = 30.seconds)
         .build()
 
     private val SyncConfiguration.isSyncMigrationPending: Boolean
-        get() = (this as SyncConfigurationImpl).isSyncMigrationPending()
+        get() = (this as SyncConfigurationImpl).isSyncMigrationPending(configPtr)
 
     @BeforeTest
     fun setup() {
-        RealmLog.setLevel(LogLevel.ALL)
         app = TestApp(
             this::class.simpleName,
             object : BaseAppInitializer(syncServerAppName("schver"), { app ->
@@ -125,7 +151,7 @@ class SyncSchemaMigrationTests {
                 val database = app.clientAppId
 
                 val namesToIds = app.setSchema(
-                    schema = setOf(DogV0::class)
+                    schema = setOf(DogV0::class, CatV0::class)
                 )
 
                 app.mongodbService.setSyncConfig(
@@ -163,10 +189,10 @@ class SyncSchemaMigrationTests {
                     schema = setOf(DogV3::class)
                 )
 
-                // TODO We don't support deleting tables yet.
-//                app.deleteSchema(namesToIds["Dog"]!!)
+                // Deleting an schema would bump the version
+                app.deleteSchema(namesToIds["Cat"]!!)
 
-                app.waitForSchemaVersion(2)
+                app.waitForSchemaVersion(3)
             }) {}
         )
 
@@ -217,7 +243,7 @@ class SyncSchemaMigrationTests {
     @Test
     fun bumpVersionNotSchema() {
         createSyncConfig(
-            schema = DogV0::class,
+            dogSchema = DogV0::class,
             version = 0,
         ).let { config ->
             assertFalse(config.isSyncMigrationPending)
@@ -230,7 +256,7 @@ class SyncSchemaMigrationTests {
         // Destructive change on server schema
         assertFailsWith<BadFlexibleSyncQueryException> {
             createSyncConfig(
-                schema = DogV0::class,
+                dogSchema = DogV0::class,
                 version = 1,
             ).let { config ->
                 assertTrue(config.isSyncMigrationPending)
@@ -246,7 +272,7 @@ class SyncSchemaMigrationTests {
     @Test
     fun changeSchemaButNotVersion() {
         createSyncConfig(
-            schema = DogV0::class,
+            dogSchema = DogV0::class,
             version = 0,
         ).let { config ->
             assertFalse(config.isSyncMigrationPending)
@@ -257,7 +283,7 @@ class SyncSchemaMigrationTests {
 
         // It is a destructive change on the client schema so it works normally.
         createSyncConfig(
-            schema = DogV1::class,
+            dogSchema = DogV1::class,
             version = 0,
         ).let { config ->
             assertFalse(config.isSyncMigrationPending)
@@ -269,7 +295,7 @@ class SyncSchemaMigrationTests {
         // Invalid schema change
         assertFailsWith<IllegalStateException>("The following changes cannot be made in additive-only schema mode") {
             createSyncConfig(
-                schema = DogV2::class,
+                dogSchema = DogV2::class,
                 version = 0,
             ).let { config ->
                 // Destructive schema change would trigger a migration, even if schema versions
@@ -288,7 +314,7 @@ class SyncSchemaMigrationTests {
     fun failsWithFutureSchemaVersionFirstOpen() {
         assertFailsWithMessage<IllegalStateException>("Client provided invalid schema version") {
             createSyncConfig(
-                schema = DogV2::class,
+                dogSchema = DogV2::class,
                 version = 5,
             ).let { config ->
                 assertFalse(config.isSyncMigrationPending)
@@ -302,7 +328,7 @@ class SyncSchemaMigrationTests {
     @Test
     fun failsWithFutureSchemaVersion() {
         createSyncConfig(
-            schema = DogV0::class,
+            dogSchema = DogV0::class,
             version = 0,
         ).let { config ->
             assertFalse(config.isSyncMigrationPending)
@@ -313,7 +339,7 @@ class SyncSchemaMigrationTests {
 
         assertFailsWithMessage<IllegalStateException>("Client provided invalid schema version") {
             createSyncConfig(
-                schema = DogV2::class,
+                dogSchema = DogV2::class,
                 version = 5,
             ).let { config ->
                 assertTrue(config.isSyncMigrationPending)
@@ -328,7 +354,7 @@ class SyncSchemaMigrationTests {
     @Test
     fun migrateConsecutiveVersions() {
         createSyncConfig(
-            schema = DogV0::class,
+            dogSchema = DogV0::class,
             version = 0,
         ).let { config ->
             assertFalse(config.isSyncMigrationPending)
@@ -338,7 +364,7 @@ class SyncSchemaMigrationTests {
         }
 
         createSyncConfig(
-            schema = DogV1::class,
+            dogSchema = DogV1::class,
             version = 1,
         ).let { config ->
             assertTrue(config.isSyncMigrationPending)
@@ -350,7 +376,7 @@ class SyncSchemaMigrationTests {
         // DogV2 and DogV3 share same schema version
         // because they only differ with additive changes.
         createSyncConfig(
-            schema = DogV2::class,
+            dogSchema = DogV2::class,
             version = 2,
         ).let { config ->
             assertTrue(config.isSyncMigrationPending)
@@ -360,7 +386,7 @@ class SyncSchemaMigrationTests {
         }
 
         createSyncConfig(
-            schema = DogV3::class,
+            dogSchema = DogV3::class,
             version = 2,
         ).let { config ->
             assertFalse(config.isSyncMigrationPending)
@@ -374,7 +400,7 @@ class SyncSchemaMigrationTests {
     @Test
     fun migrateSkippingVersions() {
         createSyncConfig(
-            schema = DogV0::class,
+            dogSchema = DogV0::class,
             version = 0,
         ).let { config ->
             assertFalse(config.isSyncMigrationPending)
@@ -384,7 +410,7 @@ class SyncSchemaMigrationTests {
         }
 
         createSyncConfig(
-            schema = DogV2::class,
+            dogSchema = DogV2::class,
             version = 2,
         ).let { config ->
             assertTrue(config.isSyncMigrationPending)
@@ -398,7 +424,7 @@ class SyncSchemaMigrationTests {
     @Test
     fun downgradeSchema() {
         createSyncConfig(
-            schema = DogV2::class,
+            dogSchema = DogV2::class,
             version = 2,
         ).let { config ->
             assertFalse(config.isSyncMigrationPending)
@@ -408,7 +434,7 @@ class SyncSchemaMigrationTests {
         }
 
         createSyncConfig(
-            schema = DogV0::class,
+            dogSchema = DogV0::class,
             version = 0,
         ).let { config ->
             assertTrue(config.isSyncMigrationPending)
@@ -421,7 +447,12 @@ class SyncSchemaMigrationTests {
     @Test
     fun dataVisibility_consecutive() {
         // DogV0 is incompatible with DogV3 changes
-        // TODO point to issue
+
+        // There is an issue in the baas server that prevents
+        // from bootstrapping when a property type changes.
+        //
+        // see https://jira.mongodb.org/browse/BAAS-31935
+
 //        createSyncConfig(
 //            schema = DogV0::class,
 //            version = 0,
@@ -446,13 +477,15 @@ class SyncSchemaMigrationTests {
 //        }
 
         createSyncConfig(
-            schema = DogV1::class,
+            dogSchema = DogV1::class,
+            catSchema = CatV0::class,
             version = 1,
         ).let { config ->
             assertFalse(config.isSyncMigrationPending)
             Realm.open(config).use { realm ->
                 assertNotNull(realm)
                 assertEquals(0, realm.query<DogV1>("name = 'v0'").count().find())
+                assertEquals(0, realm.query<CatV0>("name = 'v0'").count().find())
 
                 realm.writeBlocking {
                     copyToRealm(
@@ -461,28 +494,10 @@ class SyncSchemaMigrationTests {
                             owner = user.id
                         }
                     )
-                }
 
-                runBlocking {
-                    realm.syncSession.uploadAllLocalChanges()
-                }
-            }
-        }
-
-        createSyncConfig(
-            schema = DogV2::class,
-            version = 2,
-        ).let { config ->
-            assertTrue(config.isSyncMigrationPending)
-            Realm.open(config).use { realm ->
-                assertNotNull(realm)
-                assertEquals(0, realm.query<DogV2>("name = 'v0'").count().find())
-                assertEquals(1, realm.query<DogV2>("name = 'v1'").count().find())
-
-                realm.writeBlocking {
                     copyToRealm(
-                        DogV2().apply {
-                            name = "v2"
+                        CatV0().apply {
+                            name = "v0"
                             owner = user.id
                         }
                     )
@@ -495,10 +510,44 @@ class SyncSchemaMigrationTests {
         }
 
         createSyncConfig(
-            schema = DogV3::class,
+            dogSchema = DogV2::class,
+            catSchema = CatV0::class,
             version = 2,
         ).let { config ->
-            assertFalse(config.isSyncMigrationPending)
+            assertTrue(config.isSyncMigrationPending)
+            Realm.open(config).use { realm ->
+                assertNotNull(realm)
+                assertEquals(0, realm.query<DogV2>("name = 'v0'").count().find())
+                assertEquals(1, realm.query<DogV2>("name = 'v1'").count().find())
+                assertEquals(0, realm.query<CatV0>("name = 'v0'").count().find())
+
+                realm.writeBlocking {
+                    copyToRealm(
+                        DogV2().apply {
+                            name = "v2"
+                            owner = user.id
+                        }
+                    )
+
+                    copyToRealm(
+                        CatV0().apply {
+                            name = "v0"
+                            owner = user.id
+                        }
+                    )
+                }
+
+                runBlocking {
+                    realm.syncSession.uploadAllLocalChanges()
+                }
+            }
+        }
+
+        createSyncConfig(
+            dogSchema = DogV3::class,
+            version = 3,
+        ).let { config ->
+            assertTrue(config.isSyncMigrationPending)
             Realm.open(config).use { realm ->
                 assertNotNull(realm)
                 assertEquals(0, realm.query<DogV3>("name = 'v0'").count().find())
@@ -523,13 +572,15 @@ class SyncSchemaMigrationTests {
         }
     }
 
-    // This will be fixed at some point
-    // TODO Explain why, point to the issue
+    // There is an issue in the baas server that prevents
+    // from bootstrapping when a property type changes.
+    //
+    // see https://jira.mongodb.org/browse/BAAS-31935
     @Test
     fun dataVisibility_downgradeWithPropertyTypeChange_throws() {
         createSyncConfig(
-            schema = DogV3::class,
-            version = 2,
+            dogSchema = DogV3::class,
+            version = 3,
         ).let { config ->
             assertFalse(config.isSyncMigrationPending)
             Realm.open(config).use { realm ->
@@ -552,7 +603,7 @@ class SyncSchemaMigrationTests {
         }
 
         createSyncConfig(
-            schema = DogV0::class,
+            dogSchema = DogV0::class,
             version = 0,
         ).let { config ->
             assertTrue(config.isSyncMigrationPending)
