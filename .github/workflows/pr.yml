@@ -121,7 +121,6 @@ jobs:
       - name: Build native lib
         working-directory: ./packages/cinterop
         run: |
-            cd /work/packages/cinterop
             mkdir build
             cd build
             rm -rf realmLinuxBuild
