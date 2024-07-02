@@ -118,6 +118,12 @@ jobs:
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
+      - name: Restore JNI Swig Stubs
+        uses: actions/download-artifact@v3
+        with:
+          name: jni-stub-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/jni-swig-stub/build/generated/sources/jni
+
       - name: Build native lib
         working-directory: ./packages/cinterop
         run: |
@@ -132,12 +138,6 @@ jobs:
             -DREALM_BUILD_LIB_ONLY=true \
             ../../src/jvm
             make -j8
-
-      - name: Restore JNI Swig Stubs
-        uses: actions/download-artifact@v3
-        with:
-          name: jni-stub-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/jni-swig-stub/build/generated/sources/jni
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
