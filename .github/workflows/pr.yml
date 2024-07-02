@@ -139,33 +139,6 @@ jobs:
           name: jni-stub-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/jni-swig-stub/build/generated/sources/jni
 
-      # - name: Build Docker image
-      #   uses: docker/build-push-action@v3
-      #   with:
-      #     tags: jvm-native-lib-linux:latest
-      #     file: ./packages/cinterop/src/jvmMain/generic.Dockerfile
-      #     push: false
-
-      # - name: Build native lib
-      #   uses: addnab/docker-run-action@v3
-      #   with:
-      #     image: jvm-native-lib-linux:latest
-      #     shell: bash
-      #     options: -v ${{ github.workspace }}:/work
-      #     run: |
-      #       cd /work/packages/cinterop
-      #       mkdir build
-      #       cd build
-      #       rm -rf realmLinuxBuild
-      #       mkdir realmLinuxBuild
-      #       cd realmLinuxBuild
-      #       cmake -DCMAKE_BUILD_TYPE=Release \
-      #       -DREALM_ENABLE_SYNC=1 \
-      #       -DREALM_NO_TESTS=1 \
-      #       -DREALM_BUILD_LIB_ONLY=true \
-      #       ../../src/jvm
-      #       make -j8
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
