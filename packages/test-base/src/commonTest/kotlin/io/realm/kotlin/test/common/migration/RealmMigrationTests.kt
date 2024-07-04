@@ -168,8 +168,8 @@ class RealmMigrationTests {
             // FIXME Can we get this to have the DataMigrationContext as receiver
             migration = {
                 it.enumerate("Sample") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject? ->
-                    assertEquals(initialValue, oldObject.get("stringField"))
-                    assertEquals(initialValue, newObject?.get("stringField"))
+                    assertEquals(initialValue, oldObject.get<String>("stringField"))
+                    assertEquals(initialValue, newObject?.get<String>("stringField"))
                     newObject?.set("stringField", migratedValue)
                 }
             }
