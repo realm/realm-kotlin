@@ -473,7 +473,6 @@ fun getSharedCMakeFlags(buildType: BuildType, ccache: Boolean = true): Array<Str
         // This will prevent exporting Core's symbols which is useful when combining for example the Swift SDK and Kotlin Multiplatform
         // in the same app. The generated dynamically linked shared Framework from Kotlin/Native can then be linked dynamically into the iOS app (!use_frameworks in Cocoapods)
         // or statically. This will also reduce the binary size a little bit (avoid storing metadata about exported symbols)
-        // TODO update on Linux as well
         add("-DCMAKE_CXX_VISIBILITY_PRESET=hidden")
     }
     return args.toTypedArray()
