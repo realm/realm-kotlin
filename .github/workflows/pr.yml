@@ -136,6 +136,7 @@ jobs:
             -DREALM_ENABLE_SYNC=1 \
             -DREALM_NO_TESTS=1 \
             -DREALM_BUILD_LIB_ONLY=true \
+            -DCMAKE_TOOLCHAIN_FILE=../../../external/core/tools/cmake/x86_64-linux-gnu.toolchain.cmake \
             ../../src/jvm
             make -j8
 
