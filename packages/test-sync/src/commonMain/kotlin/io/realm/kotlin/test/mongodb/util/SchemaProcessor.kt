@@ -26,7 +26,6 @@ import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 
-// TODO REname methods and classes
 class SchemaProcessor private constructor(
     classes: Set<KClass<out BaseRealmObject>>,
     private val databaseName: String,
@@ -65,9 +64,30 @@ class SchemaProcessor private constructor(
     val processedRelationships: MutableMap<String, Map<String, SchemaRelationship>> = mutableMapOf()
 
     init {
-        // TODO CHECK embedded CYCLES
+        checkCycles()
         generateSchemas()
         generateRelationships()
+    }
+
+    private fun checkCycles() {
+        realmSchemas.values.filter {
+            it.kind == RealmClassKind.EMBEDDED
+        }.forEach { schema ->
+            checkCycles(schema)
+        }
+    }
+
+    private fun checkCycles(schema: RealmClassImpl, visited: Array<String> = emptyArray()) {
+        if (visited.contains(schema.cinteropClass.name))
+            throw IllegalStateException("Cycles in embedded object schemas are not supported")
+
+        schema.cinteropProperties
+            .filter { targetSchema ->
+                targetSchema.type == PropertyType.RLM_PROPERTY_TYPE_OBJECT
+            }
+            .forEach { targetSchema ->
+                checkCycles(realmSchemas[targetSchema.linkTarget]!!, visited + schema.name)
+            }
     }
 
     private fun generateRelationships() {

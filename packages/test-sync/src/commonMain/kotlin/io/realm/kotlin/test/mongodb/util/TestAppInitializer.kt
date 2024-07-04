@@ -20,7 +20,6 @@ import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.common.FLEXIBLE_SYNC_SCHEMA
 import io.realm.kotlin.test.mongodb.common.PARTITION_BASED_SCHEMA
-import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 
 object TestAppInitializer {
@@ -67,9 +66,7 @@ object TestAppInitializer {
             """.trimIndent()
         )
 
-        while (!app.initialSyncComplete()) {
-            delay(500)
-        }
+        app.waitUntilInitialSyncCompletes()
     }
 
     @Suppress("LongMethod")
@@ -128,9 +125,7 @@ object TestAppInitializer {
             """.trimIndent()
         )
 
-        while (!app.initialSyncComplete()) {
-            delay(500)
-        }
+        app.waitUntilInitialSyncCompletes()
     }
 
     suspend fun AppServicesClient.addEmailProvider(

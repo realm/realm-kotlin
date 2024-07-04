@@ -45,7 +45,9 @@ import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.SerialName
@@ -71,6 +73,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
 
@@ -893,6 +897,14 @@ class AppServicesClient(
                 }
             )
         }
+
+    suspend fun BaasApp.waitUntilInitialSyncCompletes() {
+        withTimeout(5.minutes) {
+            while (!initialSyncComplete()) {
+                delay(1.seconds)
+            }
+        }
+    }
 
     suspend fun BaasApp.initialSyncComplete(): Boolean {
         return withContext(dispatcher) {
