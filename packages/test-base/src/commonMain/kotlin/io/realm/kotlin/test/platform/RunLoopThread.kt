@@ -16,9 +16,7 @@
 
 package io.realm.kotlin.test.platform
 
-import kotlinx.coroutines.CoroutineScope
-
-expect class RunLoopThread : CoroutineScope {
+expect class RunLoopThread {
 
     fun run(block: RunLoopThread.() -> Unit)
 

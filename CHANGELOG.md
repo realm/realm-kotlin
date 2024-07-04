@@ -4,7 +4,8 @@
 - None.
 
 ### Enhancements
-- Avoid exporting Core's symbols so we can statically build the Kotlin SDK with other SDKs like Swift in the same project. (Issue [JIRA](https://jira.mongodb.org/browse/RKOTLIN-877))
+- Avoid exporting Core's symbols so we can statically build the Kotlin SDK with other SDKs like Swift in the same project. (Issue [JIRA](https://jira.mongodb.org/browse/RKOTLIN-877)).
+- Improved mechanism for unpacking of JVM native libs suitable for local development. (Issue [#1715](https://github.com/realm/realm-kotlin/issues/1715) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1065)).
 
 ### Fixed
 - None.
@@ -98,11 +99,12 @@
 * Minimum Gradle version: 7.2.
 * Minimum Android Gradle Plugin version: 7.1.3.
 * Minimum Android SDK: 16.
-* Minimum R8: 8.0.34.
+* Minimum R8: 8.3.37.
 
 ### Internal
 * Updated to Realm Core 14.7.0 commit c280bdb17522323d5c30dc32a2b9efc9dc80ca3b.
 * Changed Kotlin compiler testing framework to https://github.com/zacsweers/kotlin-compile-testing
+* Updated to Detekt 1.23.6.
 
 
 ## 1.16.0 (2024-05-01)

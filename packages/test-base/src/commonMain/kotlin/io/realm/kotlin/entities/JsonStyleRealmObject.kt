@@ -20,11 +20,12 @@ import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PersistedName
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.mongodb.kbson.ObjectId
 
-class JsonStyleRealmObject(id: String) : RealmObject {
-    constructor() : this("JsonStyleRealmObject")
+class JsonStyleRealmObject : RealmObject {
     @PrimaryKey
     @PersistedName("_id")
-    var id: String = id
+    var id: String = ObjectId().toHexString()
+    var selector: String = "DEFAULT"
     var value: RealmAny? = null
 }

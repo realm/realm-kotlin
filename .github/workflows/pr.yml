@@ -37,29 +37,33 @@ jobs:
     if: always() && !cancelled() && needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
+      - name: Register problem matchers
+        run: |-
+          echo "::add-matcher::.github/problem-matchers/kotlin.json"
+
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Load build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./packages/jni-swig-stub/build/generated/sources/jni
           key: jni-swig-stubs-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
@@ -86,7 +90,7 @@ jobs:
         run: ./gradlew :jni-swig-stub:assemble -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jni-stub-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/jni-swig-stub/build/generated/sources/jni/*
@@ -104,29 +108,33 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
+      - name: Register problem matchers
+        run: |-
+          echo "::add-matcher::.github/problem-matchers/kotlin.json"
+
       - name: Setup build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./packages/cinterop/build/realmLinuxBuild
           key: jni-linux-lib-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Restore JNI Swig Stubs
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jni-stub-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/jni-swig-stub/build/generated/sources/jni
 
       - name: Build Docker image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           tags: jvm-native-lib-linux:latest
           file: ./packages/cinterop/src/jvmMain/generic.Dockerfile
@@ -154,7 +162,7 @@ jobs:
             make -j8
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jni-linux-lib-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/cinterop/build/realmLinuxBuild/librealmc.so 
@@ -172,7 +180,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # TODO See https://github.com/microsoft/vcpkg/issues/25349 which might describe the error here https://github.com/realm/realm-kotlin/runs/8099890473?check_suite_focus=true
           # -- Building for: Visual Studio 17 2022
@@ -186,19 +194,19 @@ jobs:
           submodules: "recursive"
 
       - name: Setup build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./packages/cinterop/build/realmWindowsBuild
           key: jni-windows-lib-${{ needs.check-cache.outputs.packages-sha }}
           enableCrossOsArchive: true
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Restore JNI Swig Stubs
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jni-stub-${{ needs.check-cache.outputs.version-label }}
           path: ${{ github.workspace }}/packages/jni-swig-stub/build/generated/sources/jni
@@ -224,7 +232,7 @@ jobs:
           cmake --build . --config Release
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/cinterop/build/realmWindowsBuild/Release/realmc.dll
@@ -242,33 +250,33 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Setup ninja
-        uses: cmelchior/setup-ninja@master
+        uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
 
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'jvm-macos-native-lib'
           max-size: '2.0G'
@@ -294,13 +302,13 @@ jobs:
 
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Setup build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./packages/cinterop/build/realmMacOsBuild
           key: jni-macos-lib-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Restore JNI Swig Stubs
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jni-stub-${{ needs.check-cache.outputs.version-label }}
           path: ${{ github.workspace }}/packages/jni-swig-stub/build/generated/sources/jni        
@@ -309,8 +317,12 @@ jobs:
         working-directory: packages
         run: ./gradlew buildJVMSharedLibs -Prealm.kotlin.mainHost=false
 
+      - name: Show ccache size
+        run: |
+          echo `du -sh ~/.ccache`
+
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jni-macos-lib-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/cinterop/build/realmMacOsBuild/librealmc.dylib
@@ -330,33 +342,37 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
+      - name: Register problem matchers
+        run: |-
+          echo "::add-matcher::.github/problem-matchers/kotlin.json"
+
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Setup ninja
-        uses: cmelchior/setup-ninja@master
+        uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
 
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'metadata-package'
           max-size: '2.0G'
@@ -379,7 +395,7 @@ jobs:
           ndk-version: r23c
 
       - name: Setup build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-metadata-${{ needs.check-cache.outputs.packages-sha }}
@@ -389,7 +405,7 @@ jobs:
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=gradlePlugin,compilerPlugin -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=true
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo/**/* 
@@ -412,33 +428,37 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
+      - name: Register problem matchers
+        run: |-
+          echo "::add-matcher::.github/problem-matchers/kotlin.json"
+
       - name: Setup Java 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: '17'
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Setup ninja
-        uses: cmelchior/setup-ninja@master
+        uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
 
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'jvm-package'
           max-size: '2.0G'
@@ -465,25 +485,25 @@ jobs:
 
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Setup build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-jvm-sync-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Restore Linux JNI lib
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jni-linux-lib-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/cinterop/build/realmLinuxBuild
 
       - name: Restore Windows JNI lib
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/cinterop/build/realmWindowsBuild/Release
 
       - name: Restore MacOS JNI lib
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jni-macos-lib-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/cinterop/build/realmMacOsBuild
@@ -492,8 +512,12 @@ jobs:
         working-directory: packages
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.copyNativeJvmLibs=linux,windows,macos -Prealm.kotlin.mainHost=false
 
+      - name: Show ccache size
+        run: |
+          echo `du -sh ~/.ccache`
+
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo/**/* 
@@ -520,18 +544,18 @@ jobs:
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
@@ -556,17 +580,17 @@ jobs:
         run: brew install jq
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Setup ninja
-        uses: cmelchior/setup-ninja@master
+        uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
  
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'android-package'
           max-size: '2.0G'
@@ -601,20 +625,20 @@ jobs:
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
       - name: Store build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-android-sync-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Store build cache for Android Test APK
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
           key: android-base-test-apk-key-${{ needs.check-cache.outputs.packages-sha }}
 
       # Must match naming found in include-check-cache.yml
       - name: Store build cache for Android Sync Test APK
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           key: android-sync-test-apk-key-${{ needs.check-cache.outputs.packages-sha }}
           path: |
@@ -624,21 +648,21 @@ jobs:
       # Must match naming found in include-check-cache.yml
       # Must match naming found in include-check-cache.yml
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: packages-android-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo/**/* 
           retention-days: 1
 
       - name: Upload Android Base Test APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: android-base-test-apk-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
           retention-days: 1
 
       - name: Upload Android Sync Test APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: android-sync-test-apk-${{ needs.check-cache.outputs.version-label }}
           retention-days: 1
@@ -655,33 +679,33 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Setup ninja
-        uses: cmelchior/setup-ninja@master
+        uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
  
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'macos-x64-package'
           max-size: '2.0G'
@@ -704,16 +728,20 @@ jobs:
         working-directory: packages
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosX64 -Prealm.kotlin.mainHost=false
 
+      - name: Show ccache size
+        run: |
+          echo `du -sh ~/.ccache`
+
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Store build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-macos-x64-sync-${{ needs.check-cache.outputs.packages-sha }}
 
       # Must match naming found in include-check-cache.yml
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: packages-macos-x64-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo/**/* 
@@ -727,33 +755,33 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Setup ninja
-        uses: cmelchior/setup-ninja@master
+        uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
  
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'macos-arm64-package'
           max-size: '2.0G'
@@ -777,14 +805,14 @@ jobs:
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosArm64 -Prealm.kotlin.mainHost=false
 
       - name: Store build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-macos-arm64-sync-${{ needs.check-cache.outputs.packages-sha }}
 
       # Must match naming found in include-check-cache.yml
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: packages-macos-arm64-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo/**/* 
@@ -798,33 +826,33 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Setup ninja
-        uses: cmelchior/setup-ninja@master
+        uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
  
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'ios-x64-package'
           max-size: '2.0G'
@@ -849,14 +877,14 @@ jobs:
 
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Store build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-ios-x64-sync-${{ needs.check-cache.outputs.packages-sha }}
 
       # Must match naming found in include-check-cache.yml
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: packages-ios-x64-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo/**/* 
@@ -870,33 +898,33 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2.0.2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Setup ninja
-        uses: cmelchior/setup-ninja@master
+        uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
  
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'ios-arm64-package'
           max-size: '2.0G'
@@ -921,14 +949,14 @@ jobs:
 
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Store build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-ios-arm64-sync-${{ needs.check-cache.outputs.packages-sha }}
 
       # Must match naming found in include-check-cache.yml
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: packages-ios-arm64-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo/**/* 
@@ -964,7 +992,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
@@ -990,30 +1018,30 @@ jobs:
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Restore Kotlin metadata artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Restore m2-buildrepo (Android)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-android-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Restore m2-buildrepo (JVM)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
@@ -1050,7 +1078,7 @@ jobs:
             cd packages && ./gradlew :test-${{ matrix.type }}:connectedCheck -PsyncUsePlatformNetworking=true -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} -PincludeSdkModules=false --info --no-daemon
 
       - name: Archive LogCat data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always() || failure()
         with:
           name: logcat-${{ matrix.type }}-emulator.txt
@@ -1093,16 +1121,16 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Restore Android Test APK
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: android-base-test-apk-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/test-base/build/outputs/apk/androidTest/debug
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_DEVICEFARM_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_DEVICEFARM_SECRET_ACCESS_KEY }}
@@ -1130,7 +1158,7 @@ jobs:
       !contains(needs.*.result, 'cancelled')
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
@@ -1150,13 +1178,13 @@ jobs:
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Restore Android Sync Test APK
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: android-sync-test-apk-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/test-sync/build/outputs/apk/
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_DEVICEFARM_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_DEVICEFARM_SECRET_ACCESS_KEY }}
@@ -1234,7 +1262,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
@@ -1258,24 +1286,24 @@ jobs:
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Restore Kotlin metadata artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
@@ -1363,7 +1391,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
@@ -1387,24 +1415,24 @@ jobs:
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Restore m2-buildrepo (ios)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-ios-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Restore Kotlin metadata artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
@@ -1505,7 +1533,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
@@ -1529,24 +1557,24 @@ jobs:
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Restore Kotlin metadata artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
@@ -1604,54 +1632,54 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # The Metadata artifact contain broken JVM publications, so it needs to be 
       # restored first, it so they can be overidden with the correct ones.
       - name: Restore Kotlin metadata artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Restore Android artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-android-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Restore JVM artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Restore MacOS x64 artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-macos-x64-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Restore MacOS arm64 artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-macos-arm64-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Restore iOS x64 artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-ios-x64-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Restore iOS arm64 artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-ios-arm64-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Upload artifacts bundle
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: all-packages-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo
@@ -1702,7 +1730,7 @@ jobs:
       is_publish_build: ${{ steps.check_release.outputs.is_publish_build }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check if release build
         id: check_release

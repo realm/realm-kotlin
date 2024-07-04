@@ -1,3 +1,5 @@
+@file:Suppress("UNCHECKED_CAST")
+
 package io.realm.kotlin.internal.dynamic
 
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject

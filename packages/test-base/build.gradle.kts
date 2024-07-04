@@ -16,6 +16,9 @@
  */
 
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTests
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
+import kotlin.math.min
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -69,6 +72,7 @@ configurations.all {
 }
 
 // Common Kotlin configuration
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     sourceSets {
         val commonMain by getting {
@@ -100,6 +104,7 @@ kotlin {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
+                implementation(kotlin("reflect"))
             }
         }
     }
@@ -107,12 +112,13 @@ kotlin {
 
 // Android configuration
 android {
-    compileSdkVersion(Versions.Android.compileSdkVersion)
+    namespace = "io.realm.testapp"
+    compileSdk = Versions.Android.compileSdkVersion
     buildToolsVersion = Versions.Android.buildToolsVersion
 
     defaultConfig {
-        minSdkVersion(Versions.Android.minSdk)
-        targetSdkVersion(Versions.Android.targetSdk)
+        minSdk = Versions.Android.minSdk
+        targetSdk = Versions.Android.targetSdk
         multiDexEnabled = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -153,13 +159,13 @@ android {
     // Remove overlapping resources after adding "org.jetbrains.kotlinx:kotlinx-coroutines-test" to
     // avoid errors like "More than one file was found with OS independent path 'META-INF/AL2.0'."
     packagingOptions {
-        exclude("META-INF/AL2.0")
-        exclude("META-INF/LGPL2.1")
+        resources.excludes.add("META-INF/AL2.0")
+        resources.excludes.add("META-INF/LGPL2.1")
     }
 }
-
+@Suppress("UNUSED_VARIABLE")
 kotlin {
-    android("android")
+    androidTarget()
     sourceSets {
         val commonTest by getting
         val androidMain by getting {
@@ -217,7 +223,7 @@ kotlin {
         }
     }
 }
-
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     jvm()
     sourceSets {
@@ -236,7 +242,7 @@ kotlin {
         }
     }
 }
-
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     if (HOST_OS == OperatingSystem.MACOS_ARM64) {
         iosSimulatorArm64("ios")
@@ -271,9 +277,15 @@ kotlin {
     }
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().all {
-    kotlinOptions {
-        freeCompilerArgs += listOf("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
+tasks.withType<KotlinCompilationTask<*>>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+}
+
+tasks.withType<KotlinNativeCompile>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
     }
 }
 

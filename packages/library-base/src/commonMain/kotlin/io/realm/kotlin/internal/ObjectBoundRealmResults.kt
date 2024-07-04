@@ -81,4 +81,4 @@ internal class ObjectBoundRealmResults<E : BaseRealmObject>(
 internal fun <T> Flow<T>.bind(
     reference: RealmObjectReference<out BaseRealmObject>
 ): Flow<T> =
-    this.terminateWhen(reference.asFlow()) { it is DeletedObject }
+    this.terminateWhen(reference.asFlow(null)) { it is DeletedObject }

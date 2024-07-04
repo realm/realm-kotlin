@@ -1373,6 +1373,7 @@ actual object RealmInterop {
         CoreLogLevel.valueFromPriority(realmc.realm_get_log_level_category(category).toShort())
 
     actual fun realm_get_category_names(): List<String> {
+        @Suppress("UNCHECKED_CAST")
         val names: Array<String> = realmc.realm_get_log_category_names() as Array<String>
         return names.asList()
     }
@@ -2092,22 +2093,23 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_subscriptionset_insert_or_assign(
-        mutatableSubscriptionSet: RealmMutableSubscriptionSetPointer,
+        mutableSubscriptionSet: RealmMutableSubscriptionSetPointer,
         query: RealmQueryPointer,
         name: String?
     ): Pair<RealmSubscriptionPointer, Boolean> {
         val outIndex = longArrayOf(1)
         val outInserted = BooleanArray(1)
         realmc.realm_sync_subscription_set_insert_or_assign_query(
-            mutatableSubscriptionSet.cptr(),
+            mutableSubscriptionSet.cptr(),
             query.cptr(),
             name,
             outIndex,
             outInserted
         )
+        @Suppress("UNCHECKED_CAST")
         return Pair(
             realm_sync_subscription_at(
-                mutatableSubscriptionSet as RealmSubscriptionSetPointer,
+                mutableSubscriptionSet as RealmSubscriptionSetPointer,
                 outIndex[0]
             ),
             outInserted[0]

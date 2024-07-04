@@ -70,6 +70,8 @@ private:
         , m_io_realm_kotlin_internal_interop_sync_websocket_transport(env, "io/realm/kotlin/internal/interop/sync/WebSocketTransport", false)
         , m_io_realm_kotlin_internal_interop_sync_websocket_client(env, "io/realm/kotlin/internal/interop/sync/WebSocketClient", false)
         , m_io_realm_kotlin_internal_interop_notification_callback(env, "io/realm/kotlin/internal/interop/NotificationCallback", false)
+        , m_io_realm_kotlin_internal_interop_sync_connection_state(env, "io/realm/kotlin/internal/interop/sync/CoreConnectionState", false)
+
     {
     }
 
@@ -100,6 +102,7 @@ private:
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_websocket_transport;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_websocket_client;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_notification_callback;
+    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_connection_state;
 
     inline static std::unique_ptr<JavaClassGlobalDef>& instance()
     {
@@ -168,6 +171,11 @@ public:
     inline static const jni_util::JavaClass& app_error()
     {
         return instance()->m_io_realm_kotlin_internal_interop_sync_app_error;
+    }
+
+    inline static const jni_util::JavaClass& connection_state()
+    {
+        return instance()->m_io_realm_kotlin_internal_interop_sync_connection_state;
     }
 
     inline static const jni_util::JavaClass& log_callback()

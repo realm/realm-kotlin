@@ -39,12 +39,12 @@ class PrimaryKeyByteNullable : RealmObject {
 
 class PrimaryKeyChar : RealmObject {
     @PrimaryKey
-    var primaryKey: Char = Random.nextULong().toByte().toChar()
+    var primaryKey: Char = Random.nextULong().toInt().toChar()
 }
 
 class PrimaryKeyCharNullable : RealmObject {
     @PrimaryKey
-    var primaryKey: Char? = Random.nextULong().toByte().toChar()
+    var primaryKey: Char? = Random.nextULong().toInt().toChar()
 }
 
 class PrimaryKeyShort : RealmObject {

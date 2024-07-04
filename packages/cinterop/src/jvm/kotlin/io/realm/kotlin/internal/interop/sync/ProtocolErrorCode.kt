@@ -42,9 +42,9 @@ actual enum class SyncConnectionErrorCode(
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_FLX_SYNC("SwitchToFlxSync", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_SWITCH_TO_FLX_SYNC),
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS("SwitchToPbs", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS);
 
-    actual companion object {
-        internal actual fun of(nativeValue: Int): SyncConnectionErrorCode? =
-            values().firstOrNull { value ->
+    companion object {
+        internal fun of(nativeValue: Int): SyncConnectionErrorCode? =
+            entries.firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
     }
@@ -91,9 +91,9 @@ actual enum class SyncSessionErrorCode(
     RLM_SYNC_ERR_SESSION_BAD_SCHEMA_VERSION("BadSchemaVersion", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_BAD_SCHEMA_VERSION),
     RLM_SYNC_ERR_SESSION_SCHEMA_VERSION_CHANGED("SchemaVersionChanged", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_SCHEMA_VERSION_CHANGED);
 
-    actual companion object {
-        internal actual fun of(nativeValue: Int): SyncSessionErrorCode? =
-            values().firstOrNull { value ->
+    companion object {
+        internal fun of(nativeValue: Int): SyncSessionErrorCode? =
+            entries.firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
     }
@@ -131,9 +131,9 @@ actual enum class WebsocketErrorCode(
     RLM_ERR_WEBSOCKET_RETRY_ERROR("RetryError", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_RETRY_ERROR),
     RLM_ERR_WEBSOCKET_FATAL_ERROR("FatalError", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_FATAL_ERROR);
 
-    actual companion object {
-        actual fun of(nativeValue: Int): WebsocketErrorCode? =
-            values().firstOrNull { value ->
+    companion object {
+        fun of(nativeValue: Int): WebsocketErrorCode? =
+            entries.firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
     }
@@ -174,9 +174,9 @@ actual enum class WebsocketCallbackResult(actual override val description: Strin
         realm_sync_socket_callback_result_e.RLM_ERR_SYNC_SOCKET_INVALID_ARGUMENT
     );
 
-    actual companion object {
-        actual fun of(nativeValue: Int): WebsocketCallbackResult? =
-            values().firstOrNull { value ->
+    companion object {
+        fun of(nativeValue: Int): WebsocketCallbackResult? =
+            entries.firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
     }

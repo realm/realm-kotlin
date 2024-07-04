@@ -37,18 +37,33 @@ actual class RealmValueList(actual val size: Int, val head: CPointer<realm_value
 }
 
 actual value class RealmValue actual constructor(
-    actual val value: RealmValueT
+    actual val value: RealmValueT,
 ) {
-
+    @Suppress("NOTHING_TO_INLINE")
     actual inline fun getType(): ValueType = ValueType.from(value.type)
 
+    @Suppress("NOTHING_TO_INLINE")
     actual inline fun getLong(): Long = value.integer
+
+    @Suppress("NOTHING_TO_INLINE")
     actual inline fun getBoolean(): Boolean = value.boolean
+
+    @Suppress("NOTHING_TO_INLINE")
     actual inline fun getString(): String = value.string.toKotlinString()
+
+    @Suppress("NOTHING_TO_INLINE")
     actual inline fun getByteArray(): ByteArray = value.asByteArray()
+
+    @Suppress("NOTHING_TO_INLINE")
     actual inline fun getTimestamp(): Timestamp = value.asTimestamp()
+
+    @Suppress("NOTHING_TO_INLINE")
     actual inline fun getFloat(): Float = value.fnum
+
+    @Suppress("NOTHING_TO_INLINE")
     actual inline fun getDouble(): Double = value.dnum
+
+    @Suppress("NOTHING_TO_INLINE")
     actual inline fun getObjectIdBytes(): ByteArray = memScoped {
         UByteArray(OBJECT_ID_BYTES_SIZE).let { byteArray ->
             byteArray.usePinned {
@@ -60,6 +75,7 @@ actual value class RealmValue actual constructor(
         }
     }
 
+    @Suppress("NOTHING_TO_INLINE")
     actual inline fun getUUIDBytes(): ByteArray = memScoped {
         UByteArray(UUID_BYTES_SIZE).let { byteArray ->
             byteArray.usePinned {
@@ -71,13 +87,16 @@ actual value class RealmValue actual constructor(
         }
     }
 
+    @Suppress("NOTHING_TO_INLINE")
     actual inline fun getDecimal128Array(): ULongArray {
         val w = value.decimal128.w
         return ulongArrayOf(w[0], w[1])
     }
 
+    @Suppress("NOTHING_TO_INLINE")
     actual inline fun getLink(): Link = value.asLink()
 
+    @Suppress("NOTHING_TO_INLINE")
     actual inline fun isNull(): Boolean = value.type == ValueType.RLM_TYPE_NULL.nativeValue
 
     override fun toString(): String {

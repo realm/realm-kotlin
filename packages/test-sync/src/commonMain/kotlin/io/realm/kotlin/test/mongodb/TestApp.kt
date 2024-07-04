@@ -44,6 +44,7 @@ import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
@@ -91,7 +92,7 @@ open class TestApp private constructor(
      * @param debug enable trace of command server and rest api calls in the test app.
      **/
     @Suppress("LongParameterList")
-    @OptIn(ExperimentalKBsonSerializerApi::class)
+    @OptIn(ExperimentalKBsonSerializerApi::class, ExperimentalCoroutinesApi::class)
     constructor(
         testId: String?,
         appName: String = TEST_APP_PARTITION,
@@ -175,6 +176,7 @@ open class TestApp private constructor(
 
             // Tearing down the SyncSession still relies on the the event loop (powered by the coroutines) of the platform networking
             //  to post Function Handler, so we need to close it after we close the App
+            @OptIn(ExperimentalCoroutinesApi::class)
             if (dispatcher is CloseableCoroutineDispatcher) {
                 dispatcher.close()
             }

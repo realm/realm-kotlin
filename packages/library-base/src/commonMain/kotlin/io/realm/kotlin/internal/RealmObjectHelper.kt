@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("NOTHING_TO_INLINE")
 
 package io.realm.kotlin.internal
 
@@ -76,7 +77,7 @@ import kotlin.reflect.KProperty1
  *
  * Inlining would anyway yield the same result as generating it.
  */
-@Suppress("LargeClass")
+@Suppress("LargeClass", "UNCHECKED_CAST")
 internal object RealmObjectHelper {
 
     // ---------------------------------------------------------------------
@@ -873,7 +874,7 @@ internal object RealmObjectHelper {
 
             @Suppress("UNCHECKED_CAST")
             val members =
-                companion.`io_realm_kotlin_fields` as Map<String, KMutableProperty1<BaseRealmObject, Any?>>
+                companion.io_realm_kotlin_fields as Map<String, KMutableProperty1<BaseRealmObject, Any?>>
             members.map { it.key to it.value.get(source) }
         }
         properties.map {
@@ -1195,7 +1196,7 @@ internal object RealmObjectHelper {
                         operator.putAll(value as RealmDictionary<*>, updatePolicy, cache)
                     }
             }
-            else -> IllegalStateException("Unknown type: ${propertyMetadata.collectionType}")
+            else -> throw IllegalStateException("Unknown type: ${propertyMetadata.collectionType}")
         }
     }
 
@@ -1306,7 +1307,7 @@ internal object RealmObjectHelper {
                                 (
                                     realmStorageType == RealmStorageType.OBJECT && value !is BaseRealmObject
                                     ) ||
-                                    (realmStorageType != RealmStorageType.OBJECT && value!!::class.realmStorageType() != kClass)
+                                    (realmStorageType != RealmStorageType.OBJECT && value::class.realmStorageType() != kClass)
                                 )
                             )
                     )

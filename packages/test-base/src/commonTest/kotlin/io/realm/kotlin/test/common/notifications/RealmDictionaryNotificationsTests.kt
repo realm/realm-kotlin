@@ -32,6 +32,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.types.RealmDictionary
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
@@ -395,6 +396,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
 
             // Check channel 1 didn't receive the update
             assertEquals(NULLABLE_DICTIONARY_OBJECT_VALUES.size + 1, channel2.receiveOrFail().map.size)
+            @OptIn(ExperimentalCoroutinesApi::class)
             assertTrue(channel1.isEmpty)
 
             observer2.cancel()
@@ -461,16 +463,11 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { mapChange ->
             assertIs<UpdatedMap<String, RealmDictionaryContainer?>>(mapChange)
-            when (mapChange) {
-                is UpdatedMap -> {
-                    assertEquals(1, mapChange.changes.size)
-                    assertEquals("1", mapChange.changes.first())
-                    // This starts as Realm, so if the first write triggers a change event, it will
-                    // catch it here.
-                    assertEquals("Foo", mapChange.map["1"]!!.stringField)
-                }
-                else -> fail("Unexpected change: $mapChange")
-            }
+            assertEquals(1, mapChange.changes.size)
+            assertEquals("1", mapChange.changes.first())
+            // This starts as Realm, so if the first write triggers a change event, it will
+            // catch it here.
+            assertEquals("Foo", mapChange.map["1"]!!.stringField)
         }
         observer.cancel()
         c.close()
@@ -586,16 +583,12 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { mapChange ->
             assertIs<UpdatedMap<String, RealmDictionaryContainer?>>(mapChange)
-            when (mapChange) {
-                is MapChange -> {
-                    // Core will only report something changed to the top-level property.
-                    assertEquals(1, mapChange.changes.size)
-                    // Default value is Realm, so if this event is triggered by the first write
-                    // this assert will fail
-                    assertEquals("Parent change", mapChange.map.values.first()!!.stringField)
-                }
-                else -> fail("Unexpected change: $mapChange")
-            }
+
+            // Core will only report something changed to the top-level property.
+            assertEquals(1, mapChange.changes.size)
+            // Default value is Realm, so if this event is triggered by the first write
+            // this assert will fail
+            assertEquals("Parent change", mapChange.map.values.first()!!.stringField)
         }
         observer.cancel()
         c.close()
@@ -664,13 +657,9 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { mapChange ->
             assertIs<UpdatedMap<String, RealmDictionaryContainer?>>(mapChange)
-            when (mapChange) {
-                is MapChange -> {
-                    // Core will only report something changed to the top-level property.
-                    assertEquals(1, mapChange.changes.size)
-                }
-                else -> fail("Unexpected change: $mapChange")
-            }
+
+            // Core will only report something changed to the top-level property.
+            assertEquals(1, mapChange.changes.size)
         }
         observer.cancel()
         c.close()
