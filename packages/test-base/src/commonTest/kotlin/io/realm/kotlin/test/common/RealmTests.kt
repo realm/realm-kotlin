@@ -35,6 +35,8 @@ import io.realm.kotlin.test.platform.platformFileSystem
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
@@ -398,8 +400,10 @@ class RealmTests {
         assertEquals(1, realm.query<Parent>().find().size)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     @Suppress("invisible_member")
+    @DelicateCoroutinesApi
     fun writesOnFrozenRealm() {
         val dispatcher = newSingleThreadContext("background")
         runBlocking {

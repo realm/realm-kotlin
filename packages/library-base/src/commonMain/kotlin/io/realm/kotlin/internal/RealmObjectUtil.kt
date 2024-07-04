@@ -34,7 +34,7 @@ internal fun <T : BaseRealmObject> RealmObjectInternal.manage(
     type: KClass<T>,
     objectPointer: RealmObjectPointer
 ): T {
-    this.`io_realm_kotlin_objectReference` = RealmObjectReference(
+    this.io_realm_kotlin_objectReference = RealmObjectReference(
         type = type,
         owner = realm,
         mediator = mediator,
@@ -45,7 +45,7 @@ internal fun <T : BaseRealmObject> RealmObjectInternal.manage(
                 RealmInterop.realm_object_get_table(objectPointer)
             ).name
         } else {
-            realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`
+            realmObjectCompanionOrThrow(type).io_realm_kotlin_className
         }
     )
 
@@ -106,6 +106,7 @@ internal fun <T : BaseRealmObject> RealmObjectReference<T>.toRealmObject(): T =
 /**
  * Returns the [RealmObjectCompanion] associated with a given [BaseRealmObject]'s [KClass].
  */
+@Suppress("NOTHING_TO_INLINE")
 internal inline fun KClass<*>.realmObjectCompanionOrNull(): RealmObjectCompanion? {
     @Suppress("invisible_reference", "invisible_member")
     return realmObjectCompanionOrNull(this)
@@ -125,7 +126,8 @@ internal inline fun <reified T : BaseRealmObject> KClass<T>.realmObjectCompanion
  * This will be `null` for unmanaged objects.
  */
 internal val <T : BaseRealmObject> T.realmObjectReference: RealmObjectReference<T>?
-    get() = (this as RealmObjectInternal).`io_realm_kotlin_objectReference` as RealmObjectReference<T>?
+    @Suppress("UNCHECKED_CAST")
+    get() = (this as RealmObjectInternal).io_realm_kotlin_objectReference as RealmObjectReference<T>?
 
 /**
  * If the Realm Object is managed it calls the specified function block and returns its result,
@@ -184,6 +186,7 @@ internal fun <T : BaseRealmObject> createDetachedCopy(
     cache: ManagedToUnmanagedObjectCache,
 ): T {
     val id = realmObject.getIdentifier()
+    @Suppress("UNCHECKED_CAST")
     val result: BaseRealmObject = cache[id] as T? ?: run {
         val unmanagedObject = mediator.companionOf(realmObject::class).`io_realm_kotlin_newInstance`() as BaseRealmObject
         cache[id] = unmanagedObject
@@ -201,5 +204,6 @@ internal fun <T : BaseRealmObject> createDetachedCopy(
     if (closeAfterCopy) {
         realmObject.realmObjectReference!!.objectPointer.release()
     }
+    @Suppress("UNCHECKED_CAST")
     return result as T
 }

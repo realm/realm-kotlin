@@ -18,7 +18,6 @@ package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
@@ -43,6 +42,7 @@ import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
+import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
@@ -376,6 +376,8 @@ class AppTests {
 
     @Test
     fun encryptedMetadataRealm() {
+        val tempDir = PlatformUtils.createTempDir()
+
         // Create new test app with a random encryption key
         val key = TestHelper.getRandomKey()
         TestApp(
@@ -384,7 +386,7 @@ class AppTests {
             builder = {
                 it
                     .encryptionKey(key)
-                    .syncRootDirectory("${appFilesDirectory()}/foo")
+                    .syncRootDirectory("$tempDir/foo")
             }
         ).use { app ->
             // Create Realm in order to create the sync metadata Realm
@@ -413,6 +415,8 @@ class AppTests {
 
     @Test
     fun encryptedMetadataRealm_openWithWrongKeyThrows() {
+        val tempDir = PlatformUtils.createTempDir()
+
         // Create new test app with a random encryption key
         val correctKey = TestHelper.getRandomKey()
         TestApp(
@@ -421,7 +425,7 @@ class AppTests {
             builder = {
                 it
                     .encryptionKey(correctKey)
-                    .syncRootDirectory("${appFilesDirectory()}/foo")
+                    .syncRootDirectory("$tempDir/foo")
             }
         ).use { app ->
             // Create Realm in order to create the sync metadata Realm
@@ -452,6 +456,8 @@ class AppTests {
 
     @Test
     fun encryptedMetadataRealm_openWithoutKeyThrows() {
+        val tempDir = PlatformUtils.createTempDir()
+
         // Create new test app with a random encryption key
         TestApp(
             "encryptedMetadataRealm_openWithoutKeyThrows",
@@ -459,7 +465,7 @@ class AppTests {
             builder = {
                 it
                     .encryptionKey(TestHelper.getRandomKey())
-                    .syncRootDirectory("${appFilesDirectory()}/foo")
+                    .syncRootDirectory("$tempDir/foo")
             }
         ).use { app ->
             // Create Realm in order to create the sync metadata Realm

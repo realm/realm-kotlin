@@ -98,6 +98,7 @@ fun Instant.toRealmInstant(): RealmInstant {
  * Channel implementation specifically suited for tests. Its size is unlimited, but will fail
  * the test if canceled while still containing unconsumed elements.
  */
+@Suppress("NOTHING_TO_INLINE")
 inline fun <T> TestChannel(
     capacity: Int = Channel.UNLIMITED,
     onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
@@ -114,6 +115,7 @@ inline fun <T> TestChannel(
  * Helper method that will use `trySend` to send a message to a Channel and throw
  * an error if `trySend` returns false
  */
+@Suppress("NOTHING_TO_INLINE")
 inline fun <T : Any?> Channel<T>.trySendOrFail(value: T) {
     val result: ChannelResult<Unit> = this.trySend(value)
     if (result.isFailure) {

@@ -34,15 +34,26 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
     // This should never be null after initialization of a dynamic object, but we currently cannot
     // represent that in the type system as we one some code paths construct the Kotlin object
     // before having the realm object reference
-    override var `io_realm_kotlin_objectReference`: RealmObjectReference<out BaseRealmObject>? = null
+    override var `io_realm_kotlin_objectReference`: RealmObjectReference<out BaseRealmObject>? =
+        null
 
     override fun <T : Any> getValue(propertyName: String, clazz: KClass<T>): T {
         // dynamicGetSingle checks nullability of property, so null pointer check raises appropriate NPE
-        return RealmObjectHelper.dynamicGet(this.`io_realm_kotlin_objectReference`!!, propertyName, clazz, false)!!
+        return RealmObjectHelper.dynamicGet(
+            obj = this.`io_realm_kotlin_objectReference`!!,
+            propertyName = propertyName,
+            clazz = clazz,
+            nullable = false
+        )!!
     }
 
     override fun <T : Any> getNullableValue(propertyName: String, clazz: KClass<T>): T? {
-        return RealmObjectHelper.dynamicGet(`io_realm_kotlin_objectReference`!!, propertyName, clazz, true)
+        return RealmObjectHelper.dynamicGet(
+            obj = `io_realm_kotlin_objectReference`!!,
+            propertyName = propertyName,
+            clazz = clazz,
+            nullable = true
+        )
     }
 
     override fun getObject(propertyName: String): DynamicRealmObject? {
@@ -50,12 +61,28 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
     }
 
     override fun <T : Any> getValueList(propertyName: String, clazz: KClass<T>): RealmList<T> {
-        return RealmObjectHelper.dynamicGetList(`io_realm_kotlin_objectReference`!!, propertyName, clazz, false)
-            .let { it as RealmList<T> }
+        return RealmObjectHelper.dynamicGetList(
+            obj = `io_realm_kotlin_objectReference`!!,
+            propertyName = propertyName,
+            clazz = clazz,
+            nullable = false
+        )
+            .let {
+                @Suppress("unchecked_cast")
+                it as RealmList<T>
+            }
     }
 
-    override fun <T : Any> getNullableValueList(propertyName: String, clazz: KClass<T>): RealmList<T?> {
-        return RealmObjectHelper.dynamicGetList(`io_realm_kotlin_objectReference`!!, propertyName, clazz, true)
+    override fun <T : Any> getNullableValueList(
+        propertyName: String,
+        clazz: KClass<T>,
+    ): RealmList<T?> {
+        return RealmObjectHelper.dynamicGetList(
+            obj = `io_realm_kotlin_objectReference`!!,
+            propertyName = propertyName,
+            clazz = clazz,
+            nullable = true
+        )
     }
 
     override fun getObjectList(propertyName: String): RealmList<out DynamicRealmObject> {
@@ -63,12 +90,28 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
     }
 
     override fun <T : Any> getValueSet(propertyName: String, clazz: KClass<T>): RealmSet<T> {
-        return RealmObjectHelper.dynamicGetSet(`io_realm_kotlin_objectReference`!!, propertyName, clazz, false)
-            .let { it as RealmSet<T> }
+        return RealmObjectHelper.dynamicGetSet(
+            obj = `io_realm_kotlin_objectReference`!!,
+            propertyName = propertyName,
+            clazz = clazz,
+            nullable = false
+        )
+            .let {
+                @Suppress("unchecked_cast")
+                it as RealmSet<T>
+            }
     }
 
-    override fun <T : Any> getNullableValueSet(propertyName: String, clazz: KClass<T>): RealmSet<T?> {
-        return RealmObjectHelper.dynamicGetSet(`io_realm_kotlin_objectReference`!!, propertyName, clazz, true)
+    override fun <T : Any> getNullableValueSet(
+        propertyName: String,
+        clazz: KClass<T>,
+    ): RealmSet<T?> {
+        return RealmObjectHelper.dynamicGetSet(
+            obj = `io_realm_kotlin_objectReference`!!,
+            propertyName = propertyName,
+            clazz = clazz,
+            nullable = true
+        )
     }
 
     override fun getObjectSet(propertyName: String): RealmSet<out DynamicRealmObject> {
@@ -77,17 +120,30 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
 
     override fun <T : Any> getValueDictionary(
         propertyName: String,
-        clazz: KClass<T>
+        clazz: KClass<T>,
     ): RealmDictionary<T> {
-        return RealmObjectHelper.dynamicGetDictionary(`io_realm_kotlin_objectReference`!!, propertyName, clazz, false)
-            .let { it as RealmDictionary<T> }
+        return RealmObjectHelper.dynamicGetDictionary(
+            obj = `io_realm_kotlin_objectReference`!!,
+            propertyName = propertyName,
+            clazz = clazz,
+            nullable = false
+        )
+            .let {
+                @Suppress("unchecked_cast")
+                it as RealmDictionary<T>
+            }
     }
 
     override fun <T : Any> getNullableValueDictionary(
         propertyName: String,
-        clazz: KClass<T>
+        clazz: KClass<T>,
     ): RealmDictionary<T?> {
-        return RealmObjectHelper.dynamicGetDictionary(`io_realm_kotlin_objectReference`!!, propertyName, clazz, true)
+        return RealmObjectHelper.dynamicGetDictionary(
+            obj = `io_realm_kotlin_objectReference`!!,
+            propertyName = propertyName,
+            clazz = clazz,
+            nullable = true
+        )
     }
 
     override fun getObjectDictionary(propertyName: String): RealmDictionary<out DynamicRealmObject?> {
@@ -95,6 +151,9 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
     }
 
     override fun getBacklinks(propertyName: String): RealmResults<out DynamicRealmObject> {
-        return RealmObjectHelper.dynamicGetBacklinks(`io_realm_kotlin_objectReference`!!, propertyName)
+        return RealmObjectHelper.dynamicGetBacklinks(
+            `io_realm_kotlin_objectReference`!!,
+            propertyName
+        )
     }
 }

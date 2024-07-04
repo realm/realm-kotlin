@@ -319,6 +319,7 @@ class RealmObjectTests : RealmStateTest {
 
     // FIXME RealmObject doesn't actually implement RealmState yet
     @Ignore
+    @Test
     override fun isClosed() {
         TODO("Not yet implemented")
     }

@@ -17,6 +17,7 @@
 
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTests
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type
+import kotlin.math.min
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -72,6 +73,7 @@ configurations.all {
 }
 
 // Common Kotlin configuration
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     sourceSets {
         val commonMain by getting {
@@ -129,14 +131,15 @@ kotlin {
 
 // Android configuration
 android {
-    compileSdkVersion(Versions.Android.compileSdkVersion)
+    namespace = "io.realm.sync.testapp"
+    compileSdk = Versions.Android.compileSdkVersion
     buildToolsVersion = Versions.Android.buildToolsVersion
 
     testBuildType = (properties["testBuildType"] ?: "debug") as String
 
     defaultConfig {
-        minSdkVersion(Versions.Android.minSdk)
-        targetSdkVersion(Versions.Android.targetSdk)
+        minSdk = Versions.Android.minSdk
+        targetSdk = Versions.Android.targetSdk
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         multiDexEnabled = true
 
@@ -168,13 +171,13 @@ android {
     // Remove overlapping resources after adding "org.jetbrains.kotlinx:kotlinx-coroutines-test" to
     // avoid errors like "More than one file was found with OS independent path 'META-INF/AL2.0'."
     packagingOptions {
-        exclude("META-INF/AL2.0")
-        exclude("META-INF/LGPL2.1")
+        resources.excludes.add("META-INF/AL2.0")
+        resources.excludes.add("META-INF/LGPL2.1")
     }
 }
-
+@Suppress("UNUSED_VARIABLE")
 kotlin {
-    android("android")
+    androidTarget()
     sourceSets {
         val androidMain by getting {
             dependencies {
@@ -229,7 +232,7 @@ kotlin {
         }
     }
 }
-
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     jvm()
     sourceSets {
@@ -249,6 +252,7 @@ kotlin {
         }
     }
 }
+@Suppress("UNUSED_VARIABLE")
 kotlin {
     if (HOST_OS == OperatingSystem.MACOS_ARM64) {
         iosSimulatorArm64("ios")

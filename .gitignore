@@ -329,3 +329,11 @@ DerivedData/
 
 # End of https://www.gitignore.io/api/c,git,c++,java,cmake,xcode,kotlin,android,intellij,visualstudiocode
 dynamic_libraries.properties
+
+**/.kotlin
+
+**/output
+
+packages/test-sync/mongodb-realm/
+
+packages/m2-buildrepo

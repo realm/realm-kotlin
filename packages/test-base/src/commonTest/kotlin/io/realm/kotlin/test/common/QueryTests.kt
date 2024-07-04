@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("unchecked_cast")
+@file:OptIn(ExperimentalCoroutinesApi::class)
 
 package io.realm.kotlin.test.common
 
@@ -56,6 +58,7 @@ import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.FullText
 import io.realm.kotlin.types.annotations.PersistedName
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel

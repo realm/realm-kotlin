@@ -129,7 +129,7 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
     private val queryType: AggregatorQueryType
 ) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), TypeBoundQuery<T>, RealmScalarNullableQuery<T> {
 
-    @Suppress("ExplicitItLambdaParameter")
+    @Suppress("ExplicitItLambdaParameter", "UNCHECKED_CAST")
     override val converter: (RealmValue) -> T? = when (propertyMetadata.type) {
         PropertyType.RLM_PROPERTY_TYPE_INT -> { it -> IntConverter.fromRealmValue(it)?.let { coerceLong(propertyMetadata.name, it, type) } as T? }
         PropertyType.RLM_PROPERTY_TYPE_FLOAT -> { it -> FloatConverter.fromRealmValue(it)?.let { coerceFloat(propertyMetadata.name, it, type) } as T? }
@@ -182,7 +182,7 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
                     transport, null, mediator, realmReference, false, false,
                 ) as T?
             else -> converter(transport)
-        } as T?
+        }
     }
 }
 
@@ -201,7 +201,7 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
     private val type: KClass<T>
 ) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), TypeBoundQuery<T>, RealmScalarQuery<T> {
 
-    @Suppress("ExplicitItLambdaParameter")
+    @Suppress("ExplicitItLambdaParameter", "unchecked_cast")
     override val converter: (RealmValue) -> T? = when (propertyMetadata.type) {
         PropertyType.RLM_PROPERTY_TYPE_INT -> { it -> IntConverter.fromRealmValue(it)?.let { coerceLong(propertyMetadata.name, it, type) } as T? }
         PropertyType.RLM_PROPERTY_TYPE_FLOAT -> { it -> DoubleConverter.fromRealmValue(it)?.let { coerceDouble(propertyMetadata.name, it, type) } as T? }

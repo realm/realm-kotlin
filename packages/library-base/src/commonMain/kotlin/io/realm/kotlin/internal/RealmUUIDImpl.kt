@@ -103,6 +103,8 @@ public class RealmUUIDImpl : RealmUUID {
         }
     }
 }
-
+@Suppress("NOTHING_TO_INLINE")
 public inline fun RealmUUID.asBsonBinary(): BsonBinary = BsonBinary(BsonBinarySubType.UUID_STANDARD, bytes)
+
+@Suppress("NOTHING_TO_INLINE")
 public inline fun BsonBinary.asRealmUUID(): RealmUUID = RealmUUID.from(data)

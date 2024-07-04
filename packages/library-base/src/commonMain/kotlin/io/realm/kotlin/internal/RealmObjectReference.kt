@@ -78,6 +78,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
         objectPointer = pointer
     )
 
+    @Suppress("unchecked_cast")
     override fun freeze(
         frozenRealm: RealmReference
     ): RealmObjectReference<T>? {
@@ -93,6 +94,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
         return thaw(liveRealm, type)
     }
 
+    @Suppress("unchecked_cast")
     public fun thaw(
         liveRealm: RealmReference,
         clazz: KClass<out BaseRealmObject>
@@ -149,14 +151,10 @@ public class RealmObjectReference<T : BaseRealmObject>(
         objectPointer.let { RealmInterop.realm_object_delete(it) }
     }
 
-    override fun isValid(): Boolean {
-        val ptr = objectPointer
-        return if (ptr != null) {
+    override fun isValid(): Boolean =
+        objectPointer.let { ptr ->
             !ptr.isReleased() && RealmInterop.realm_object_is_valid(ptr)
-        } else {
-            false
         }
-    }
 
     internal fun checkValid() {
         if (!this.isValid()) {

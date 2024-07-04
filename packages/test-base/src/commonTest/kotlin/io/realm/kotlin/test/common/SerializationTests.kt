@@ -314,17 +314,11 @@ class SerializationTests {
                     RealmAny.Type.TIMESTAMP -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(timestampField)
                     }
-                    RealmAny.Type.OBJECT -> SerializableSample().apply {
+                    RealmAny.Type.OBJECT_ID -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(bsonObjectIdField)
                     }
                     RealmAny.Type.UUID -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(uuidField)
-                    }
-                    RealmAny.Type.OBJECT_ID -> SerializableSample().apply {
-                        SerializableSample().let {
-                            nullableObject = it
-                            nullableRealmAnyField = RealmAny.create(it)
-                        }
                     }
                     RealmAny.Type.OBJECT -> SerializableSample().apply {
                         SerializableSample().let {

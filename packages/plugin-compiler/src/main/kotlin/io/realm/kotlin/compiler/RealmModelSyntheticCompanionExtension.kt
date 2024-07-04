@@ -106,16 +106,17 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
             companionClass.source
         ).apply {
             initialize(
-                null,
-                companionClass.thisAsReceiverParameter,
-                emptyList(),
-                emptyList(),
+                /* extensionReceiverParameter = */ null,
+                /* dispatchReceiverParameter = */ companionClass.thisAsReceiverParameter,
+                /* contextReceiverParameters = */ emptyList(),
+                /* typeParameters = */ emptyList(),
+                /* unsubstitutedValueParameters = */ emptyList(),
                 // FIXME Howto resolve types from "runtime" module. Should be
                 //  `io.realm.kotlin.internal.Table`, but doesn't seem to break as long as the actual
                 //  implementation return type can be cast to this return type
-                realmObjectClass.builtIns.anyType,
-                Modality.OPEN,
-                DescriptorVisibilities.PUBLIC
+                /* unsubstitutedReturnType = */ realmObjectClass.builtIns.anyType,
+                /* modality = */ Modality.OPEN,
+                /* visibility = */ DescriptorVisibilities.PUBLIC
             )
         }
     }
@@ -133,13 +134,14 @@ class RealmModelSyntheticCompanionExtension : SyntheticResolveExtension {
             companionClass.source
         ).apply {
             initialize(
-                null,
-                companionClass.thisAsReceiverParameter,
-                emptyList(),
-                emptyList(),
-                realmObjectClass.builtIns.anyType,
-                Modality.OPEN,
-                DescriptorVisibilities.PUBLIC
+                /* extensionReceiverParameter = */ null,
+                /* dispatchReceiverParameter = */ companionClass.thisAsReceiverParameter,
+                /* contextReceiverParameters = */ emptyList(),
+                /* typeParameters = */ emptyList(),
+                /* unsubstitutedValueParameters = */ emptyList(),
+                /* unsubstitutedReturnType = */ realmObjectClass.builtIns.anyType,
+                /* modality = */ Modality.OPEN,
+                /* visibility = */ DescriptorVisibilities.PUBLIC
             )
         }
     }

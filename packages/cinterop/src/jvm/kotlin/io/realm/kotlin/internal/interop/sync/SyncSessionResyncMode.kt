@@ -25,9 +25,9 @@ actual enum class SyncSessionResyncMode(override val nativeValue: Int) : NativeE
     RLM_SYNC_SESSION_RESYNC_MODE_RECOVER(realm_sync_session_resync_mode_e.RLM_SYNC_SESSION_RESYNC_MODE_RECOVER),
     RLM_SYNC_SESSION_RESYNC_MODE_RECOVER_OR_DISCARD(realm_sync_session_resync_mode_e.RLM_SYNC_SESSION_RESYNC_MODE_RECOVER_OR_DISCARD);
 
-    actual companion object {
-        actual fun fromInt(nativeValue: Int): SyncSessionResyncMode {
-            for (value in SyncSessionResyncMode.values()) {
+    companion object {
+        fun of(nativeValue: Int): SyncSessionResyncMode {
+            for (value in entries) {
                 if (value.nativeValue == nativeValue) {
                     return value
                 }

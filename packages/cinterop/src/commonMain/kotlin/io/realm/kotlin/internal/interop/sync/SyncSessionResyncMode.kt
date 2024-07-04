@@ -25,8 +25,4 @@ expect enum class SyncSessionResyncMode {
     RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL,
     RLM_SYNC_SESSION_RESYNC_MODE_RECOVER,
     RLM_SYNC_SESSION_RESYNC_MODE_RECOVER_OR_DISCARD;
-
-    companion object {
-        fun fromInt(nativeValue: Int): SyncSessionResyncMode
-    }
 }

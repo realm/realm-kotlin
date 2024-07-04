@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.sync.AppError
+import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.SyncError
 
@@ -89,7 +90,7 @@ fun interface ProgressCallback {
 }
 
 fun interface ConnectionStateChangeCallback {
-    fun onChange(oldState: Int, newState: Int)
+    fun onChange(oldState: CoreConnectionState, newState: CoreConnectionState)
 }
 
 interface SyncThreadObserver {

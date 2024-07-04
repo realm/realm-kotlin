@@ -8,7 +8,7 @@ plugins {
 version = "1.0"
 
 kotlin {
-    android()
+    androidTarget()
     jvm()
 // Disable iOS until needed
 //    iosX64()
@@ -30,9 +30,6 @@ kotlin {
             dependencies {
                 implementation("io.realm.kotlin:library-sync:${Realm.version}")
             }
-        }
-        val main by creating {
-            dependsOn(commonMain)
         }
         val androidMain by getting
 // Disable iOS until needed
@@ -58,6 +55,7 @@ kotlin {
 }
 
 android {
+    namespace = "io.realm.kotlin.benchmarks"
     compileSdk = Versions.Android.compileSdkVersion
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {

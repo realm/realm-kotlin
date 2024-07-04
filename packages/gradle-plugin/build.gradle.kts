@@ -101,7 +101,7 @@ sourceSets {
 }
 
 // Task to generate gradle plugin runtime constants for SDK and core versions
-tasks.create("versionConstants") {
+val versionConstants: Task = tasks.create("versionConstants") {
     val coreDependenciesFile = layout.projectDirectory.file(
         listOf("..", "external", "core", "dependencies.yml").joinToString(File.separator)
     )
@@ -128,4 +128,8 @@ tasks.create("versionConstants") {
     }
 }
 
-tasks.getByName("compileKotlin").dependsOn("versionConstants")
+tasks.getByName("compileKotlin").dependsOn(versionConstants)
+tasks.getByName("sourcesJar").dependsOn(versionConstants)
+afterEvaluate {
+    tasks.getByName("publishPluginJar").dependsOn(versionConstants)
+}

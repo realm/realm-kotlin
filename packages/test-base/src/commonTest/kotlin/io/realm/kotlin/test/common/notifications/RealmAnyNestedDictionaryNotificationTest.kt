@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package io.realm.kotlin.test.common.notifications
 
 import io.realm.kotlin.Realm
@@ -32,6 +34,7 @@ import io.realm.kotlin.test.common.utils.FlowableTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.types.RealmAny
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
@@ -262,6 +265,7 @@ class RealmAnyNestedDictionaryNotificationTest : FlowableTests, DeletableEntityN
         TODO("Not yet implemented")
     }
 
+    @Test
     @Ignore
     override fun closeRealmInsideFlowThrows() {
         TODO("Not yet implemented")

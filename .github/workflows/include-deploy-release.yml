@@ -18,33 +18,33 @@ jobs:
 
     steps:
       - name: git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.13
+        uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Setup ninja
-        uses: cmelchior/setup-ninja@master
+        uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
 
       - name: Install ccache
-        uses: hendrikmuhs/ccache-action@v1.2.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
         with:
           key: 'jvm-package'
           max-size: '2.0G'
@@ -71,31 +71,31 @@ jobs:
 
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Setup build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-jvm-sync-${{ inputs.packages-sha-label }}
 
       - name: Restore Linux JNI lib
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jni-linux-lib-${{ inputs.version-label }}
           path: ./packages/cinterop/build/realmLinuxBuild
 
       - name: Restore Windows JNI lib
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jni-windows-lib-${{ inputs.version-label }}
           path: ./packages/cinterop/build/realmWindowsBuild/Release
 
       - name: Restore MacOS JNI lib
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jni-macos-lib-${{ inputs.version-label }}
           path: ./packages/cinterop/build/realmMacOsBuild
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo

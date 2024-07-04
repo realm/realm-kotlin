@@ -16,23 +16,23 @@
 
 package io.realm.kotlin.internal.interop.sync
 
-import io.realm.kotlin.internal.interop.NativeEnumerated
 import realm_wrapper.realm_sync_session_resync_mode
+import realm_wrapper.realm_sync_session_resync_mode_e
 
-actual enum class SyncSessionResyncMode(override val nativeValue: UInt) : NativeEnumerated {
-    RLM_SYNC_SESSION_RESYNC_MODE_MANUAL(realm_sync_session_resync_mode.RLM_SYNC_SESSION_RESYNC_MODE_MANUAL.value),
-    RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL(realm_sync_session_resync_mode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL.value),
-    RLM_SYNC_SESSION_RESYNC_MODE_RECOVER(realm_sync_session_resync_mode.RLM_SYNC_SESSION_RESYNC_MODE_RECOVER.value),
-    RLM_SYNC_SESSION_RESYNC_MODE_RECOVER_OR_DISCARD(realm_sync_session_resync_mode.RLM_SYNC_SESSION_RESYNC_MODE_RECOVER_OR_DISCARD.value);
+actual enum class SyncSessionResyncMode(val value: realm_sync_session_resync_mode_e) {
+    RLM_SYNC_SESSION_RESYNC_MODE_MANUAL(realm_sync_session_resync_mode.RLM_SYNC_SESSION_RESYNC_MODE_MANUAL),
+    RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL(realm_sync_session_resync_mode.RLM_SYNC_SESSION_RESYNC_MODE_DISCARD_LOCAL),
+    RLM_SYNC_SESSION_RESYNC_MODE_RECOVER(realm_sync_session_resync_mode.RLM_SYNC_SESSION_RESYNC_MODE_RECOVER),
+    RLM_SYNC_SESSION_RESYNC_MODE_RECOVER_OR_DISCARD(realm_sync_session_resync_mode.RLM_SYNC_SESSION_RESYNC_MODE_RECOVER_OR_DISCARD);
 
-    actual companion object {
-        actual fun fromInt(nativeValue: Int): SyncSessionResyncMode {
-            for (value in SyncSessionResyncMode.values()) {
-                if (value.nativeValue.toInt() == nativeValue) {
-                    return value
+    companion object {
+        fun of(mode: realm_sync_session_resync_mode_e): SyncSessionResyncMode {
+            for (entry in entries) {
+                if (entry.value.value == mode.value) {
+                    return entry
                 }
             }
-            error("Unknown session resync mode: $nativeValue")
+            error("Unknown session resync mode: $mode")
         }
     }
 }

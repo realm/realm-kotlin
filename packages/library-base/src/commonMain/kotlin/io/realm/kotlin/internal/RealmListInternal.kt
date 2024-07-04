@@ -326,7 +326,6 @@ internal class PrimitiveListOperator<E>(
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun set(
         index: Int,
         element: E,
@@ -375,18 +374,15 @@ internal class RealmAnyListOperator(
     val issueDynamicMutableObject: Boolean
 ) : ListOperator<RealmAny?> {
 
-    @Suppress("UNCHECKED_CAST")
-    override fun get(index: Int): RealmAny? {
-        return getterScope {
-            val transport = realm_list_get(nativePointer, index.toLong())
-            return realmValueToRealmAny(
-                transport, null, mediator, realmReference,
-                issueDynamicObject,
-                issueDynamicMutableObject,
-                { RealmInterop.realm_list_get_list(nativePointer, index.toLong()) },
-                { RealmInterop.realm_list_get_dictionary(nativePointer, index.toLong()) }
-            )
-        }
+    override fun get(index: Int): RealmAny? = getterScope {
+        val transport = realm_list_get(nativePointer, index.toLong())
+        return realmValueToRealmAny(
+            transport, null, mediator, realmReference,
+            issueDynamicObject,
+            issueDynamicMutableObject,
+            { RealmInterop.realm_list_get_list(nativePointer, index.toLong()) },
+            { RealmInterop.realm_list_get_dictionary(nativePointer, index.toLong()) }
+        )
     }
 
     override fun indexOf(element: RealmAny?): Int {
@@ -443,7 +439,6 @@ internal class RealmAnyListOperator(
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun set(
         index: Int,
         element: RealmAny?,
@@ -548,7 +543,6 @@ internal class RealmObjectListOperator<E : BaseRealmObject?>(
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun set(
         index: Int,
         element: E,
@@ -608,7 +602,6 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
         RealmObjectHelper.assign(newObj, element, updatePolicy, cache)
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun set(
         index: Int,
         element: E,

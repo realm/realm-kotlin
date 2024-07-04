@@ -29,6 +29,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.update
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
@@ -198,6 +199,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
                 assertIs<UpdatedObject<Sample>>(objectChange)
                 assertEquals("Baz", objectChange.obj.stringField)
             }
+            @OptIn(ExperimentalCoroutinesApi::class)
             assertTrue(c1.isEmpty)
             observer2.cancel()
             c1.close()
@@ -324,14 +326,10 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { objectChange ->
             assertIs<UpdatedObject<Sample>>(objectChange)
-            when (objectChange) {
-                is UpdatedObject -> {
-                    assertEquals(1, objectChange.changedFields.size)
-                    assertEquals("stringField", objectChange.changedFields.first())
-                    assertEquals("Bar", objectChange.obj.stringField)
-                }
-                else -> fail("Unexpected change: $objectChange")
-            }
+
+            assertEquals(1, objectChange.changedFields.size)
+            assertEquals("stringField", objectChange.changedFields.first())
+            assertEquals("Bar", objectChange.obj.stringField)
         }
         observer.cancel()
         c.close()
@@ -366,15 +364,11 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { objectChange ->
             assertIs<UpdatedObject<Sample>>(objectChange)
-            when (objectChange) {
-                is UpdatedObject -> {
-                    // Core will only report something changed to the top-level property.
-                    assertEquals(1, objectChange.changedFields.size)
-                    assertEquals("nullableObject", objectChange.changedFields.first())
-                    assertEquals("Bar", objectChange.obj.nullableObject!!.stringField)
-                }
-                else -> fail("Unexpected change: $objectChange")
-            }
+
+            // Core will only report something changed to the top-level property.
+            assertEquals(1, objectChange.changedFields.size)
+            assertEquals("nullableObject", objectChange.changedFields.first())
+            assertEquals("Bar", objectChange.obj.nullableObject!!.stringField)
         }
         observer.cancel()
         c.close()
@@ -422,14 +416,10 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { objectChange ->
             assertIs<UpdatedObject<Sample>>(objectChange)
-            when (objectChange) {
-                is UpdatedObject -> {
-                    // Default value is Realm, so if this event is triggered by the first write
-                    // this assert will fail
-                    assertEquals("Parent change", objectChange.obj.stringField)
-                }
-                else -> fail("Unexpected change: $objectChange")
-            }
+
+            // Default value is Realm, so if this event is triggered by the first write
+            // this assert will fail
+            assertEquals("Parent change", objectChange.obj.stringField)
         }
         observer.cancel()
         c.close()
@@ -476,15 +466,11 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { objectChange ->
             assertIs<UpdatedObject<Sample>>(objectChange)
-            when (objectChange) {
-                is UpdatedObject -> {
-                    // Core will only report something changed to the top-level property.
-                    assertEquals(1, objectChange.changedFields.size)
-                    assertEquals("nullableObject", objectChange.changedFields.first())
-                    assertEquals("Bar", objectChange.obj.nullableObject!!.nullableObject!!.nullableObject!!.nullableObject!!.nullableObject!!.stringField)
-                }
-                else -> fail("Unexpected change: $objectChange")
-            }
+
+            // Core will only report something changed to the top-level property.
+            assertEquals(1, objectChange.changedFields.size)
+            assertEquals("nullableObject", objectChange.changedFields.first())
+            assertEquals("Bar", objectChange.obj.nullableObject!!.nullableObject!!.nullableObject!!.nullableObject!!.nullableObject!!.stringField)
         }
         observer.cancel()
         c.close()

@@ -19,68 +19,54 @@ on:
   workflow_call:
     outputs:  
       version-label:
-        value: ${{ jobs.check-cache.outputs.version-label }}
-      packages-metadata-cache-hit:
-        value: ${{ jobs.check-cache.outputs.packages-metadata-cache-hit }}
-      packages-jvm-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.packages-jvm-cache-hit }}
-      packages-android-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.packages-android-cache-hit }}
-      android-test-base-apk-cache-hit:
-        value: ${{ jobs.check-cache.outputs.android-test-base-apk-cache-hit }}
-      android-test-sync-apk-cache-hit:
-        value: ${{ jobs.check-cache.outputs.android-test-sync-apk-cache-hit }}
-      packages-macos-x64-cache-hit:
-        value: ${{ jobs.check-cache.outputs.packages-macos-x64-cache-hit }}
-      packages-macos-arm64-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.packages-macos-arm64-cache-hit }}
-      packages-ios-x64-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.packages-ios-x64-cache-hit }}
-      packages-ios-arm64-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.packages-ios-arm64-cache-hit }}
-      jni-swig-stub-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.jni-swig-stub-cache-hit }}
-      jni-linux-lib-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.jni-linux-lib-cache-hit }}
-      jni-macos-lib-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.jni-macos-lib-cache-hit }}
-      jni-windows-lib-cache-hit: 
-        value: ${{ jobs.check-cache.outputs.jni-windows-lib-cache-hit }}
+        value: ${{ jobs.checksum.outputs.version-label }}
       packages-sha: 
-        value: ${{ jobs.check-cache.outputs.packages-sha }}
+        value: ${{ jobs.checksum.outputs.packages-sha }}
       benchmarks-sha: 
-        value: ${{ jobs.check-cache.outputs.benchmarks-sha }}
+        value: ${{ jobs.checksum.outputs.benchmarks-sha }}
       core-commit-sha:
-        value: ${{ jobs.check-cache.outputs.core-commit-sha }}
+        value: ${{ jobs.checksum.outputs.core-commit-sha }}
+
+      packages-metadata-cache-hit:
+        value: ${{ jobs.metadata-compiler-plugin.outputs.packages-metadata-cache-hit }}
+      packages-jvm-cache-hit: 
+        value: ${{ jobs.jvm-all.outputs.packages-jvm-cache-hit }}
+      packages-android-cache-hit: 
+        value: ${{ jobs.android.outputs.packages-android-cache-hit }}
+      android-test-base-apk-cache-hit:
+        value: ${{ jobs.android-test-base.outputs.android-test-base-apk-cache-hit }}
+      android-test-sync-apk-cache-hit:
+        value: ${{ jobs.android-test-sync.outputs.android-test-sync-apk-cache-hit }}
+      packages-macos-x64-cache-hit:
+        value: ${{ jobs.macos-x64.outputs.packages-macos-x64-cache-hit }}
+      packages-macos-arm64-cache-hit: 
+        value: ${{ jobs.macos-arm.outputs.packages-macos-arm64-cache-hit }}
+      packages-ios-x64-cache-hit: 
+        value: ${{ jobs.ios-x64.outputs.packages-ios-x64-cache-hit }}
+      packages-ios-arm64-cache-hit: 
+        value: ${{ jobs.ios-arm.outputs.packages-ios-arm64-cache-hit }}
+      jni-swig-stub-cache-hit: 
+        value: ${{ jobs.jni-stub.outputs.jni-swig-stub-cache-hit }}
+      jni-linux-lib-cache-hit: 
+        value: ${{ jobs.jni-linux-lib.outputs.jni-linux-lib-cache-hit }}
+      jni-macos-lib-cache-hit: 
+        value: ${{ jobs.jni-macos-lib.outputs.jni-macos-lib-cache-hit }}
+      jni-windows-lib-cache-hit: 
+        value: ${{ jobs.jni-windows-lib.outputs.jni-windows-lib-cache-hit }}
 
 jobs:
-  check-cache:
+  checksum:
     runs-on: ubuntu-latest
-    name: Check cache 
-    env:
-      CACHE_SKIP_SAVE: true
+    name: Cache SHA
     outputs:  
       version-label: ${{ steps.find-library-version.outputs.label }}
-      packages-metadata-cache-hit: ${{ steps.kotlin-metadata-cache.outputs.cache-hit }}
-      packages-jvm-cache-hit: ${{ steps.jvm-cache.outputs.cache-hit }}
-      packages-android-cache-hit: ${{ steps.android-cache.outputs.cache-hit }}
-      android-test-base-apk-cache-hit: ${{ steps.android-test-base-apk.outputs.cache-hit }}
-      android-test-sync-apk-cache-hit: ${{ steps.android-test-sync-apk.outputs.cache-hit }}
-      packages-macos-x64-cache-hit: ${{ steps.macos-x64-cache.outputs.cache-hit }}
-      packages-macos-arm64-cache-hit: ${{ steps.macos-arm64-cache.outputs.cache-hit }}
-      packages-ios-x64-cache-hit: ${{ steps.ios-x64-cache.outputs.cache-hit }}
-      packages-ios-arm64-cache-hit: ${{ steps.ios-arm64-cache.outputs.cache-hit }}
-      jni-swig-stub-cache-hit: ${{ steps.jni-swig-stub-cache.outputs.cache-hit }}
-      jni-linux-lib-cache-hit: ${{ steps.jni-linux-lib-cache.outputs.cache-hit }}
-      jni-macos-lib-cache-hit: ${{ steps.jni-macos-lib-cache.outputs.cache-hit }}
-      jni-windows-lib-cache-hit: ${{ steps.jni-windows-lib-cache.outputs.cache-hit }}
       packages-sha: ${{ steps.packages-cache-key.outputs.sha }}
       benchmarks-sha: ${{ steps.calculate-benchmarks-cache-key.outputs.sha }}
-      core-commit-sha: ${{ steps.calculate-core-commmit-sha.outputs.commit }}
+      core-commit-sha: ${{ steps.calculate-core-versioncommmit-sha.outputs.commit }}
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: "recursive"
 
@@ -88,6 +74,7 @@ jobs:
       id: find-library-version
       run: |
         version=$(grep "const val version" buildSrc/src/main/kotlin/Config.kt | cut -d \" -f2)
+        echo "Label: $version"
         echo "label=$version" >> $GITHUB_OUTPUT
 
     # This also include changes to Realm Core as they are hashed as part of `/packages/external/core`
@@ -104,349 +91,341 @@ jobs:
       working-directory: packages/external/core
       run: echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
-    #
-    # For each specific package we need to perform 3 steps:
-    # 
-    # 1. Check if a cache is available and download it if it is.
-    # 2. If (1), store this cache as an artifact for jobs downstream to use.
-    # 3. Cleanup the build folder. This is required so we can download the next 
-    #    platform into a fresh cache location. It does not look possible to download
-    #    a cache into a different location.  
-    # 
-    # TODO There doesn't seem to be a good way to check if a cache key exists without download it.
-    # https://github.com/actions/cache/issues/321
-    #
-    # TODO Create a custom action for this until we have a work-around?
-    #
-
-    #
-    # Kotlin Metadata and Gradle/Compiler Plugin
-    #
+  #
+  # Kotlin Metadata and Gradle/Compiler Plugin
+  #
+  metadata-compiler-plugin:
+    runs-on: ubuntu-latest
+    name: Metadata & Compiler plugin
+    needs: checksum
+    outputs:  
+      packages-metadata-cache-hit: ${{ steps.kotlin-metadata-cache.outputs.cache-hit }}
+    steps:
     - name: Check Kotlin Metadata cache 
       id: kotlin-metadata-cache
-      uses: cmelchior/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-metadata-${{ steps.packages-cache-key.outputs.sha }}
+        key: packages-m2-metadata-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save Kotlin Metadata packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.kotlin-metadata-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-metadata-${{ steps.find-library-version.outputs.label }}
+        name: packages-metadata-${{ needs.checksum.outputs.version-label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
-    - name: Delete downloaded JVM cache files
-      id: delete-cache-metadata
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.kotlin-metadata-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/build/m2-buildrepo
+  #
+  # JVM (All platforms)
+  #
+  jvm-all:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: JVM (All platforms)
+    outputs:  
+      packages-jvm-cache-hit: ${{ steps.jvm-cache.outputs.cache-hit }}
 
-    #
-    # JVM (All platforms)
-    #
+    steps:
     - name: Check JVM cache 
       id: jvm-cache
-      uses: cmelchior/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-jvm-sync-${{ steps.packages-cache-key.outputs.sha }}
+        key: packages-m2-jvm-sync-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save JVM packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.jvm-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-jvm-${{ steps.find-library-version.outputs.label }}
+        name: packages-jvm-${{ needs.checksum.outputs.version-label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
-    - name: Delete downloaded JVM cache files
-      id: delete-cache-jvm
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.jvm-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/build/m2-buildrepo
-
-    #
-    # JNI Stub (JVM)
-    #    
+  #
+  # JNI Stub (JVM)
+  #   
+  jni-stub:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: JNI Stub (JVM)
+    outputs:  
+      jni-swig-stub-cache-hit: ${{ steps.jni-swig-stub-cache.outputs.cache-hit }}
+    
+    steps: 
     - name: Check JNI Swig stub cache 
       id: jni-swig-stub-cache
-      uses: cmelchior/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/jni-swig-stub/build/generated/sources/jni
-        key: jni-swig-stubs-${{ steps.packages-cache-key.outputs.sha }}
+        key: jni-swig-stubs-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save JNI Stub packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit == 'true'
       with:
-        name: jni-stub-${{ steps.find-library-version.outputs.label }}
+        name: jni-stub-${{ needs.checksum.outputs.version-label }}
         path: ./packages/jni-swig-stub/build/generated/sources/jni/*
         retention-days: 1
 
-    - name: Delete downloaded JVM cache files
-      id: delete-cache-jni-stub
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/jni-swig-stub/build/generated/sources/jni
+  #
+  # JNI MacOS Lib
+  #   
+  jni-macos-lib:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: JNI MacOS Lib
+    outputs:  
+      jni-macos-lib-cache-hit: ${{ steps.jni-macos-lib-cache.outputs.cache-hit }}
 
-    #
-    # JNI MacOS Lib
-    #    
+    steps: 
     - name: Check JNI MacOS lib cache 
       id: jni-macos-lib-cache
-      uses: cmelchior/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/cinterop/build/realmMacOsBuild
-        key: jni-macos-lib-${{ steps.packages-cache-key.outputs.sha }}
-
+        key: jni-macos-lib-${{ needs.checksum.outputs.packages-sha }}
     - name: Save JNI MacOS lib package
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.jni-macos-lib-cache.outputs.cache-hit == 'true'
       with:
-        name: jni-macos-lib-${{ steps.find-library-version.outputs.label }}
+        name: jni-macos-lib-${{ needs.checksum.outputs.version-label }}
         path: ./packages/cinterop/build/realmMacOsBuild/**/*
         retention-days: 1
 
-    - name: Delete downloaded JVM cache files
-      id: delete-cache-macos-lib
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.jni-macos-lib-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/cinterop/build/realmMacOsBuild
+  #
+  # JNI Linux Lib
+  #    
+  jni-linux-lib:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: JNI Linux Lib
+    outputs:  
+      jni-linux-lib-cache-hit: ${{ steps.jni-linux-lib-cache.outputs.cache-hit }}
 
-    #
-    # JNI Linux Lib
-    #    
+    steps:
     - name: Check JNI Linux lib cache 
       id: jni-linux-lib-cache
-      uses: cmelchior/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/cinterop/build/realmLinuxBuild
-        key: jni-linux-lib-${{ steps.packages-cache-key.outputs.sha }}
+        key: jni-linux-lib-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save JNI Linux lib package
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.jni-linux-lib-cache.outputs.cache-hit == 'true'
       with:
-        name: jni-linux-lib-${{ steps.find-library-version.outputs.label }}
+        name: jni-linux-lib-${{ needs.checksum.outputs.version-label }}
         path: ./packages/cinterop/build/realmLinuxBuild/**/*
         retention-days: 1
 
-    - name: Delete downloaded JVM cache files
-      id: delete-cache-linux-lib
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.jni-linux-lib-cache.outputs.cache-hit == 'true'
+  #
+  # JNI Windows Lib
+  #    
+  jni-windows-lib:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: JNI Windows Lib
+    outputs:  
+      jni-windows-lib-cache-hit: ${{ steps.jni-windows-lib-cache.outputs.cache-hit }}
+    steps:
+    - name: Check JNI Windows lib cache 
+      id: jni-windows-lib-cache
+      uses: actions/cache@v4
       with:
-        path: ./packages/cinterop/build/realmLinuxBuild
+        path: ./packages/cinterop/build/realmWindowsBuild
+        key: jni-windows-lib-${{ needs.checksum.outputs.packages-sha }}
+        enableCrossOsArchive: true
 
-    #
-    # Android
-    #
+    - name: Save JNI Windows lib package
+      uses: actions/upload-artifact@v4
+      if: always() && !cancelled() && steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
+      with:
+        name: jni-windows-lib-${{ needs.checksum.outputs.version-label }}
+        path: ./packages/cinterop/build/realmWindowsBuild/Release/realmc.dll
+        retention-days: 1
+  #
+  # Android
+  #
+  android:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: Android
+    outputs:  
+      packages-android-cache-hit: ${{ steps.android-cache.outputs.cache-hit }}
+
+    steps:
     - name: Check Android cache
       id: android-cache
-      uses: cmelchior/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-android-sync-${{ steps.packages-cache-key.outputs.sha }}
+        key: packages-m2-android-sync-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save Android packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.android-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-android-${{ steps.find-library-version.outputs.label }}
+        name: packages-android-${{ needs.checksum.outputs.version-label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
-    - name: Delete downloaded Android cache files
-      id: delete-cache-android
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.android-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/build/m2-buildrepo
+  #
+  # Android Base Test APK
+  #
+  android-test-base:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: Android Base Test APK
+    outputs:  
+      android-test-base-apk-cache-hit: ${{ steps.android-test-base-apk.outputs.cache-hit }}
 
-      #
-      # Android Base Test APK
-      #
+    steps:
     - name: Check Android Base Test APK
       id: android-test-base-apk
-      uses: cmelchior/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
-        key: android-base-test-apk-key-${{ steps.packages-cache-key.outputs.sha }}
-
+        key: android-base-test-apk-key-${{ needs.checksum.outputs.packages-sha }}
     - name: Save Android Base Test APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.android-test-base-apk.outputs.cache-hit == 'true'
       with:
-        name: android-base-test-apk-${{ steps.find-library-version.outputs.label }}
+        name: android-base-test-apk-${{ needs.checksum.outputs.version-label }}
         path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
         retention-days: 1
 
-    - name: Delete Android Base Test APK cache files
-      id: delete-cache-android-base-test-apk
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.android-test-base-apk.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+  #
+  # Android Sync Test APK
+  #
+  android-test-sync:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: Android Sync Test APK
+    outputs:  
+      android-test-sync-apk-cache-hit: ${{ steps.android-test-sync-apk.outputs.cache-hit }}
 
-      #
-      # Android Sync Test APK
-      #
+    steps:
     - name: Check Android Sync Test APK
       id: android-test-sync-apk
-      uses: cmelchior/cache@main
+      uses: actions/cache@v4
       with:
-        key: android-sync-test-apk-key-${{ steps.packages-cache-key.outputs.sha }}
+        key: android-sync-test-apk-key-${{ needs.checksum.outputs.packages-sha }}
         path: |
           ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
           ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
 
     - name: Save Android Sync Test APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.android-test-sync-apk.outputs.cache-hit == 'true'
       with:
-        name: android-sync-test-apk-${{ steps.find-library-version.outputs.label }}
+        name: android-sync-test-apk-${{ needs.checksum.outputs.version-label }}
         retention-days: 1
         path: |
           ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
           ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
 
-    - name: Delete Android Sync Test APK cache files
-      id: delete-cache-android-sync-test-apk
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.android-test-sync-apk.outputs.cache-hit == 'true'
-      with:
-        path: |
-          ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
-          ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
+  #
+  # MacOS arm64
+  #
+  macos-arm:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: MacOS arm64
+    outputs:  
+      packages-macos-arm64-cache-hit: ${{ steps.macos-arm64-cache.outputs.cache-hit }}
 
-    #
-    # MacOS arm64
-    #
+    steps:
     - name: Check MacOS arm64 cache 
       id: macos-arm64-cache
-      uses: cmelchior/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-macos-arm64-sync-${{ steps.packages-cache-key.outputs.sha }}
+        key: packages-m2-macos-arm64-sync-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save MacOS arm64 packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.macos-arm64-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-macos-arm64-${{ steps.find-library-version.outputs.label }}
+        name: packages-macos-arm64-${{ needs.checksum.outputs.version-label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
-    - name: Delete downloaded MacOS arm64 cache files
-      id: delete-cache-macos-arm64
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.macos-arm64-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/build/m2-buildrepo
+  #
+  # MacOS x64
+  #
+  macos-x64:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: MacOS x64
+    outputs:  
+      packages-macos-x64-cache-hit: ${{ steps.macos-x64-cache.outputs.cache-hit }}
 
-    #
-    # MacOS x64
-    #
+    steps:
     - name: Check MacOS X64 cache 
       id: macos-x64-cache
-      uses: cmelchior/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-macos-x64-sync-${{ steps.packages-cache-key.outputs.sha }}
+        key: packages-m2-macos-x64-sync-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save MacOS x64 packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.macos-x64-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-macos-x64-${{ steps.find-library-version.outputs.label }}
+        name: packages-macos-x64-${{ needs.checksum.outputs.version-label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
-    - name: Delete downloaded MacOS x64 cache files
-      id: delete-cache-macos-x64
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.macos-x64-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/build/m2-buildrepo
 
-    #
-    # iOS arm64
-    #
+  #
+  # iOS arm64
+  #
+  ios-arm:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: iOS arm64
+    outputs:  
+      packages-ios-arm64-cache-hit: ${{ steps.ios-arm64-cache.outputs.cache-hit }}
+
+    steps:
     - name: Check iOS arm64 cache 
       id: ios-arm64-cache
-      uses: cmelchior/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-ios-arm64-sync-${{ steps.packages-cache-key.outputs.sha }}
+        key: packages-m2-ios-arm64-sync-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save iOS arm64 packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.ios-arm64-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-ios-arm64-${{ steps.find-library-version.outputs.label }}
+        name: packages-ios-arm64-${{ needs.checksum.outputs.version-label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
 
-    - name: Delete downloaded iOS arm64 cache files
-      id: delete-cache-ios-arm64
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.ios-arm64-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/build/m2-buildrepo
+  #
+  # iOS x64
+  #
+  ios-x64:
+    runs-on: ubuntu-latest
+    needs: checksum
+    name: iOS x64
+    outputs:  
+      packages-ios-x64-cache-hit: ${{ steps.ios-x64-cache.outputs.cache-hit }}
 
-    #
-    # iOS x64
-    #
+    steps:
     - name: Check iOS X64 cache 
       id: ios-x64-cache
-      uses: cmelchior/cache@main
+      uses: actions/cache@v4
       with:
         path: ./packages/build/m2-buildrepo
-        key: packages-m2-ios-x64-sync-${{ steps.packages-cache-key.outputs.sha }}
+        key: packages-m2-ios-x64-sync-${{ needs.checksum.outputs.packages-sha }}
 
     - name: Save iOS x64 packages
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always() && !cancelled() && steps.ios-x64-cache.outputs.cache-hit == 'true'
       with:
-        name: packages-ios-x64-${{ steps.find-library-version.outputs.label }}
+        name: packages-ios-x64-${{ needs.checksum.outputs.version-label }}
         path: ./packages/build/m2-buildrepo/**/* 
         retention-days: 1
-
-    - name: Delete downloaded iOS x64 cache files
-      id: delete-cache-ios-x64
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.ios-x64-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/build/m2-buildrepo
-
-    #
-    # JNI Windows Lib
-    #    
-    - name: Check JNI Windows lib cache 
-      id: jni-windows-lib-cache
-      uses: cmelchior/cache@main
-      with:
-        path: ./packages/cinterop/build/realmWindowsBuild
-        key: jni-windows-lib-${{ steps.packages-cache-key.outputs.sha }}
-        enableCrossOsArchive: true
-
-    - name: Save JNI Windows lib package
-      uses: actions/upload-artifact@v3
-      if: always() && !cancelled() && steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
-      with:
-        name: jni-windows-lib-${{ steps.find-library-version.outputs.label }}
-        path: ./packages/cinterop/build/realmWindowsBuild/Release/realmc.dll
-        retention-days: 1
-
-    - name: Delete downloaded JNI Windows lib cache files
-      id: delete-cache-windows-lib
-      uses: JesseTG/rm@v1.0.3
-      if: always() && !cancelled() && steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
-      with:
-        path: ./packages/cinterop/build/realmWindowsBuild

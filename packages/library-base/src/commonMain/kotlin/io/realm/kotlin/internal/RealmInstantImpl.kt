@@ -45,6 +45,8 @@ public fun Duration.toRealmInstant(): RealmInstant {
 
 internal fun RealmInstant.restrictToMillisPrecision() =
     toDuration().inWholeMilliseconds.milliseconds.toRealmInstant()
-
+@Suppress("NOTHING_TO_INLINE")
 public inline fun RealmInstant.asBsonDateTime(): BsonDateTime = BsonDateTime(toDuration().inWholeMilliseconds)
+
+@Suppress("NOTHING_TO_INLINE")
 public inline fun BsonDateTime.asRealmInstant(): RealmInstant = value.milliseconds.toRealmInstant()
