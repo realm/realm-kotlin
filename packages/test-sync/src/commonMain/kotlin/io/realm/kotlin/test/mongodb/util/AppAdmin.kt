@@ -101,11 +101,6 @@ interface AppAdmin {
      */
     suspend fun deleteDocuments(database: String, clazz: String, query: String): JsonObject?
 
-    /**
-     * Wait for Sync bootstrap to complete for all model classes.
-     */
-    suspend fun waitForSyncBootstrap()
-
     fun closeClient()
 }
 
