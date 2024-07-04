@@ -4,7 +4,7 @@
 - None.
 
 ### Enhancements
-- None.
+- Improved mechanism for unpacking of JVM native libs suitable for local development. (Issue [#1715](https://github.com/realm/realm-kotlin/issues/1715) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1065)).
 
 ### Fixed
 - None.
