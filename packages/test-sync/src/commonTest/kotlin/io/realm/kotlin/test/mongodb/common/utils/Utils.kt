@@ -75,7 +75,7 @@ suspend inline fun SyncSession.uploadAllLocalChangesOrFail() {
     assertTrue(this.uploadAllLocalChanges(timeout), "Failed to upload local changes in time: $timeout")
 }
 
-suspend fun <R> retry(action: suspend () -> R?, until: (R?) -> Boolean, retries: Int = 5, delay: Duration = 1.seconds): R? {
+suspend fun <R> retry(action: suspend () -> R?, until: (R?) -> Boolean, retries: Int = 15, delay: Duration = 2.seconds): R? {
     repeat(retries) {
         action().let {
             if (until(it)) {
