@@ -767,9 +767,7 @@ class SyncedRealmTests {
             }
         ).let { config ->
             Realm.open(config).use { realm ->
-                println("download changes")
                 realm.syncSession.downloadAllServerChanges(10.seconds)
-                println("downloaded changes")
                 val flow = realm.query<JsonStyleRealmObject>("_id = $0", parentId).asFlow()
                 val parent = withTimeout(10.seconds) {
                     println("get object")
