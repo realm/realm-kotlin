@@ -7,6 +7,7 @@
 * None.
 
 ### Fixed
+* Fix crashes when core tries to log invalid utf-8 messages. (Issue [#1760](https://github.com/realm/realm-kotlin/issues/1760) [RKOTLIN-1089](https://jira.mongodb.org/browse/RKOTLIN-1089)).
 * [Sync] Fatal sync exceptions are now thrown as `UnrecoverableSyncException`. (Issue [#1767](https://github.com/realm/realm-kotlin/issues/1767) [RKOTLIN-1096](https://jira.mongodb.org/browse/RKOTLIN-1096)).
 * [Sync] Fix `NullPointerException` in `SubscriptionSet.waitForSynchronization`. (Issue [#1777](https://github.com/realm/realm-kotlin/issues/1777) [RKOTLIN-1102](https://jira.mongodb.org/browse/RKOTLIN-1102)).
 
