@@ -113,6 +113,12 @@ jobs:
           path: ./packages/cinterop/build/realmLinuxBuild
           key: jni-linux-lib-${{ needs.check-cache.outputs.packages-sha }}
 
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.VERSION_JAVA }}
+
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
@@ -136,6 +142,8 @@ jobs:
             -DREALM_ENABLE_SYNC=1 \
             -DREALM_NO_TESTS=1 \
             -DREALM_BUILD_LIB_ONLY=true \
+            -DCMAKE_TOOLCHAIN_FILE=../../../external/core/tools/cmake/x86_64-linux-gnu.toolchain.cmake \
+            -DJAVA_INCLUDE_PATH=${{ env.JAVA_HOME }}/include/ \
             ../../src/jvm
             make -j8
 
@@ -1091,7 +1099,9 @@ jobs:
       always() && 
       !cancelled() && 
       !contains(needs.*.result, 'failure') && 
-      !contains(needs.*.result, 'cancelled')
+      !contains(needs.*.result, 'cancelled') &&
+      endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' || github.ref == 'refs/heads/release/k2')
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
