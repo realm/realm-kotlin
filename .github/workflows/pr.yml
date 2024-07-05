@@ -137,6 +137,7 @@ jobs:
             -DREALM_NO_TESTS=1 \
             -DREALM_BUILD_LIB_ONLY=true \
             -DCMAKE_TOOLCHAIN_FILE=../../../external/core/tools/cmake/x86_64-linux-gnu.toolchain.cmake \
+            -DJAVA_INCLUDE_PATH=/usr/lib/jvm/java-8-openjdk-amd64/include/ \
             ../../src/jvm
             make -j8
 
