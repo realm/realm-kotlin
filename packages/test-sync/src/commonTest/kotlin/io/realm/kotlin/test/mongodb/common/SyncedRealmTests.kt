@@ -770,14 +770,10 @@ class SyncedRealmTests {
                 realm.syncSession.downloadAllServerChanges(10.seconds)
                 val flow = realm.query<JsonStyleRealmObject>("_id = $0", parentId).asFlow()
                 val parent = withTimeout(10.seconds) {
-                    println("get object")
-                    val x = flow.first {
+                    flow.first {
                         it.list.size >= 1
                     }.list[0]
-                    println("x")
-                    x
                 }
-                println("get parent")
                 parent.let {
                     val value = it.value!!.asDictionary()
                     assertEquals(RealmAny.Companion.create(1), value["primitive"])
