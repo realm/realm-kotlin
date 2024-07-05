@@ -29,11 +29,11 @@ import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
-import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.common.utils.waitForSynchronizationOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.mongodb.util.DefaultFlexibleSyncAppInitializer
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
@@ -63,7 +63,7 @@ class FlexibleSyncIntegrationTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
+        app = TestApp(this::class.simpleName, DefaultFlexibleSyncAppInitializer)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         runBlocking {
             app.createUserAndLogIn(email, password)

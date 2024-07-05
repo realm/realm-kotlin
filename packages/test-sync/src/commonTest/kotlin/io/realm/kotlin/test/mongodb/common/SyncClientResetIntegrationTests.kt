@@ -47,9 +47,11 @@ import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.addEmailProvider
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeFlexibleSync
-import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializePartitionSync
+import io.realm.kotlin.test.mongodb.util.BaasApp
+import io.realm.kotlin.test.mongodb.util.BaseAppInitializer
+import io.realm.kotlin.test.mongodb.util.addEmailProvider
+import io.realm.kotlin.test.mongodb.util.initializeFlexibleSync
+import io.realm.kotlin.test.mongodb.util.initializePartitionSync
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
@@ -118,16 +120,15 @@ class SyncClientResetIntegrationTests {
             RealmLog.add(ClientResetLoggerInspector(logChannel))
             val app = TestApp(
                 this::class.simpleName,
-                appName = appName,
-                initialSetup = { app, service ->
+                object : BaseAppInitializer(appName, { app: BaasApp ->
                     addEmailProvider(app)
                     when (syncMode) {
                         SyncMode.PARTITION_BASED ->
-                            initializePartitionSync(app, service, recoveryDisabled)
+                            initializePartitionSync(app, recoveryDisabled)
                         SyncMode.FLEXIBLE ->
-                            initializeFlexibleSync(app, service, recoveryDisabled)
+                            initializeFlexibleSync(app, recoveryDisabled)
                     }
-                }
+                }) {},
             )
             try {
                 val (email, password) = TestHelper.randomEmail() to "password1234"

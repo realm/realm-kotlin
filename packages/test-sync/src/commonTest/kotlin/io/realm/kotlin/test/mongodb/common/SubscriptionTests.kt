@@ -28,6 +28,7 @@ import io.realm.kotlin.mongodb.sync.asQuery
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.mongodb.util.DefaultPartitionBasedAppInitializer
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.toRealmInstant
 import io.realm.kotlin.types.RealmInstant
@@ -55,7 +56,7 @@ class SubscriptionTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName)
+        app = TestApp(this::class.simpleName, DefaultPartitionBasedAppInitializer,)
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
