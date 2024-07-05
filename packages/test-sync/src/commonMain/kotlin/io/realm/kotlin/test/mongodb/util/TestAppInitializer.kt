@@ -18,7 +18,8 @@ package io.realm.kotlin.test.mongodb.util
 import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
-import kotlinx.serialization.decodeFromString
+import io.realm.kotlin.test.mongodb.common.FLEXIBLE_SYNC_SCHEMA
+import io.realm.kotlin.test.mongodb.common.PARTITION_BASED_SCHEMA
 import kotlinx.serialization.json.Json
 
 object TestAppInitializer {
@@ -36,9 +37,12 @@ object TestAppInitializer {
     suspend fun AppServicesClient.initializeFlexibleSync(
         app: BaasApp,
         service: Service,
-        recoveryDisabled: Boolean = false // TODO
+        recoveryDisabled: Boolean = false
     ) {
         val databaseName = app.clientAppId
+
+        app.setSchema(FLEXIBLE_SYNC_SCHEMA)
+
         service.setSyncConfig(
             """
             {
@@ -48,12 +52,21 @@ object TestAppInitializer {
                     "is_recovery_mode_disabled": $recoveryDisabled,
                     "queryable_fields_names": [
                         "name",
-                        "section"
+                        "section",
+                        "stringField",
+                        "location",
+                        "selector"
+                    ],
+                    "asymmetric_tables": [
+                        "AsymmetricA",
+                        "Measurement"
                     ]
                 }
             }
             """.trimIndent()
         )
+
+        app.waitUntilInitialSyncCompletes()
     }
 
     @Suppress("LongMethod")
@@ -66,6 +79,13 @@ object TestAppInitializer {
 
         app.addFunction(canReadPartition)
         app.addFunction(canWritePartition)
+
+        app.setSchema(
+            schema = PARTITION_BASED_SCHEMA,
+            extraProperties = mapOf(
+                "realm_id" to PrimitivePropertyType.Type.STRING
+            )
+        )
 
         service.setSyncConfig(
             """
@@ -105,88 +125,7 @@ object TestAppInitializer {
             """.trimIndent()
         )
 
-        app.addSchema(
-            """
-            {
-                "metadata": {
-                    "data_source": "BackingDB",
-                    "database": "$databaseName",
-                    "collection": "SyncDog"
-                },
-                "schema": {
-                    "properties": {
-                        "_id": {
-                            "bsonType": "objectId"
-                        },
-                        "breed": {
-                            "bsonType": "string"
-                        },
-                        "name": {
-                            "bsonType": "string"
-                        },
-                        "realm_id": {
-                            "bsonType": "string"
-                        }
-                    },
-                    "required": [
-                        "name"
-                    ],
-                    "title": "SyncDog"
-                }
-            }
-            """.trimIndent()
-        )
-
-        app.addSchema(
-            """
-            {
-                "metadata": {
-                    "data_source": "BackingDB",
-                    "database": "$databaseName",
-                    "collection": "SyncPerson"
-                },
-                "relationships": {
-                    "dogs": {
-                        "ref": "#/relationship/BackingDB/$databaseName/SyncDog",
-                        "source_key": "dogs",
-                        "foreign_key": "_id",
-                        "is_list": true
-                    }
-                },
-                "schema": {
-                    "properties": {
-                        "_id": {
-                            "bsonType": "objectId"
-                        },
-                        "age": {
-                            "bsonType": "int"
-                        },
-                        "dogs": {
-                            "bsonType": "array",
-                            "items": {
-                                "bsonType": "objectId"
-                            }
-                        },
-                        "firstName": {
-                            "bsonType": "string"
-                        },
-                        "lastName": {
-                            "bsonType": "string"
-                        },
-                        "realm_id": {
-                            "bsonType": "string"
-                        }
-                    },
-                    "required": [
-                        "firstName",
-                        "lastName",
-                        "age"
-                    ],
-                    "title": "SyncPerson"
-                }
-            }
-            """.trimIndent()
-        )
+        app.waitUntilInitialSyncCompletes()
     }
 
     suspend fun AppServicesClient.addEmailProvider(
@@ -295,8 +234,6 @@ object TestAppInitializer {
 
             block(app, service)
         }
-
-        setDevelopmentMode(true)
     }
 
     private val insertDocument = Function(
