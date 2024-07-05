@@ -4,7 +4,10 @@
 - None.
 
 ### Enhancements
-- Improved mechanism for unpacking of JVM native libs suitable for local development. (Issue [#1715](https://github.com/realm/realm-kotlin/issues/1715) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1065)).
+* Improved mechanism for unpacking of JVM native libs suitable for local development. (Issue [#1715](https://github.com/realm/realm-kotlin/issues/1715) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1065)).
+
+* Support Android 15 page size 16 KB. (Issue [#1787](https://github.com/realm/realm-kotlin/issues/1787) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1105)).
+
 
 ### Fixed
 - None.
