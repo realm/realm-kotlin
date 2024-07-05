@@ -12,6 +12,7 @@ buildscript {
         }
         gradlePluginPortal()
         google()
+        mavenLocal()
         mavenCentral()
     }
     dependencies {
@@ -28,6 +29,7 @@ allprojects {
             maven("file://${rootProject.rootDir.absolutePath}/../packages/build/m2-buildrepo")
         }
         google()
+        mavenLocal()
         mavenCentral()
     }
 
