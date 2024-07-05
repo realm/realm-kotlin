@@ -1,0 +1,40 @@
+{
+    "problemMatcher": [
+        {
+            "owner": "kotlin",
+            "severity": "error",
+            "pattern": [
+                {
+                    "regexp": "^e\\:\\s(?:(?:(.*):(?:\\s\\()?(\\d+)(?:(?:\\,\\s)|\\:)(\\d+))(?:\\))?\\:\\s)?(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "message": 4
+                }
+            ]
+        },
+        {
+            "owner": "kotlin-warning",
+            "severity": "warning",
+            "pattern": [
+                {
+                    "regexp": "^w\\:\\s(?:(?:(.*):(?:\\s\\()?(\\d+)(?:(?:\\,\\s)|\\:)(\\d+))(?:\\))?\\:\\s)?(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "message": 4
+                }
+            ]
+        },
+        {
+            "owner": "gradle-warning",
+            "severity": "warning",
+            "pattern": [
+                {
+                    "regexp": "^WARNING:(.*(?:\\n(?!w|e\\:|>|FAILURE|BUILD SUCCESSFUL).*)*)$",
+                    "message": 1
+                }
+            ]
+        }
+    ]
+}
