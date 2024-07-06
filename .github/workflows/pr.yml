@@ -144,6 +144,7 @@ jobs:
             -DREALM_ENABLE_SYNC=1 \
             -DREALM_NO_TESTS=1 \
             -DREALM_BUILD_LIB_ONLY=true \
+            -DCMAKE_CXX_VISIBILITY_PRESET=hidden \
             ../../src/jvm
             make -j8
 
@@ -213,6 +214,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release `
           -DREALM_ENABLE_SYNC=ON `
           -DREALM_NO_TESTS=1 `
+          -DCMAKE_CXX_VISIBILITY_PRESET=hidden `
           -DVCPKG_TARGET_TRIPLET=x64-windows-static
           cmake --build . --config Release
 
