@@ -61,13 +61,14 @@ import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmClass
 import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.schema.ValuePropertyType
-import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
+import io.realm.kotlin.test.mongodb.util.DefaultFlexibleSyncAppInitializer
+import io.realm.kotlin.test.mongodb.util.DefaultPartitionBasedAppInitializer
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
@@ -130,7 +131,7 @@ class SyncedRealmTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = TestApp(this::class.simpleName)
+        app = TestApp(this::class.simpleName, DefaultPartitionBasedAppInitializer)
 
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
@@ -720,12 +721,14 @@ class SyncedRealmTests {
     fun roundtripCollectionsInMixed() = runBlocking {
         val (email1, password1) = randomEmail() to "password1234"
         val (email2, password2) = randomEmail() to "password1234"
-        val app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
+        val app = TestApp(this::class.simpleName, DefaultFlexibleSyncAppInitializer)
         val user1 = app.createUserAndLogIn(email1, password1)
         val user2 = app.createUserAndLogIn(email2, password2)
 
         // Create object with all types
         val selector = ObjectId().toString()
+        var parentId: ObjectId? = null
+        var childId: ObjectId? = null
 
         createFlexibleSyncConfig(
             user = user1,
@@ -737,14 +740,13 @@ class SyncedRealmTests {
                 realm.write {
                     val child = (
                         JsonStyleRealmObject().apply {
-                            this.id = "CHILD"
                             this.selector = selector
                         }
                         )
+                    childId = child.id
 
-                    copyToRealm(
+                    parentId = copyToRealm(
                         JsonStyleRealmObject().apply {
-                            this.id = "PARENT"
                             this.selector = selector
                             value = realmAnyDictionaryOf(
                                 "primitive" to 1,
@@ -753,7 +755,7 @@ class SyncedRealmTests {
                                 "dictionary" to realmAnyDictionaryOf("dictkey1" to 1, "dictkey2" to "Realm", "dictkey3" to child, "dictkey4" to realmAnyListOf(1, 2, 3))
                             )
                         }
-                    )
+                    ).id
                 }
                 realm.syncSession.uploadAllLocalChangesOrFail()
             }
@@ -766,7 +768,7 @@ class SyncedRealmTests {
         ).let { config ->
             Realm.open(config).use { realm ->
                 realm.syncSession.downloadAllServerChanges(10.seconds)
-                val flow = realm.query<JsonStyleRealmObject>("_id = $0", "PARENT").asFlow()
+                val flow = realm.query<JsonStyleRealmObject>("_id = $0", parentId).asFlow()
                 val parent = withTimeout(10.seconds) {
                     flow.first {
                         it.list.size >= 1
@@ -778,18 +780,18 @@ class SyncedRealmTests {
                     value["list"]!!.asList().let {
                         assertEquals(1, it[0]!!.asInt())
                         assertEquals("Realm", it[1]!!.asString())
-                        assertEquals("CHILD", it[2]!!.asRealmObject<JsonStyleRealmObject>().id)
+                        assertEquals(childId, it[2]!!.asRealmObject<JsonStyleRealmObject>().id)
                         it[3]!!.asDictionary().let { dict ->
                             assertEquals(1, dict["listkey1"]!!.asInt())
                             assertEquals("Realm", dict["listkey2"]!!.asString())
-                            assertEquals("CHILD", dict["listkey3"]!!.asRealmObject<JsonStyleRealmObject>().id)
+                            assertEquals(childId, dict["listkey3"]!!.asRealmObject<JsonStyleRealmObject>().id)
                         }
-                        assertEquals("CHILD", it[2]!!.asRealmObject<JsonStyleRealmObject>().id)
+                        assertEquals(childId, it[2]!!.asRealmObject<JsonStyleRealmObject>().id)
                     }
                     value["dictionary"]!!.asDictionary().let {
                         assertEquals(1, it["dictkey1"]!!.asInt())
                         assertEquals("Realm", it["dictkey2"]!!.asString())
-                        assertEquals("CHILD", it["dictkey3"]!!.asRealmObject<JsonStyleRealmObject>().id)
+                        assertEquals(childId, it["dictkey3"]!!.asRealmObject<JsonStyleRealmObject>().id)
                         it["dictkey4"]!!.asList().let {
                             assertEquals(realmAnyListOf(1, 2, 3).asList(), it)
                         }
@@ -803,7 +805,7 @@ class SyncedRealmTests {
     fun collectionsInMixed_asFlow() = runBlocking {
         val (email1, password1) = randomEmail() to "password1234"
         val (email2, password2) = randomEmail() to "password1234"
-        val app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
+        val app = TestApp(this::class.simpleName, DefaultFlexibleSyncAppInitializer)
         val user1 = app.createUserAndLogIn(email1, password1)
         val user2 = app.createUserAndLogIn(email2, password2)
 
@@ -1138,7 +1140,7 @@ class SyncedRealmTests {
     fun writeCopyTo_localToFlexibleSync_throws() = runBlocking {
         TestApp(
             this::class.simpleName,
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
             }
@@ -1217,7 +1219,7 @@ class SyncedRealmTests {
     fun writeCopyTo_flexibleSyncToLocal() = runBlocking {
         TestApp(
             "writeCopyTo_flexibleSyncToLocal",
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
             }
@@ -1340,7 +1342,7 @@ class SyncedRealmTests {
     fun writeCopyTo_flexibleSyncToFlexibleSync() = runBlocking {
         TestApp(
             "writeCopyTo_flexibleSyncToFlexibleSync",
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
             }
@@ -1443,7 +1445,7 @@ class SyncedRealmTests {
     fun accessSessionAfterRemoteChange() = runBlocking {
         TestApp(
             "accessSessionAfterRemoteChange",
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
             }
@@ -1634,7 +1636,7 @@ class SyncedRealmTests {
     fun createInitialRealmFx() = runBlocking {
         TestApp(
             "createInitialRealmFx",
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
             }
@@ -1689,7 +1691,7 @@ class SyncedRealmTests {
         @OptIn(ExperimentalKBsonSerializerApi::class)
         TestApp(
             "initialRealm_flexibleSync",
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
             }

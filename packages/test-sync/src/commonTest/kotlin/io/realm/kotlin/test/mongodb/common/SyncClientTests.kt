@@ -8,6 +8,7 @@ import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.mongodb.util.DefaultPartitionBasedAppInitializer
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
 import kotlin.test.AfterTest
@@ -28,7 +29,7 @@ class SyncClientTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName)
+        app = TestApp(this::class.simpleName, DefaultPartitionBasedAppInitializer)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {
             app.createUserAndLogIn(email, password)

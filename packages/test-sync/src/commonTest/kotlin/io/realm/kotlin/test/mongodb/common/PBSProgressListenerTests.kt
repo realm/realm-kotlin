@@ -29,11 +29,11 @@ import io.realm.kotlin.mongodb.sync.ProgressMode
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
-import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
+import io.realm.kotlin.test.mongodb.util.DefaultPartitionBasedAppInitializer
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
@@ -70,7 +70,7 @@ class PBSProgressListenerTests {
     @BeforeTest
     fun setup() {
         RealmLog.setLevel(LogLevel.INFO)
-        app = TestApp(this::class.simpleName, appName = TEST_APP_PARTITION)
+        app = TestApp(this::class.simpleName, DefaultPartitionBasedAppInitializer)
         partitionValue = org.mongodb.kbson.ObjectId().toString()
     }
 
@@ -265,7 +265,7 @@ class PBSProgressListenerTests {
     fun completesOnClose() = runBlocking {
         val channel =
             TestChannel<Boolean>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-        TestApp("completesOnClose", TEST_APP_PARTITION).use { app ->
+        TestApp("completesOnClose", DefaultPartitionBasedAppInitializer).use { app ->
             val user = app.createUserAndLogIn()
             val realm = Realm.open(createSyncConfig(user))
             try {

@@ -21,9 +21,9 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.ext.insertOne
 import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.mongo.MongoDatabase
-import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
+import io.realm.kotlin.test.mongodb.util.DefaultFlexibleSyncAppInitializer
 import kotlinx.serialization.SerializationException
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonInt32
@@ -48,7 +48,7 @@ class MongoDatabaseTests {
     fun setUp() {
         app = TestApp(
             this::class.simpleName,
-            appName = TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
         )
         val user = app.createUserAndLogin()
         client = user.mongoClient(TEST_SERVICE_NAME)
