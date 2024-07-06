@@ -36,12 +36,13 @@ import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.SyncServerConfig
-import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
+import io.realm.kotlin.test.mongodb.util.DefaultFlexibleSyncAppInitializer
+import io.realm.kotlin.test.mongodb.util.DefaultPartitionBasedAppInitializer
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
@@ -68,7 +69,7 @@ class AppTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName)
+        app = TestApp(this::class.simpleName, DefaultPartitionBasedAppInitializer)
     }
 
     @AfterTest
@@ -382,7 +383,7 @@ class AppTests {
         val key = TestHelper.getRandomKey()
         TestApp(
             "encryptedMetadataRealm",
-            appName = TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it
                     .encryptionKey(key)
@@ -421,7 +422,7 @@ class AppTests {
         val correctKey = TestHelper.getRandomKey()
         TestApp(
             "encryptedMetadataRealm_openWithWrongKeyThrows",
-            appName = TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it
                     .encryptionKey(correctKey)
@@ -461,7 +462,7 @@ class AppTests {
         // Create new test app with a random encryption key
         TestApp(
             "encryptedMetadataRealm_openWithoutKeyThrows",
-            appName = TEST_APP_FLEX,
+            DefaultFlexibleSyncAppInitializer,
             builder = {
                 it
                     .encryptionKey(TestHelper.getRandomKey())
@@ -502,6 +503,7 @@ class AppTests {
     fun changeBaseUrl() {
         TestApp(
             testId = "changeBaseUrl",
+            DefaultPartitionBasedAppInitializer,
             builder = { builder ->
                 // We create a test app that points to the default base url
                 // this app is not going to be validated yet.
@@ -527,6 +529,7 @@ class AppTests {
     fun changeBaseUrl_null() {
         TestApp(
             testId = "changeBaseUrl",
+            DefaultPartitionBasedAppInitializer,
         ).use { testApp ->
             assertEquals(SyncServerConfig.url, testApp.baseUrl)
 

@@ -8,6 +8,7 @@
 
 * Support Android 15 page size 16 KB. (Issue [#1787](https://github.com/realm/realm-kotlin/issues/1787) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1105)).
 
+* Avoid exporting Core's symbols so we can statically build the Kotlin SDK with other SDKs like Swift in the same project. (Issue [JIRA](https://jira.mongodb.org/browse/RKOTLIN-877)).
 
 ### Fixed
 - None.
@@ -28,9 +29,10 @@
 * Minimum R8: 8.0.34.
 
 ### Internal
-- None.
+- Reworked test app initializer framework.
 
-## 2.0.1 (YYYY-MM-DD)
+
+## 2.0.1-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking changes
 * None.

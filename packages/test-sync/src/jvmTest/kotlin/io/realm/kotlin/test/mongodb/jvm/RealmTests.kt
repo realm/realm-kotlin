@@ -22,6 +22,7 @@ import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.util.DefaultPartitionBasedAppInitializer
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.runBlocking
@@ -42,7 +43,7 @@ class RealmTests {
     @Ignore // See https://github.com/realm/realm-kotlin/issues/1627
     fun cleanupAllRealmThreadsOnClose() = runBlocking {
         @OptIn(ExperimentalKBsonSerializerApi::class)
-        val app = TestApp("cleanupAllRealmThreadsOnClose")
+        val app = TestApp("cleanupAllRealmThreadsOnClose", DefaultPartitionBasedAppInitializer)
         val user = app.login(Credentials.anonymous())
         val configuration = SyncConfiguration.create(user, TestHelper.randomPartitionValue(), setOf(ParentPk::class, ChildPk::class))
         Realm.open(configuration).close()
