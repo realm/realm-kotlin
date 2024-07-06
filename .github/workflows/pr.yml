@@ -1106,7 +1106,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
@@ -1128,19 +1128,19 @@ jobs:
           cache-read-only: false
 
       - name: Restore Kotlin metadata artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo
 
       - name: Restore m2-buildrepo (Android)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-android-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo
 
       - name: Restore m2-buildrepo (JVM)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo
@@ -1166,7 +1166,7 @@ jobs:
             cd packages && ./gradlew :test-base:connectedCheck  -PincludeSdkModules=false --info --no-daemon
 
       - name: Archive LogCat data
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always() || failure()
         with:
           name: logcat-base-emulator-16kb-page-size.txt
