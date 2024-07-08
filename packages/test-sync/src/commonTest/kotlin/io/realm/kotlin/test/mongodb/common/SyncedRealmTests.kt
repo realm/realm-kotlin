@@ -739,10 +739,10 @@ class SyncedRealmTests {
                 Realm.open(config).use { realm ->
                     realm.write {
                         val child = (
-                                JsonStyleRealmObject().apply {
-                                    this.selector = selector
-                                }
-                                )
+                            JsonStyleRealmObject().apply {
+                                this.selector = selector
+                            }
+                            )
                         childId = child.id
 
                         parentId = copyToRealm(
