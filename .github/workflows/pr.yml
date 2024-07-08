@@ -1163,6 +1163,7 @@ jobs:
           heap-size: 1024M
           channel: canary
           script: |
+            adb shell cat /proc/meminfo
             adb logcat -c
             adb logcat > logcat.txt &
             cd packages && ./gradlew :test-base:connectedCheck  -PincludeSdkModules=false --info --no-daemon
