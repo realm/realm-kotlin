@@ -82,13 +82,12 @@ static std::string string_to_hex(const std::string& message, realm::StringData& 
     ret << "error_code = " << error_code << "; ";
     ret << "retcode = " << retcode << "; ";
     ret << "StringData.size = " << str.size() << "; ";
-    ret << "StringData.data = " << str << "; ";
-    ret << "StringData as hex = ";
+    ret << "StringData as hex =";
     for (std::string::size_type i = 0; i < str.size(); ++i)
         ret << " 0x" << std::hex << std::setfill('0') << std::setw(2) << (int)s[i];
     ret << "; ";
-    ret << "in_begin = " << in_begin << "; ";
-    ret << "in_end = " << in_end << "; ";
+    ret << "in_begin = " << (void*) in_begin << "; ";
+    ret << "in_end = " << (void*) in_end << "; ";
     ret << "out_curr = " << out_curr << "; ";
     ret << "out_end = " << out_end << ";";
     return ret.str();

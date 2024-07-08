@@ -103,6 +103,8 @@ kotlin {
                 implementation("io.ktor:ktor-client-content-negotiation:${Versions.ktor}")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serialization}")
 
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serialization}")
+
                 implementation("com.squareup.okio:okio:${Versions.okio}")
             }
         }

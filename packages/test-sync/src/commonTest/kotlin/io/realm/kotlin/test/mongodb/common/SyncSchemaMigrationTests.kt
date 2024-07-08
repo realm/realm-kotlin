@@ -139,7 +139,13 @@ class SyncSchemaMigrationTests {
         .build()
 
     private val SyncConfiguration.isSyncMigrationPending: Boolean
-        get() = (this as SyncConfigurationImpl).isSyncMigrationPending(configPtr)
+        //        get() = true
+        get() {
+            (this as SyncConfigurationImpl)
+
+            val configPtr = this.createNativeConfiguration()
+            return this.isSyncMigrationPending(configPtr)
+        }
 
     @BeforeTest
     fun setup() {

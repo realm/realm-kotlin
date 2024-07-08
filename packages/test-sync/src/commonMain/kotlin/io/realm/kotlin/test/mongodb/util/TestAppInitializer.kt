@@ -20,7 +20,6 @@ import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.common.FLEXIBLE_SYNC_SCHEMA
 import io.realm.kotlin.test.mongodb.common.PARTITION_BASED_SCHEMA
-import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 
 interface AppInitializer {
@@ -110,10 +109,6 @@ open class BaseAppInitializer(
                 with(client) {
                     block?.invoke(this, app)
                 }
-
-                while (!app.initialSyncComplete()) {
-                    delay(500)
-                }
             }
         }
     }
@@ -140,7 +135,7 @@ object DefaultFlexibleSyncAppInitializer :
 @Suppress("LongMethod")
 suspend fun AppServicesClient.initializeFlexibleSync(
     app: BaasApp,
-    recoveryDisabled: Boolean = false,
+    recoveryDisabled: Boolean = false, // TODO
 ) {
     val databaseName = app.clientAppId
 
@@ -168,12 +163,13 @@ suspend fun AppServicesClient.initializeFlexibleSync(
             }
         """.trimIndent()
     )
+    app.waitUntilInitialSyncCompletes()
 }
 
 @Suppress("LongMethod")
 suspend fun AppServicesClient.initializePartitionSync(
     app: BaasApp,
-    recoveryDisabled: Boolean = false,
+    recoveryDisabled: Boolean = false, // TODO
 ) {
     val databaseName = app.clientAppId
 
@@ -182,7 +178,9 @@ suspend fun AppServicesClient.initializePartitionSync(
 
     app.setSchema(
         schema = PARTITION_BASED_SCHEMA,
-        extraProperties = mapOf("realm_id" to PrimitivePropertyType.Type.STRING)
+        extraProperties = mapOf(
+            "realm_id" to PrimitivePropertyType.Type.STRING
+        )
     )
 
     app.mongodbService.setSyncConfig(
@@ -222,6 +220,8 @@ suspend fun AppServicesClient.initializePartitionSync(
             }
         """.trimIndent()
     )
+
+    app.waitUntilInitialSyncCompletes()
 }
 
 suspend fun AppServicesClient.addEmailProvider(

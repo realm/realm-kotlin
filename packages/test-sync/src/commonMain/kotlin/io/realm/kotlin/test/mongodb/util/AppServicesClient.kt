@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("invisible_member", "invisible_reference")
 
 package io.realm.kotlin.test.mongodb.util
 
@@ -45,6 +44,7 @@ import io.realm.kotlin.test.mongodb.SyncServerConfig
 import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -73,72 +73,20 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 private const val ADMIN_PATH = "/api/admin/v3.0"
 private const val PRIVATE_PATH = "/api/private/v1.0"
-
-@OptIn(ExperimentalSerializationApi::class)
-private val json = Json {
-    classDiscriminatorMode = ClassDiscriminatorMode.NONE
-    encodeDefaults = true
-}
 
 data class SyncPermissions(
     val read: Boolean,
     val write: Boolean
 )
 
-@Serializable
-data class LoginResponse(val access_token: String)
-
-@Serializable
-data class Profile(val roles: List<Role>)
-
-@Serializable
-data class Role(val role_name: String, val group_id: String? = null)
-
-@Serializable
-data class AuthProvider constructor(
-    val _id: String,
-    val type: String,
-    val disabled: Boolean = false,
-    @Transient val app: BaasApp? = null
-)
-
-@Serializable
-data class Service(
-    val _id: String,
-    val name: String,
-    val type: String,
-    @Transient val app: BaasApp? = null
-)
-
-@Serializable
-data class Function(
-    val _id: String? = null,
-    val name: String,
-    val source: String? = null,
-    @SerialName("run_as_system") val runAsSystem: Boolean? = null,
-    val private: Boolean? = null,
-    @SerialName("can_evaluate") val canEvaluate: JsonObject? = null
-)
-
-@Serializable
-data class BaasApp(
-    val _id: String,
-    @SerialName("client_app_id") val clientAppId: String,
-    val name: String,
-    @SerialName("domain_id") val domainId: String,
-    @SerialName("group_id") val groupId: String,
-
-    @Transient private val _client: AppServicesClient? = null
-) {
-    val client: AppServicesClient
-        get() = _client ?: TODO("App should be copy'ed with _client set to the AppServicesClient that retrieved it")
-    val url: String
-        get() = client.baseUrl + ADMIN_PATH + "/groups/${this.groupId}/apps/${this._id}"
-    val privateUrl: String
-        get() = client.baseUrl + PRIVATE_PATH + "/groups/${this.groupId}/apps/${this._id}"
+@OptIn(ExperimentalSerializationApi::class)
+private val json = Json {
+    classDiscriminatorMode = ClassDiscriminatorMode.NONE
+    encodeDefaults = true
 }
 
 @Serializable
@@ -338,6 +286,59 @@ fun PropertyType.toSchemaType() =
         else -> throw IllegalArgumentException("Unsupported type")
     }
 
+@Serializable
+data class LoginResponse(val access_token: String)
+
+@Serializable
+data class Profile(val roles: List<Role>)
+
+@Serializable
+data class Role(val role_name: String, val group_id: String? = null)
+
+@Serializable
+data class AuthProvider constructor(
+    val _id: String,
+    val type: String,
+    val disabled: Boolean = false,
+    @Transient val app: BaasApp? = null
+)
+
+@Serializable
+data class Service(
+    val _id: String,
+    val name: String,
+    val type: String,
+    @Transient val app: BaasApp? = null
+)
+
+@Serializable
+data class Function(
+    val _id: String? = null,
+    val name: String,
+    val source: String? = null,
+    @SerialName("run_as_system") val runAsSystem: Boolean? = null,
+    val private: Boolean? = null,
+    @SerialName("can_evaluate") val canEvaluate: JsonObject? = null
+)
+
+@Serializable
+data class BaasApp(
+    val _id: String,
+    @SerialName("client_app_id") val clientAppId: String,
+    val name: String,
+    @SerialName("domain_id") val domainId: String,
+    @SerialName("group_id") val groupId: String,
+
+    @Transient private val _client: AppServicesClient? = null
+) {
+    val client: AppServicesClient
+        get() = _client ?: TODO("App should be copy'ed with _client set to the AppServicesClient that retrieved it")
+    val url: String
+        get() = client.baseUrl + ADMIN_PATH + "/groups/${this.groupId}/apps/${this._id}"
+    val privateUrl: String
+        get() = client.baseUrl + PRIVATE_PATH + "/groups/${this.groupId}/apps/${this._id}"
+}
+
 /**
  * Client to interact with App Services Server. It allows to create Applications and tweak their
  * configurations.
@@ -390,18 +391,6 @@ class AppServicesClient(
         }
     }
 
-    suspend fun BaasApp.toggleFeatures(features: Set<String>, enable: Boolean) {
-        withContext(dispatcher) {
-            httpClient.typedRequest<Unit>(
-                Post,
-                "$privateUrl/features"
-            ) {
-                setBody(Json.parseToJsonElement("""{ "action": "${if (enable) "enable" else "disable"}", "feature_flags": [ ${features.joinToString { "\"$it\"" }} ] }"""))
-                contentType(ContentType.Application.Json)
-            }
-        }
-    }
-
     suspend fun BaasApp.setSchema(
         schema: Set<KClass<out BaseRealmObject>>,
         extraProperties: Map<String, PrimitivePropertyType.Type> = emptyMap()
@@ -450,17 +439,6 @@ class AppServicesClient(
         }
     }
 
-    suspend fun BaasApp.addFunction(function: Function): Function =
-        withContext(dispatcher) {
-            httpClient.typedRequest<Function>(
-                Post,
-                "$url/functions"
-            ) {
-                setBody(function)
-                contentType(ContentType.Application.Json)
-            }
-        }
-
     suspend fun BaasApp.waitForSchemaVersion(expectedVersion: Int) {
         return withTimeout(1.minutes) {
             withContext(dispatcher) {
@@ -494,7 +472,7 @@ class AppServicesClient(
     suspend fun BaasApp.updateSchema(
         id: String,
         schema: Schema,
-        bypassServiceChange: Boolean = false,
+        bypassServiceChange: Boolean = false
     ): HttpResponse =
         withContext(dispatcher) {
             httpClient.request(
@@ -502,6 +480,31 @@ class AppServicesClient(
             ) {
                 this.method = HttpMethod.Put
                 setBody(json.encodeToJsonElement(schema))
+                contentType(ContentType.Application.Json)
+            }
+        }
+
+    val BaasApp.url: String
+        get() = "$groupUrl/apps/${this._id}"
+    suspend fun BaasApp.toggleFeatures(features: Set<String>, enable: Boolean) {
+        withContext(dispatcher) {
+            httpClient.typedRequest<Unit>(
+                Post,
+                "$privateUrl/features"
+            ) {
+                setBody(Json.parseToJsonElement("""{ "action": "${if (enable) "enable" else "disable"}", "feature_flags": [ ${features.joinToString { "\"$it\"" }} ] }"""))
+                contentType(ContentType.Application.Json)
+            }
+        }
+    }
+
+    suspend fun BaasApp.addFunction(function: Function): Function =
+        withContext(dispatcher) {
+            httpClient.typedRequest<Function>(
+                Post,
+                "$url/functions"
+            ) {
+                setBody(function)
                 contentType(ContentType.Application.Json)
             }
         }
@@ -856,6 +859,14 @@ class AppServicesClient(
             )
         }
 
+    suspend fun BaasApp.waitUntilInitialSyncCompletes() {
+        withTimeout(5.minutes) {
+            while (!initialSyncComplete()) {
+                delay(1.seconds)
+            }
+        }
+    }
+
     suspend fun BaasApp.initialSyncComplete(): Boolean {
         return withContext(dispatcher) {
             try {
@@ -863,7 +874,6 @@ class AppServicesClient(
                     Get,
                     "$url/sync/progress"
                 ).let { obj: JsonObject ->
-                    println(obj)
                     obj["accepting_clients"]?.jsonPrimitive?.boolean ?: false
                 }
             } catch (ex: IllegalStateException) {
@@ -948,6 +958,7 @@ class AppServicesClient(
 
             val httpClient = defaultClient("realm-baas-authorized", debug) {
                 expectSuccess = true
+
                 defaultRequest {
                     headers {
                         append("Authorization", "Bearer $accessToken")

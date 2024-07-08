@@ -984,7 +984,15 @@ realm_set_log_callback([](void *userdata, const char *category, realm_log_level_
                                                     "(SLjava/lang/String;Ljava/lang/String;)V");
 
                                push_local_frame(jenv, 2);
-                               jenv->CallVoidMethod(log_callback, log_method, java_level, to_jstring(jenv, category), to_jstring(jenv, message));
+                               jstring j_message = NULL;
+                               try {
+                                   j_message = to_jstring(jenv, message);
+                               } catch (RuntimeError exception) {
+                                   std::ostringstream ret;
+                                   ret << "Invalid data: " << exception.reason();
+                                   j_message = to_jstring(jenv, ret.str());
+                               }
+                               jenv->CallVoidMethod(log_callback, log_method, java_level, to_jstring(jenv, category), j_message);
                                jni_check_exception(jenv);
                                jenv->PopLocalFrame(NULL);
                           },

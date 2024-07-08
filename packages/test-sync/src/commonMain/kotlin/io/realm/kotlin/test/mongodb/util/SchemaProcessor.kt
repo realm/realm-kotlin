@@ -1,3 +1,18 @@
+/*
+ * Copyright 2024 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 @file:Suppress("invisible_member", "invisible_reference")
 
 package io.realm.kotlin.test.mongodb.util
@@ -11,7 +26,6 @@ import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 
-// TODO REname methods and classes
 class SchemaProcessor private constructor(
     classes: Set<KClass<out BaseRealmObject>>,
     private val databaseName: String,
@@ -50,9 +64,30 @@ class SchemaProcessor private constructor(
     val processedRelationships: MutableMap<String, Map<String, SchemaRelationship>> = mutableMapOf()
 
     init {
-        // TODO CHECK embedded CYCLES
+        checkCycles()
         generateSchemas()
         generateRelationships()
+    }
+
+    private fun checkCycles() {
+        realmSchemas.values.filter {
+            it.kind == RealmClassKind.EMBEDDED
+        }.forEach { schema ->
+            checkCycles(schema)
+        }
+    }
+
+    private fun checkCycles(schema: RealmClassImpl, visited: Array<String> = emptyArray()) {
+        if (visited.contains(schema.cinteropClass.name))
+            throw IllegalStateException("Cycles in embedded object schemas are not supported")
+
+        schema.cinteropProperties
+            .filter { targetSchema ->
+                targetSchema.type == PropertyType.RLM_PROPERTY_TYPE_OBJECT
+            }
+            .forEach { targetSchema ->
+                checkCycles(realmSchemas[targetSchema.linkTarget]!!, visited + schema.name)
+            }
     }
 
     private fun generateRelationships() {

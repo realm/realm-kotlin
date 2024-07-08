@@ -767,19 +767,13 @@ class SyncedRealmTests {
             }
         ).let { config ->
             Realm.open(config).use { realm ->
-                println("download changes")
                 realm.syncSession.downloadAllServerChanges(10.seconds)
-                println("downloaded changes")
                 val flow = realm.query<JsonStyleRealmObject>("_id = $0", parentId).asFlow()
                 val parent = withTimeout(10.seconds) {
-                    println("get object")
-                    val x = flow.first {
+                    flow.first {
                         it.list.size >= 1
                     }.list[0]
-                    println("x")
-                    x
                 }
-                println("get parent")
                 parent.let {
                     val value = it.value!!.asDictionary()
                     assertEquals(RealmAny.Companion.create(1), value["primitive"])
@@ -1585,18 +1579,10 @@ class SyncedRealmTests {
     // key of the objects from asset-pbs.realm will not be unique on secondary runs.
     @Test
     fun initialRealm_partitionBasedSync() {
-        // Delete any document from previous runs
-        with(app.asTestApp) {
-            runBlocking {
-                deleteDocuments(clientAppId, ParentPk::class.simpleName!!, "{}")
-            }
-        }
-
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
-
         val config1 = createPartitionSyncConfig(
             user = user, partitionValue = partitionValue, name = "db1",
             errorHandler = object : SyncSession.ErrorHandler {

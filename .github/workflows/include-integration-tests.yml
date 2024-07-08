@@ -19,21 +19,21 @@ jobs:
   #   runs-on: macos-12
   #   steps:
   #     - name: Checkout code
-  #       uses: actions/checkout@v3
+  #       uses: actions/checkout@v4
 
   #     - name: Setup Java 11
-  #       uses: actions/setup-java@v3
+  #       uses: actions/setup-java@v4
   #       with:
   #         distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
   #         java-version: 11
 
   #     - name: Setup Gradle and task/dependency caching
-  #       uses: gradle/gradle-build-action@v2
+  #       uses: gradle/actions/setup-gradle@v3
   #       with:
   #         cache-read-only: false
 
   #     - name: Restore m2-buildrepo
-  #       uses: actions/download-artifact@v3
+  #       uses: actions/download-artifact@v4
   #       with:
   #         name: all-packages-${{ needs.check-cache.outputs.version-label }}
   #         path: ./packages/build/m2-buildrepo 
@@ -60,21 +60,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 
@@ -90,27 +90,27 @@ jobs:
     runs-on: macos-12
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       # - name: AVD cache
-      #   uses: actions/cache@v3
+      #   uses: actions/cache@v4
       #   id: avd-cache
       #   with:
       #     path: |
@@ -171,24 +171,24 @@ jobs:
   build-benchmarks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 
@@ -213,30 +213,30 @@ jobs:
             arguments: integrationTest
     runs-on: macos-12
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       # - name: AVD cache
-      #   uses: actions/cache@v3
+      #   uses: actions/cache@v4
       #   id: avd-cache
       #   with:
       #     path: |
@@ -294,30 +294,30 @@ jobs:
             arguments: integrationTest
     runs-on: macos-12
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Java 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: 17
 
       - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
           cache-read-only: false
 
       - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       # - name: AVD cache
-      #   uses: actions/cache@v3
+      #   uses: actions/cache@v4
       #   id: avd-cache
       #   with:
       #     path: |
