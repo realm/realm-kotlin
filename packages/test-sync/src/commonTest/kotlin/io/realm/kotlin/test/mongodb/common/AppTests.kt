@@ -401,7 +401,6 @@ class AppTests {
     }
 
     @Test
-    @Ignore
     fun encryptedMetadataRealm_openWithWrongKeyThrows() {
         val tempDir = PlatformUtils.createTempDir()
 
@@ -425,12 +424,19 @@ class AppTests {
 
             // Create a configuration pointing to the metadata Realm for that app
             val metadataDir = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/server-utility/metadata/"
+
+            // We cannot validate if the test app metadata realm is encrypted directly, as it is cached
+            // and subsequent access wont validate the encryption key. Copying the Realm allows to bypass
+            // the cache.
+            PlatformUtils.copyFile(metadataDir + "sync_metadata.realm", metadataDir + "copy_sync_metadata.realm")
+
             val wrongKey = TestHelper.getRandomKey()
             val config = RealmConfiguration
                 .Builder(setOf())
-                .name("sync_metadata.realm")
+                .name("copy_sync_metadata.realm")
                 .directory(metadataDir)
                 .encryptionKey(wrongKey)
+                .schemaVersion(7)
                 .build()
             assertTrue(fileExists(config.path))
 
@@ -443,7 +449,6 @@ class AppTests {
     }
 
     @Test
-    @Ignore
     fun encryptedMetadataRealm_openWithoutKeyThrows() {
         val tempDir = PlatformUtils.createTempDir()
 
@@ -466,10 +471,17 @@ class AppTests {
 
             // Create a configuration pointing to the metadata Realm for that app
             val metadataDir = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/server-utility/metadata/"
+
+            // We cannot validate if the test app metadata realm is encrypted directly, as it is cached
+            // and subsequent access wont validate the encryption key. Copying the Realm allows to bypass
+            // the cache.
+            PlatformUtils.copyFile(metadataDir + "sync_metadata.realm", metadataDir + "copy_sync_metadata.realm")
+
             val config = RealmConfiguration
                 .Builder(setOf())
-                .name("sync_metadata.realm")
+                .name("copy_sync_metadata.realm")
                 .directory(metadataDir)
+                .schemaVersion(7)
                 .build()
             assertTrue(fileExists(config.path))
 
