@@ -7,7 +7,7 @@
 * [Sync] Add support for switching users with `App.switchUser(User)`. (Issue [#1813](https://github.com/realm/realm-kotlin/issues/1813)/[RKOTLIN-1115](https://jira.mongodb.org/browse/RKOTLIN-1115)).
 
 ### Fixed
-* None.
+* [Sync] Platform networking was not enabled even if setting `AppConfiguration.Builder.usePlatformNetworking`. (Issue [#1811](https://github.com/realm/realm-kotlin/issues/1811)/[RKOTLIN-1114](https://jira.mongodb.org/browse/RKOTLIN-1114)).
 
 ### Compatibility
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
@@ -25,7 +25,7 @@
 * Minimum R8: 8.0.34.
 
 ### Internal
-* None.
+* Updated to Realm Core 14.10.3 commit 3334d3869b8cba9a4ae63247f80f3f1739e32c07.
 
 
 ## 2.1.1-SNAPSHOT (YYYY-MM-DD)
@@ -37,7 +37,7 @@
 * None.
 
 ### Fixed
-* [Sync] Platform networking was not enabled even if setting `AppConfiguration.Builder.usePlatformNetworking`. (Issue [#1811](https://github.com/realm/realm-kotlin/issues/1811)/[RKOTLIN-1114](https://jira.mongodb.org/browse/RKOTLIN-1114)).
+* None.
 
 ### Compatibility
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).

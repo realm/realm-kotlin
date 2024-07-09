@@ -168,7 +168,7 @@ internal open class SyncSessionImpl(
             nativePointer,
             error,
             message,
-            true
+            false
         )
     }
 

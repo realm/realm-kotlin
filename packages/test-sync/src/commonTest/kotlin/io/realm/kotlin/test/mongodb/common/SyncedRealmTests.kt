@@ -350,14 +350,14 @@ class SyncedRealmTests {
                         syncSession = (realm.syncSession as SyncSessionImpl).nativePointer,
                         error = ErrorCode.RLM_ERR_ACCOUNT_NAME_IN_USE,
                         errorMessage = "Non fatal error",
-                        isFatal = true, // flipped https://jira.mongodb.org/browse/RCORE-2146
+                        isFatal = false,
                     )
 
                     RealmInterop.realm_sync_session_handle_error_for_testing(
                         syncSession = (realm.syncSession as SyncSessionImpl).nativePointer,
                         error = ErrorCode.RLM_ERR_INTERNAL_SERVER_ERROR,
                         errorMessage = "Fatal error",
-                        isFatal = false, // flipped https://jira.mongodb.org/browse/RCORE-2146
+                        isFatal = true,
                     )
                 }
             }
