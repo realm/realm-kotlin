@@ -33,7 +33,6 @@ jobs:
 
       - name: Run Ktlint
         run: ./gradlew ktlintCheck
-        continue-on-error: true
 
       - name: Stash Ktlint results
         run: |
@@ -85,7 +84,6 @@ jobs:
 
       - name: Run Detekt
         run: ./gradlew detekt
-        continue-on-error: true
 
       - name: Stash Detekt results    
         run: |

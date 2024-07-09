@@ -57,8 +57,8 @@ public open class UnrecoverableSyncException internal constructor(message: Strin
  * Thrown when the type of sync used by the server does not match the one used by the client, i.e.
  * the server and client disagrees whether to use Partition-based or Flexible Sync.
  */
-public class WrongSyncTypeException internal constructor(message: String,
-) : UnrecoverableSyncException(message)
+public class WrongSyncTypeException internal constructor(message: String) :
+    UnrecoverableSyncException(message)
 
 /**
  * Thrown when the server does not support one or more of the queries defined in the
@@ -73,7 +73,8 @@ public class BadFlexibleSyncQueryException internal constructor(message: String?
  */
 public class CompensatingWriteException internal constructor(
     message: String,
-    compensatingWrites: Array<CoreCompensatingWriteInfo>, isFatal: Boolean
+    compensatingWrites: Array<CoreCompensatingWriteInfo>,
+    isFatal: Boolean
 ) : SyncException(message, isFatal) {
     /**
      * List of all the objects created that has been reversed as part of triggering this exception.
