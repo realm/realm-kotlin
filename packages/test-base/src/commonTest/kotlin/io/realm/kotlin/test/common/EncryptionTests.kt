@@ -69,7 +69,7 @@ class EncryptionTests {
         // Initialize an encrypted Realm
         val encryptedConf = RealmConfiguration
             .Builder(
-                
+
                 schema = setOf(Sample::class)
             )
             .directory(tmpDir)
