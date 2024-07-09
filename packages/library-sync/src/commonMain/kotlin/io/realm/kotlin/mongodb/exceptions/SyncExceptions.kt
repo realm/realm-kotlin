@@ -31,7 +31,9 @@ import io.realm.kotlin.types.RealmAny
  *
  * @see io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler
  */
-public open class SyncException internal constructor(message: String?) : AppException(message)
+public open class SyncException internal constructor(message: String?, isFatal: Boolean) : AppException(message) {
+    public val isFatal: Boolean = isFatal
+}
 
 /**
  * Thrown when something has gone wrong with Device Sync in a way that is not recoverable.
@@ -47,21 +49,23 @@ public open class SyncException internal constructor(message: String?) : AppExce
  *
  * @see io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler
  */
-public class UnrecoverableSyncException internal constructor(message: String) :
-    SyncException(message)
+@Deprecated("This will be removed in the future. Test for SyncException.isFatal instead.")
+public open class UnrecoverableSyncException internal constructor(message: String) :
+    SyncException(message, true)
 
 /**
  * Thrown when the type of sync used by the server does not match the one used by the client, i.e.
  * the server and client disagrees whether to use Partition-based or Flexible Sync.
  */
-public class WrongSyncTypeException internal constructor(message: String) : SyncException(message)
+public class WrongSyncTypeException internal constructor(message: String,
+) : UnrecoverableSyncException(message)
 
 /**
  * Thrown when the server does not support one or more of the queries defined in the
  * [io.realm.kotlin.mongodb.sync.SubscriptionSet].
  */
-public class BadFlexibleSyncQueryException internal constructor(message: String?) :
-    SyncException(message)
+public class BadFlexibleSyncQueryException internal constructor(message: String?, isFatal: Boolean) :
+    SyncException(message, isFatal)
 
 /**
  * Thrown when the server undoes one or more client writes. Details on undone writes can be found in
@@ -69,8 +73,8 @@ public class BadFlexibleSyncQueryException internal constructor(message: String?
  */
 public class CompensatingWriteException internal constructor(
     message: String,
-    compensatingWrites: Array<CoreCompensatingWriteInfo>
-) : SyncException(message) {
+    compensatingWrites: Array<CoreCompensatingWriteInfo>, isFatal: Boolean
+) : SyncException(message, isFatal) {
     /**
      * List of all the objects created that has been reversed as part of triggering this exception.
      */
