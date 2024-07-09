@@ -1098,7 +1098,7 @@ jobs:
     strategy:
       fail-fast: false
 
-    runs-on: ubuntu-latest-arm64 # android emulator does not run on arm64 - https://github.com/ReactiveCircus/android-emulator-runner/issues/350
+    runs-on: linux-arm64-small # android emulator does not run on arm64 - https://github.com/ReactiveCircus/android-emulator-runner/issues/350
     needs: [check-cache, build-android-packages, build-jvm-packages, build-kotlin-metadata-package]
     if: |
       always() && 
