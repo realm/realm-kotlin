@@ -40,7 +40,6 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.last
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.supervisorScope
@@ -149,10 +148,8 @@ class FLXProgressListenerTests {
     fun uploadProgressListener_changesOnly() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
             for (i in 0..3) {
+                realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
                 realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES)
-                    .onStart {
-                        realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
-                    }
                     .run {
                         withTimeout(TIMEOUT) {
                             last().let {
