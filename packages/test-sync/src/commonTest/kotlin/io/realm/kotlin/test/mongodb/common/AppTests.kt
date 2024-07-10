@@ -439,6 +439,7 @@ class AppTests {
             // Create a configuration pointing to the metadata Realm for that app
             val metadataDir = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/server-utility/metadata/"
 
+            // Workaround for https://github.com/realm/realm-core/issues/7876
             // We cannot validate if the test app metadata realm is encrypted directly, as it is cached
             // and subsequent access wont validate the encryption key. Copying the Realm allows to bypass
             // the cache.
@@ -486,6 +487,7 @@ class AppTests {
             // Create a configuration pointing to the metadata Realm for that app
             val metadataDir = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/server-utility/metadata/"
 
+            // Workaround for https://github.com/realm/realm-core/issues/7876
             // We cannot validate if the test app metadata realm is encrypted directly, as it is cached
             // and subsequent access wont validate the encryption key. Copying the Realm allows to bypass
             // the cache.
