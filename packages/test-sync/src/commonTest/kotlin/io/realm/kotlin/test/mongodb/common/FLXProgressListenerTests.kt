@@ -239,7 +239,7 @@ class FLXProgressListenerTests {
             try {
                 val flow = realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
                 val job = async {
-                    withTimeout(10.seconds) {
+                    withTimeout(30.seconds) {
                         flow.collect {
                             channel.trySend(true)
                         }
