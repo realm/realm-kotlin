@@ -6,7 +6,7 @@
 ### Enhancements
 - Avoid exporting Core's symbols so we can statically build the Kotlin SDK with other SDKs like Swift in the same project. (Issue [JIRA](https://jira.mongodb.org/browse/RKOTLIN-877)).
 - Improved mechanism for unpacking of JVM native libs suitable for local development. (Issue [#1715](https://github.com/realm/realm-kotlin/issues/1715) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1065)).
-* [Sync] Add `SyncException.isFatal` to signal fatal an unrecoverable exceptions. (Issue [#1767](https://github.com/realm/realm-kotlin/issues/1767) [RKOTLIN-1096](https://jira.mongodb.org/browse/RKOTLIN-1096)).
+* [Sync] Add `SyncException.isFatal` to signal fatal unrecoverable exceptions. (Issue [#1767](https://github.com/realm/realm-kotlin/issues/1767) [RKOTLIN-1096](https://jira.mongodb.org/browse/RKOTLIN-1096)).
 
 ### Fixed
 - None.
