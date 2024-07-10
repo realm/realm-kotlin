@@ -85,7 +85,7 @@ jobs:
         run: ./gradlew :gradle-plugin:publishAllPublicationsToTestRepository --info --stacktrace
 
       - name: Run Detekt
-        run: ./gradlew /tmp/detekt
+        run: ./gradlew detekt
 
       - name: Stash Detekt results   
         if: always() 
