@@ -1650,14 +1650,17 @@ class SyncedRealmTests {
         println("Partition based sync bundled realm is in ${config2.path}")
     }
 
-    // This test cannot run multiple times on the same server instance as the primary
-    // key of the objects from asset-pbs.realm will not be unique on secondary runs.
     @Test
     fun initialRealm_partitionBasedSync() {
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
+
+        runBlocking {
+            app.asTestApp.deleteDocuments(app.configuration.appId, "ParentPk", "{}")
+        }
+
         val config1 = createPartitionSyncConfig(
             user = user, partitionValue = partitionValue, name = "db1",
             errorHandler = object : SyncSession.ErrorHandler {
