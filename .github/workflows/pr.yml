@@ -1154,14 +1154,13 @@ jobs:
         shell: bash
 
       - name: Create AVD image
+        env:
+          ANDROID_AVD_HOME: "$ANDROID_SDK_ROOT/avd/"
         run: |
-          echo no | avdmanager create avd --force -n test --abi 'arm64-v8a' --package 'system-images;android-VanillaIceCream;google_apis_ps16k;arm64-v8a'          
+          echo no | avdmanager create avd --force -n test1 --abi 'arm64-v8a' --package 'system-images;android-VanillaIceCream;google_apis_ps16k;arm64-v8a'          
         shell: bash
 
       - name: Setup tmate session
+        env:
+          ANDROID_AVD_HOME: "$ANDROID_SDK_ROOT/avd/"
         uses: mxschmitt/action-tmate@v3
-
-      - name: Pause for Debugging
-        run: |
-          echo "Pausing for debugging. SSH into the runner to inspect."
-          sleep 24000  # Pause for 400 minutes
