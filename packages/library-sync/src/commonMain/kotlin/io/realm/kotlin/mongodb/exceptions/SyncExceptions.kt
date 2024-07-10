@@ -19,6 +19,7 @@ package io.realm.kotlin.mongodb.exceptions
 
 import io.realm.kotlin.internal.asPrimitiveRealmAnyOrElse
 import io.realm.kotlin.internal.interop.sync.CoreCompensatingWriteInfo
+import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.types.RealmAny
 
 /**
@@ -29,9 +30,21 @@ import io.realm.kotlin.types.RealmAny
  * [io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler] and the the exact reason
  * must be found in [Throwable.message].
  *
+ *
+ *
  * @see io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler
  */
 public open class SyncException internal constructor(message: String?, isFatal: Boolean) : AppException(message) {
+    /**
+     * Flag to indicate that something has gone wrong with Device Sync in a way that is not
+     * recoverable and [SyncSession] will be [SyncSession.State.INACTIVE] until this error is
+     * resolved.
+     *
+     * It is still possible to use the Realm locally after receiving an error where this flag is
+     * true. However, this must be done with caution as data written to the realm after this point
+     * risk getting lost as many errors of this category will result in a Client Reset once the
+     * client re-connects to the server.
+     */
     public val isFatal: Boolean = isFatal
 }
 
