@@ -181,6 +181,7 @@ public interface RealmConfiguration : Configuration {
                 initialDataCallback,
                 inMemory,
                 initialRealmFileConfiguration,
+                relaxedSchema,
                 realmLogger
             )
         }

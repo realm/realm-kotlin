@@ -16,7 +16,9 @@
 
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.dynamic.getinterface.RelaxedRealmObject
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmObject
 
 /**
@@ -28,6 +30,9 @@ import io.realm.kotlin.types.RealmObject
  */
 // TODO Public due to being a transitive dependency of Mediator
 @Suppress("VariableNaming")
-public interface RealmObjectInternal : BaseRealmObject {
+// FIXME RelaxedRealmObject is only needed for proposal 2 of the relaxed schema API and this is
+//  maybe not the way to inject it in the hierarchy
+public interface RealmObjectInternal : BaseRealmObject, RelaxedRealmObject {
     public var `io_realm_kotlin_objectReference`: RealmObjectReference<out BaseRealmObject>?
+    public var `io_realm_kotlin_extras`: Map<String, RealmAny>?
 }

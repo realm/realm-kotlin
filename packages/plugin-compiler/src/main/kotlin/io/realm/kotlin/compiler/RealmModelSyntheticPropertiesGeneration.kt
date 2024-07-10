@@ -193,7 +193,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     val realmClassImpl = pluginContext.lookupClassOrThrow(ClassIds.REALM_CLASS_IMPL)
     private val realmClassCtor = pluginContext.lookupConstructorInClass(ClassIds.REALM_CLASS_IMPL) {
-        it.owner.valueParameters.size == 2
+        it.owner.valueParameters.size == 3
     }
 
     private val validPrimaryKeyTypes = with(pluginContext.irBuiltIns) {

@@ -1411,3 +1411,25 @@ jobjectArray realm_get_log_category_names() {
 
     return array;
 }
+
+jobjectArray realm_get_additional_properties_helper(realm_object_t* obj) {
+    JNIEnv* env = get_env(true);
+
+    size_t count = 0;
+    realm_get_additional_properties(obj, nullptr, 0xffffff, &count);
+
+    const char** properties = new const char*[count];
+    realm_get_additional_properties(obj, properties, count, &count);
+    // FIXME Guard count != count
+
+    auto array = env->NewObjectArray(count, JavaClassGlobalDef::java_lang_string(), nullptr);
+
+    for(size_t i = 0; i < count; i++) {
+        jstring string = env->NewStringUTF(properties[i]);
+        env->SetObjectArrayElement(array, i, string);
+    }
+
+    delete[] properties;
+
+    return array;
+}

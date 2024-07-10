@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.schema
 
+import kotlin.reflect.KClass
+
 /**
  * A [RealmClass] describing the object model of a specific class.
  */
@@ -41,10 +43,17 @@ public interface RealmClass {
      */
     public val kind: RealmClassKind
 
+
+    public val inDataModel: Boolean // Flexible property would be false
+
     /**
      * Index operator to lookup a specific [RealmProperty] from its persisted property name.
      *
      * @return the [RealmProperty] with the given `propertyName` or `null` if no such property exists.
      */
     public operator fun get(key: String): RealmProperty?
+
+    // Nullable not reflected in model
+    // TODO Consider deprecating inDataModel
+    public val kClass: KClass<*>?
 }

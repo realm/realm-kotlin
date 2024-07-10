@@ -162,5 +162,6 @@ bool realm_sync_websocket_message(int64_t observer_ptr, jbyteArray data, size_t 
 void realm_sync_websocket_closed(int64_t observer_ptr, bool was_clean, int error_code, const char* reason);
 
 jobjectArray realm_get_log_category_names();
+jobjectArray realm_get_additional_properties_helper(realm_object_t* obj);
 
 #endif //TEST_REALM_API_HELPERS_H

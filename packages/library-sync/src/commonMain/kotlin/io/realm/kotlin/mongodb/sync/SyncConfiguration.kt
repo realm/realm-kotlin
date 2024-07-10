@@ -526,7 +526,8 @@ public interface SyncConfiguration : Configuration {
                 partitionValue == null,
                 inMemory,
                 initialRealmFileConfiguration,
-                realmLogger
+                relaxedSchema,
+                realmLogger,
             )
 
             return SyncConfigurationImpl(
