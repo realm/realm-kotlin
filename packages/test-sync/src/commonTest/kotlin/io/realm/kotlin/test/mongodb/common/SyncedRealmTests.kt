@@ -453,7 +453,8 @@ class SyncedRealmTests {
             val message = error.message
             assertNotNull(message)
             assertIs<WrongSyncTypeException>(error)
-            // FIXME
+            assertTrue(error.isFatal)
+            // Deprecated
             assertIs<UnrecoverableSyncException>(error)
             assertTrue(
                 message.contains("Client connected using flexible sync when app is using partition-based sync"),
