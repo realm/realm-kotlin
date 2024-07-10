@@ -216,6 +216,10 @@ actual object RealmInterop {
         realmc.realm_config_set_in_memory(config.cptr(), inMemory)
     }
 
+    actual fun realm_config_set_relaxed_schema(config: RealmConfigurationPointer, relaxedSchema: Boolean) {
+        realmc.realm_config_set_flexible_schema(config.cptr(), relaxedSchema)
+    }
+
     actual fun realm_create_scheduler(): RealmSchedulerPointer =
         LongPointerWrapper(realmc.realm_create_generic_scheduler())
 
@@ -489,6 +493,15 @@ actual object RealmInterop {
         return RealmValue(struct)
     }
 
+    actual fun MemAllocator.realm_get_value_by_name(
+        obj: RealmObjectPointer,
+        name: String,
+    ): RealmValue {
+        val struct = allocRealmValueT()
+        realmc.realm_get_value_by_name((obj as LongPointerWrapper).ptr, name, struct)
+        return RealmValue(struct)
+    }
+
     actual fun realm_set_value(
         obj: RealmObjectPointer,
         key: PropertyKey,
@@ -496,6 +509,29 @@ actual object RealmInterop {
         isDefault: Boolean
     ) {
         realmc.realm_set_value(obj.cptr(), key.key, value.value, isDefault)
+    }
+
+    actual fun realm_set_value_by_name(
+        obj: RealmObjectPointer,
+        name: String,
+        value: RealmValue,
+    ) {
+        realmc.realm_set_value_by_name(obj.cptr(), name, value.value)
+    }
+
+    actual fun realm_has_property(obj: RealmObjectPointer, name: String): Boolean {
+        val found = BooleanArray(1)
+        realmc.realm_has_property(obj.cptr(), name, found)
+        return found[0]
+    }
+
+    actual fun realm_get_additional_properties(obj: RealmObjectPointer): List<String> {
+        @Suppress("UNCHECKED_CAST")
+        val properties =  realmc.realm_get_additional_properties_helper(obj.cptr()) as Array<String>
+        return properties.asList()
+    }
+    actual fun realm_erase_property(obj: RealmObjectPointer, key: String): Boolean {
+        return realmc.realm_erase_property(obj.cptr(), key)
     }
 
     actual fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer {

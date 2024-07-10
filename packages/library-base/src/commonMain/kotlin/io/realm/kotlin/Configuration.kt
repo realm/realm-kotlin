@@ -170,6 +170,9 @@ public interface Configuration {
      */
     public val initialRealmFileConfiguration: InitialRealmFileConfiguration?
 
+    // FIXME DOCS
+    public val relaxedSchema: Boolean
+
     /**
      * Base class for configuration builders that holds properties available to both
      * [RealmConfiguration] and [SyncConfiguration].
@@ -209,6 +212,7 @@ public interface Configuration {
         protected var initialDataCallback: InitialDataCallback? = null
         protected var inMemory: Boolean = false
         protected var initialRealmFileConfiguration: InitialRealmFileConfiguration? = null
+        protected var relaxedSchema: Boolean = false
 
         /**
          * Sets the filename of the realm file.
@@ -396,6 +400,12 @@ public interface Configuration {
                 "Checksum must be null or a non-empty string."
             }
             this.initialRealmFileConfiguration = InitialRealmFileConfiguration(assetFile, sha256checkSum)
+            return this as S
+        }
+
+        // FIXME Docs
+        public fun relaxedSchema(relaxedSchema: Boolean): S {
+            this.relaxedSchema = relaxedSchema
             return this as S
         }
 

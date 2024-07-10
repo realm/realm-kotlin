@@ -42,7 +42,7 @@ internal data class RealmSchemaImpl(
                         ).filter { property: PropertyInfo ->
                             schemaMetadata == null || classMetadata?.get(property.name)?.isUserDefined() == true
                         }
-                        RealmClassImpl(table, properties)
+                        RealmClassImpl(table, properties, true)
                     } else {
                         null
                     }

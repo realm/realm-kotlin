@@ -303,7 +303,8 @@ class RealmSchemaTests {
                     sampleDescriptor,
                     RealmClassImpl(
                         io.realm.kotlin.internal.interop.ClassInfo("NEW_CLASS", numProperties = 1),
-                        listOf(io.realm.kotlin.internal.interop.PropertyInfo("NEW_PROPERTY", type = PropertyType.RLM_PROPERTY_TYPE_STRING))
+                        listOf(io.realm.kotlin.internal.interop.PropertyInfo("NEW_PROPERTY", type = PropertyType.RLM_PROPERTY_TYPE_STRING)),
+                        true,
                     )
                 )
             )

@@ -16,6 +16,9 @@
 
 package io.realm.kotlin.schema
 
+import io.realm.kotlin.types.BaseRealmObject
+import kotlin.reflect.KMutableProperty1
+
 /**
  * A [RealmProperty] describes the properties of a class property in the object model.
  */
@@ -40,4 +43,9 @@ public interface RealmProperty {
      * other property types it will always be false.
      */
     public val isNullable: Boolean
+
+    public val inDataModel: Boolean
+
+    // Nullable not reflected in model (replacement for isDataModel)
+    public val accessor: KMutableProperty1<out BaseRealmObject, *>?
 }

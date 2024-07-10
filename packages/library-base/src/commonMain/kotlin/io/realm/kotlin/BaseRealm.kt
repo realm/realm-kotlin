@@ -31,6 +31,7 @@ public interface BaseRealm : Versioned {
      * @return the schema of the realm.
      */
     public fun schema(): RealmSchema
+//    public fun schema(fullSchema: Boolean = false): RealmSchema
 
     /**
      * Returns the schema version of the realm.
