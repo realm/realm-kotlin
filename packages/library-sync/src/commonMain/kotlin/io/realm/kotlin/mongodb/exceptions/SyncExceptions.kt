@@ -30,8 +30,6 @@ import io.realm.kotlin.types.RealmAny
  * [io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler] and the the exact reason
  * must be found in [Throwable.message].
  *
- *
- *
  * @see io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler
  */
 public open class SyncException internal constructor(message: String?, isFatal: Boolean) : AppException(message) {
