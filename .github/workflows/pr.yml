@@ -1124,7 +1124,8 @@ jobs:
           packages: ''
           
           
-      - run: sdkmanager --channel=3 emulator
+      - run: sdkmanager --list
+      - run: sdkmanager --channel=3 --list
       - run: sdkmanager tools
       - run: ls -l $HOME/.android/
     
