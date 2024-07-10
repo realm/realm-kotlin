@@ -1150,10 +1150,20 @@ jobs:
       - name: Install SDK Tools
         run: |
           sdkmanager 'platforms;android-34' 'system-images;android-VanillaIceCream;google_apis_ps16k;arm64-v8a' 'tools'
-          echo no | avdmanager create avd --force -n test --abi 'arm64-v8a' --package 'system-images;android-VanillaIceCream;google_apis_ps16k;arm64-v8a'
           bash -c 'yes || true' | sdkmanager --licenses
         shell: bash
-          
+
+      - name: Create AVD image
+        run: |
+          bash -c 'no || true' | avdmanager create avd --force -n test --abi 'arm64-v8a' --package 'system-images;android-VanillaIceCream;google_apis_ps16k;arm64-v8a'          
+        shell: bash
+
+      - name: Start Emulator
+        run: |
+          echo $ANDROID_AVD_HOME
+          ls -l /home/runner/.android/avd/
+          $ANDROID_SDK_ROOT/emulator/emulator -avd test -accel off &
+        shell: bash
       # - run: sdkmanager --list
       # - run: sdkmanager --channel=3 --list
       # - run: sdkmanager tools
