@@ -48,6 +48,7 @@ import kotlinx.coroutines.withTimeout
 import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -145,6 +146,7 @@ class FLXProgressListenerTests {
     }
 
     @Test
+    @Ignore // disabled until https://github.com/realm/realm-core/issues/7869 is fixed
     fun uploadProgressListener_changesOnly() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
             for (i in 0..3) {
