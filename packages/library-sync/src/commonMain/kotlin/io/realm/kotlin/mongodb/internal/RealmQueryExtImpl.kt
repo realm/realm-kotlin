@@ -69,7 +69,7 @@ internal suspend fun <T : RealmObject> createSubscriptionFromQuery(
                 realm.syncSession.downloadAllServerChanges()
                 subscriptions.refresh()
                 subscriptions.errorMessage?.let { errorMessage: String ->
-                    throw BadFlexibleSyncQueryException(errorMessage)
+                    throw BadFlexibleSyncQueryException(errorMessage, isFatal = false)
                 }
             }
             // Rerun the query on the latest Realm version.
