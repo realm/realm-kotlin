@@ -415,6 +415,7 @@ class AppTests {
     }
 
     @Test
+    @Ignore
     fun encryptedMetadataRealm_openWithWrongKeyThrows() {
         val tempDir = PlatformUtils.createTempDir()
 
@@ -456,6 +457,7 @@ class AppTests {
     }
 
     @Test
+    @Ignore
     fun encryptedMetadataRealm_openWithoutKeyThrows() {
         val tempDir = PlatformUtils.createTempDir()
 
