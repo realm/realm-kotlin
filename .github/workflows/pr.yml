@@ -1155,7 +1155,7 @@ jobs:
 
       - name: Create AVD image
         run: |
-          bash -c 'no || true' | avdmanager create avd --force -n test --abi 'arm64-v8a' --package 'system-images;android-VanillaIceCream;google_apis_ps16k;arm64-v8a'          
+          echo no | avdmanager create avd --force -n test --abi 'arm64-v8a' --package 'system-images;android-VanillaIceCream;google_apis_ps16k;arm64-v8a'          
         shell: bash
 
       - name: Start Emulator
