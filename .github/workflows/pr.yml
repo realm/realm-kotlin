@@ -1149,7 +1149,7 @@ jobs:
       
       - name: Install SDK Tools
         run: |
-          sdkmanager 'platforms;android-34' 'system-images;android-34;google_apis;arm64-v8a' 'tools'
+          sdkmanager 'platforms;android-34' 'system-images;android-VanillaIceCream;google_apis_ps16k;arm64-v8a' 'tools'
           bash -c 'yes || true' | sdkmanager --licenses
         shell: bash
           
