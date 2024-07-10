@@ -1122,6 +1122,12 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           packages: ''
+          
+          
+      - run: sdkmanager --channel=3 emulator
+      - run: sdkmanager tools
+      - run: ls -l $HOME/.android/
+    
         
       # - name: Enable KVM group perms
       #   run: |
