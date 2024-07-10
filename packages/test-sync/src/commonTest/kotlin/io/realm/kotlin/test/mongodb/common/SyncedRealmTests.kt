@@ -45,6 +45,7 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.exceptions.UnrecoverableSyncException
+import io.realm.kotlin.mongodb.exceptions.WrongSyncTypeException
 import io.realm.kotlin.mongodb.internal.SyncSessionImpl
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.InitialSubscriptionsCallback
@@ -370,7 +371,10 @@ class SyncedRealmTests {
             // Second
             channel.receiveOrFail().let { error ->
                 assertNotNull(error.message)
+                // Deprecated
                 assertIs<UnrecoverableSyncException>(error)
+                assertIs<SyncException>(error)
+                assertTrue(error.isFatal)
             }
 
             deferred.cancel()
@@ -412,6 +416,49 @@ class SyncedRealmTests {
             assertTrue(
                 message.lowercase().contains("permission denied"),
                 "The error should be 'PermissionDenied' but it was: $message"
+            )
+            deferred.cancel()
+        }
+    }
+
+    @Test
+    fun errorHandler_wrongSyncTypeException() {
+        val channel = TestChannel<Throwable>()
+        // Remove permissions to generate a sync error containing ONLY the original path
+        // This way we assert we don't read wrong data from the user_info field
+        val (email, password) = "test_nowrite_noread_${randomEmail()}" to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+
+        // Opens FLX synced realm against a PBS app
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+        ).errorHandler { _, error ->
+            channel.trySendOrFail(error)
+        }.build()
+
+        runBlocking {
+            val deferred = async {
+                Realm.open(config).use {
+                    // Make sure that the test eventually fail. Coroutines can cancel a delay
+                    // so this doesn't always block the test for 10 seconds.
+                    delay(10_000)
+                    channel.send(AssertionError("Realm was successfully opened"))
+                }
+            }
+
+            val error = channel.receiveOrFail()
+            val message = error.message
+            assertNotNull(message)
+            assertIs<WrongSyncTypeException>(error)
+            assertTrue(error.isFatal)
+            // Deprecated
+            assertIs<UnrecoverableSyncException>(error)
+            assertTrue(
+                message.contains("Client connected using flexible sync when app is using partition-based sync"),
+                "Was: $message"
             )
             deferred.cancel()
         }
