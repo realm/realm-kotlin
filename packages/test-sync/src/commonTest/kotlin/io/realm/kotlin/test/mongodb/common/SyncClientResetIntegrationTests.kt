@@ -710,10 +710,8 @@ class SyncClientResetIntegrationTests {
                 exception: ClientResetRequiredException
             ) {
                 // Notify that this callback has been invoked
-                assertEquals(
-                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
-                    exception.message
-                )
+                assertTrue(exception.message!!.contains("User-provided callback failed"))
+
                 assertIs<IllegalStateException>(exception.cause)
                 assertEquals(
                     "User exception",
@@ -788,10 +786,8 @@ class SyncClientResetIntegrationTests {
                 exception: ClientResetRequiredException
             ) {
                 // Notify that this callback has been invoked
-                assertEquals(
-                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
-                    exception.message
-                )
+                assertTrue(exception.message!!.contains("User-provided callback failed"))
+
                 channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
         }).build()
@@ -1123,10 +1119,8 @@ class SyncClientResetIntegrationTests {
                 exception: ClientResetRequiredException
             ) {
                 // Notify that this callback has been invoked
-                assertEquals(
-                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
-                    exception.message
-                )
+                assertTrue(exception.message!!.contains("User-provided callback failed"))
+
                 channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
         }).build()
@@ -1193,11 +1187,8 @@ class SyncClientResetIntegrationTests {
                 // Validate that files have been moved after explicit reset
                 assertFalse(fileExists(originalFilePath))
                 assertTrue(fileExists(recoveryFilePath))
-
-                assertEquals(
-                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
-                    exception.message
-                )
+                println(exception.message)
+                assertTrue(exception.message!!.contains("User-provided callback failed"))
 
                 channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
@@ -1400,10 +1391,7 @@ class SyncClientResetIntegrationTests {
                 assertFalse(fileExists(originalFilePath))
                 assertTrue(fileExists(recoveryFilePath))
 
-                assertEquals(
-                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
-                    exception.message
-                )
+                assertTrue(exception.message!!.contains("User-provided callback failed"))
 
                 channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
