@@ -547,7 +547,9 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          java-version: |
+            17
+            ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -602,6 +604,8 @@ jobs:
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       - name: Setup Android SDK
+        env: 
+          JAVA_HOME: ${{ env.JAVA_HOME_17_x64 }}
         uses: android-actions/setup-android@v3
     
       - name: Install NDK
