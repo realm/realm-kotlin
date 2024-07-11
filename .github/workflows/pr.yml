@@ -1098,7 +1098,7 @@ jobs:
     strategy:
       fail-fast: false
 
-    runs-on: linux-arm64-small # android emulator does not run on arm64 - https://github.com/ReactiveCircus/android-emulator-runner/issues/350
+    runs-on: macos-14 # android emulator does not run on arm64 - https://github.com/ReactiveCircus/android-emulator-runner/issues/350
     # needs: [check-cache, build-android-packages, build-jvm-packages, build-kotlin-metadata-package]
     # if: |
     #   always() && 
@@ -1124,36 +1124,36 @@ jobs:
           packages: 'platform-tools'
       
       # https://github.com/lzhiyong/android-sdk-tools/releases
-      - name: Install ADB
-        run: |
-          curl --compressed --location --output tools.zip https://github.com/lzhiyong/android-sdk-tools/releases/download/34.0.3/android-sdk-tools-static-aarch64.zip
-          unzip -d tools -n -q tools.zip
-          rm -f tools.zip
-          cp tools/platform-tools/adb $ANDROID_SDK_ROOT/platform-tools/adb
-          rm -fr tools
-        shell: bash
+      # - name: Install ADB
+      #   run: |
+      #     curl --compressed --location --output tools.zip https://github.com/lzhiyong/android-sdk-tools/releases/download/34.0.3/android-sdk-tools-static-aarch64.zip
+      #     unzip -d tools -n -q tools.zip
+      #     rm -f tools.zip
+      #     cp tools/platform-tools/adb $ANDROID_SDK_ROOT/platform-tools/adb
+      #     rm -fr tools
+      #   shell: bash
       
-      # https://ci.android.com/builds/branches/aosp-emu-master-dev/grid
-      - name: Install Emulator
-        run: |
-          curl --compressed --location --output emulator.zip $(curl --location --silent https://ci.android.com/builds/submitted/11162281/emulator-linux_aarch64/latest/sdk-repo-linux_aarch64-emulator-11162281.zip | grep -o 'https://storage[^"]*' | sed 's/\\u0026/\&/g')
-          unzip -d $ANDROID_SDK_ROOT -n -q emulator.zip
-          rm -f emulator.zip
-          cp $ANDROID_SDK_ROOT/platform-tools/package.xml $ANDROID_SDK_ROOT/emulator/package.xml
-          sed -i \
-            -e 's|path="[a-zA-Z-]*"|path="emulator"|g' \
-            -e 's|<display-name>Android .*<\/display-name>|<display-name>Android Emulator<\/display-name>|g' \
-            $ANDROID_SDK_ROOT/emulator/package.xml
-          echo 'Vulkan = off\nGLDirectMem = on' >> ~/.android/advancedFeatures.ini
-        shell: bash
+      # # https://ci.android.com/builds/branches/aosp-emu-master-dev/grid
+      # - name: Install Emulator
+      #   run: |
+      #     curl --compressed --location --output emulator.zip $(curl --location --silent https://ci.android.com/builds/submitted/11162281/emulator-linux_aarch64/latest/sdk-repo-linux_aarch64-emulator-11162281.zip | grep -o 'https://storage[^"]*' | sed 's/\\u0026/\&/g')
+      #     unzip -d $ANDROID_SDK_ROOT -n -q emulator.zip
+      #     rm -f emulator.zip
+      #     cp $ANDROID_SDK_ROOT/platform-tools/package.xml $ANDROID_SDK_ROOT/emulator/package.xml
+      #     sed -i \
+      #       -e 's|path="[a-zA-Z-]*"|path="emulator"|g' \
+      #       -e 's|<display-name>Android .*<\/display-name>|<display-name>Android Emulator<\/display-name>|g' \
+      #       $ANDROID_SDK_ROOT/emulator/package.xml
+      #     echo 'Vulkan = off\nGLDirectMem = on' >> ~/.android/advancedFeatures.ini
+      #   shell: bash
       
-      - name: Install SDK Tools
-        env:
-          ANDROID_AVD_HOME: "/home/runner/.config/.android/avd"
-        run: |
-          sdkmanager 'platforms;android-34' 'system-images;android-VanillaIceCream;google_apis_ps16k;arm64-v8a' 'tools'
-          echo yes | sdkmanager --licenses
-        shell: bash
+      # - name: Install SDK Tools
+      #   env:
+      #     ANDROID_AVD_HOME: "/home/runner/.config/.android/avd"
+      #   run: |
+      #     sdkmanager 'platforms;android-34' 'system-images;android-VanillaIceCream;google_apis_ps16k;arm64-v8a' 'tools'
+      #     echo yes | sdkmanager --licenses
+      #   shell: bash
 
       # - name: Create AVD image
       #   env:
@@ -1162,25 +1162,25 @@ jobs:
       #     echo no | avdmanager create avd --force -n test --abi 'arm64-v8a' --package 'system-images;android-VanillaIceCream;google_apis_ps16k;arm64-v8a'          
       #   shell: bash
 
-      # - name: Run Integration Tests
-      #   env:
-      #     SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-      #     ANDROID_AVD_HOME: "/home/runner/.config/.android/avd"
-      #   uses: nhachicha/android-emulator-runner@main
-      #   with:
-      #     emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-      #     disable-animations: true
-      #     api-level: VanillaIceCream
-      #     target: google_apis_ps16k
-      #     arch: arm64-v8a
-      #     disk-size: 4096M
-      #     ram-size: 4096M
-      #     heap-size: 1024M
-      #     channel: canary
-      #     script: |
-      #       adb shell cat /proc/meminfo
-      #       adb logcat -c
-      #       adb logcat > logcat.txt &
+      - name: Run Integration Tests
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          # ANDROID_AVD_HOME: "/home/runner/.config/.android/avd"
+        uses: nhachicha/android-emulator-runner@88e721fe43b941d4545e4730e70507ba9f51ce9e
+        with:
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          api-level: VanillaIceCream
+          target: google_apis_ps16k
+          arch: arm64-v8a
+          disk-size: 4096M
+          ram-size: 4096M
+          heap-size: 1024M
+          channel: canary
+          script: |
+            adb shell cat /proc/meminfo
+            adb logcat -c
+            adb logcat > logcat.txt &
 
       - name: Setup tmate session
         env:
