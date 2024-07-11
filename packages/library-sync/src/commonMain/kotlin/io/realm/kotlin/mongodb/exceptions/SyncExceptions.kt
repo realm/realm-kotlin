@@ -68,6 +68,7 @@ public open class UnrecoverableSyncException internal constructor(message: Strin
  * Thrown when the type of sync used by the server does not match the one used by the client, i.e.
  * the server and client disagrees whether to use Partition-based or Flexible Sync.
  */
+@Suppress("DEPRECATION")
 public class WrongSyncTypeException internal constructor(message: String) :
     UnrecoverableSyncException(message)
 
