@@ -122,7 +122,7 @@ jobs:
           key: jni-linux-lib-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Setup Java 11
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
@@ -473,7 +473,7 @@ jobs:
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
+        uses: android-actions/setup-android@v3
   
       - name: Install NDK
         run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}"
@@ -602,7 +602,7 @@ jobs:
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
+        uses: android-actions/setup-android@v3
     
       - name: Install NDK
         run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}"
