@@ -1155,12 +1155,32 @@ jobs:
           echo yes | sdkmanager --licenses
         shell: bash
 
-      - name: Create AVD image
+      # - name: Create AVD image
+      #   env:
+      #     ANDROID_AVD_HOME: "/home/runner/.config/.android/avd"
+      #   run: |
+      #     echo no | avdmanager create avd --force -n test --abi 'arm64-v8a' --package 'system-images;android-VanillaIceCream;google_apis_ps16k;arm64-v8a'          
+      #   shell: bash
+
+      - name: Run Integration Tests
         env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
           ANDROID_AVD_HOME: "/home/runner/.config/.android/avd"
-        run: |
-          echo no | avdmanager create avd --force -n test --abi 'arm64-v8a' --package 'system-images;android-VanillaIceCream;google_apis_ps16k;arm64-v8a'          
-        shell: bash
+        uses: nhachicha/android-emulator-runner@main
+        with:
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          api-level: VanillaIceCream
+          target: google_apis_ps16k
+          arch: arm64-v8a
+          disk-size: 4096M
+          ram-size: 4096M
+          heap-size: 1024M
+          channel: canary
+          script: |
+            adb shell cat /proc/meminfo
+            adb logcat -c
+            adb logcat > logcat.txt &
 
       - name: Setup tmate session
         env:
