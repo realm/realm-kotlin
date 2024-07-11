@@ -65,6 +65,7 @@ import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
@@ -710,7 +711,7 @@ class SyncClientResetIntegrationTests {
                 exception: ClientResetRequiredException
             ) {
                 // Notify that this callback has been invoked
-                assertTrue(exception.message!!.contains("User-provided callback failed"))
+                assertContains(exception.message!!, "User-provided callback failed")
 
                 assertIs<IllegalStateException>(exception.cause)
                 assertEquals(
@@ -786,7 +787,7 @@ class SyncClientResetIntegrationTests {
                 exception: ClientResetRequiredException
             ) {
                 // Notify that this callback has been invoked
-                assertTrue(exception.message!!.contains("User-provided callback failed"))
+                assertContains(exception.message!!, "User-provided callback failed")
 
                 channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
@@ -1076,7 +1077,7 @@ class SyncClientResetIntegrationTests {
                 assertNotNull(exception.originalFilePath)
                 assertFalse(fileExists(exception.recoveryFilePath))
                 assertTrue(fileExists(exception.originalFilePath))
-                assertTrue(exception.message!!.contains("Simulate Client Reset"))
+                assertContains(exception.message!!, "Simulate Client Reset")
             }
         }
         channel.close()
@@ -1119,7 +1120,7 @@ class SyncClientResetIntegrationTests {
                 exception: ClientResetRequiredException
             ) {
                 // Notify that this callback has been invoked
-                assertTrue(exception.message!!.contains("User-provided callback failed"))
+                assertContains(exception.message!!, "User-provided callback failed")
 
                 channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
@@ -1188,7 +1189,7 @@ class SyncClientResetIntegrationTests {
                 assertFalse(fileExists(originalFilePath))
                 assertTrue(fileExists(recoveryFilePath))
                 println(exception.message)
-                assertTrue(exception.message!!.contains("User-provided callback failed"))
+                assertContains(exception.message!!, "User-provided callback failed")
 
                 channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
