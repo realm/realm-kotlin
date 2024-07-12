@@ -1,46 +1,15 @@
-## 2.1.0-SNAPSHOT (YYYY-MM-DD)
+## 2.1.0 (2024-07-12)
 
 ### Breaking Changes
 - None.
 
 ### Enhancements
-- Avoid exporting Core's symbols so we can statically build the Kotlin SDK with other SDKs like Swift in the same project. (Issue [JIRA](https://jira.mongodb.org/browse/RKOTLIN-877)).
-- Improved mechanism for unpacking of JVM native libs suitable for local development. (Issue [#1715](https://github.com/realm/realm-kotlin/issues/1715) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1065)).
+* Avoid exporting Core's symbols so we can statically build the Kotlin SDK with other SDKs like Swift in the same project. (Issue [JIRA](https://jira.mongodb.org/browse/RKOTLIN-877)).
+* Improved mechanism for unpacking of JVM native libs suitable for local development. (Issue [#1715](https://github.com/realm/realm-kotlin/issues/1715) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1065)).
 * [Sync] Add `SyncException.isFatal` to signal fatal unrecoverable exceptions. (Issue [#1767](https://github.com/realm/realm-kotlin/issues/1767) [RKOTLIN-1096](https://jira.mongodb.org/browse/RKOTLIN-1096)).
 
 ### Fixed
-- None.
-
-### Compatibility
-* File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
-* Realm Studio 15.0.0 or above is required to open Realms created by this version.
-* This release is compatible with the following Kotlin releases:
-  * Kotlin 2.0.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
-  * Ktor 2.1.2 and above.
-  * Coroutines 1.7.0 and above.
-  * AtomicFu 0.18.3 and above.
-  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
-* Minimum Kbson 0.4.0.
-* Minimum Gradle version: 7.2.
-* Minimum Android Gradle Plugin version: 7.1.3.
-* Minimum Android SDK: 16.
-* Minimum R8: 8.0.34.
-
-### Internal
-- Reworked test app initializer framework.
-
-
-## 2.0.1-SNAPSHOT (YYYY-MM-DD)
-
-### Breaking changes
-* None.
-
-### Enhancements
-* None.
-
-### Fixed
 * Fix crashes when core tries to log invalid utf-8 messages. (Issue [#1760](https://github.com/realm/realm-kotlin/issues/1760) [RKOTLIN-1089](https://jira.mongodb.org/browse/RKOTLIN-1089)).
-* [Sync] Fatal sync exceptions are now thrown as `UnrecoverableSyncException`. (Issue [#1767](https://github.com/realm/realm-kotlin/issues/1767) [RKOTLIN-1096](https://jira.mongodb.org/browse/RKOTLIN-1096)).
 * [Sync] Fix `NullPointerException` in `SubscriptionSet.waitForSynchronization`. (Issue [#1777](https://github.com/realm/realm-kotlin/issues/1777) [RKOTLIN-1102](https://jira.mongodb.org/browse/RKOTLIN-1102)).
 
 ### Compatibility
@@ -59,7 +28,7 @@
 * Minimum R8: 8.0.34.
 
 ### Internal
-- None.
+* Reworked test app initializer framework.
 
 
 ## 2.0.0 (2024-06-03)
