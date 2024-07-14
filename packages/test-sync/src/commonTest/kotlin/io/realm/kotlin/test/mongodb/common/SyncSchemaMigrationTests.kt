@@ -55,11 +55,6 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-/**
- * Tests for [io.realm.kotlin.mongodb.sync.Sync] that is accessed through
- * [io.realm.kotlin.mongodb.App.sync].
- */
-
 @PersistedName("Dog")
 class DogV0 : RealmObject {
     @PrimaryKey
@@ -317,7 +312,7 @@ class SyncSchemaMigrationTests {
 
     // fails with future schema version
     @Test
-    fun failsWithFutureSchemaVersionFirstOpen() {
+    fun failsWithNonExistingSchemaVersionFirstOpen() {
         assertFailsWithMessage<IllegalStateException>("Client provided invalid schema version") {
             createSyncConfig(
                 dogSchema = DogV2::class,
@@ -332,7 +327,7 @@ class SyncSchemaMigrationTests {
     }
 
     @Test
-    fun failsWithFutureSchemaVersion() {
+    fun failsWithNonExistingSchemaVersion() {
         createSyncConfig(
             dogSchema = DogV0::class,
             version = 0,
