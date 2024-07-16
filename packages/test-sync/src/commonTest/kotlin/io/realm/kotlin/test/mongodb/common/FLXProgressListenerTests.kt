@@ -146,7 +146,6 @@ class FLXProgressListenerTests {
     }
 
     @Test
-    @Ignore // disabled until https://github.com/realm/realm-core/issues/7869 is fixed
     fun uploadProgressListener_changesOnly() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
             for (i in 0..3) {
