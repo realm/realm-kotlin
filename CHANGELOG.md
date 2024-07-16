@@ -1,3 +1,33 @@
+## 2.2.0-SNAPSHOT (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
+* Realm Studio 15.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 2.0.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.4.0.
+* Minimum Gradle version: 7.2.
+* Minimum Android Gradle Plugin version: 7.1.3.
+* Minimum Android SDK: 16.
+* Minimum R8: 8.0.34.
+
+### Internal
+* None.
+
+
 ## 2.1.1-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
