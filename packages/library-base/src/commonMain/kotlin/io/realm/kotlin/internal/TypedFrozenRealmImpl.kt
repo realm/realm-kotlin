@@ -26,5 +26,6 @@ public class TypedFrozenRealmImpl(
     configuration: InternalConfiguration,
 ) : InternalTypedRealm, BaseRealmImpl(configuration) {
 
+    // TODO This resolves schema information ... couldn't we just inherit from
     override val realmReference: RealmReference = FrozenRealmReferenceImpl(this, dbPointer)
 }

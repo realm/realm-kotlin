@@ -36,7 +36,7 @@ public class NotificationToken constructor(
     override fun cancel() {
         lock.withLock {
             if (observer.value) {
-                token.release()
+//                token.release()
             }
             observer.value = false
         }

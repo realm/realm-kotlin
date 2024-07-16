@@ -23,12 +23,14 @@ import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.platform.PlatformUtils.triggerGC
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.RealmObject
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.BufferedReader
@@ -100,7 +102,7 @@ class MemoryTests {
 
     // make sure that calling realm.close() will force close the Realm and release native memory
     @Test
-    fun closeShouldFreeMemory() {
+    fun closeShouldFreeOMemory() {
         val command = arrayListOf("/system/bin/sh", "-c", "cat /proc/${Process.myPid()}/maps | grep default.realm | awk '{print \$1}'")
 
         val realm = openRealmFromTmpDir()
@@ -136,6 +138,7 @@ class MemoryTests {
     // we cannot assert that the final size is not smaller that if all versions are stilled alive,
     // but this is the best we can do and is better than nothing until proven flaky.
     @Test
+//    @Ignore
     fun releaseIntermediateVersions() {
         val command = arrayListOf("/system/bin/sh", "-c", "cat /proc/${Process.myPid()}/maps | grep default.realm | awk '{print \$1}'")
         openRealmFromTmpDir().use { realm: Realm ->
@@ -212,6 +215,7 @@ class MemoryTests {
     private fun openRealmFromTmpDir(): Realm {
         val configuration =
             RealmConfiguration.Builder(schema = setOf(MemoryTest::class))
+//                .log(LogLevel.ALL)
                 .directory(tmpDir)
                 .build()
         return Realm.open(configuration)

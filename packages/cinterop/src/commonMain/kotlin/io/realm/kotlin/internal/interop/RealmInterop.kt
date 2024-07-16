@@ -218,7 +218,7 @@ expect object RealmInterop {
     fun realm_add_realm_changed_callback(realm: LiveRealmPointer, block: () -> Unit): RealmCallbackTokenPointer
     fun realm_add_schema_changed_callback(realm: LiveRealmPointer, block: (RealmSchemaPointer) -> Unit): RealmCallbackTokenPointer
 
-    fun realm_freeze(liveRealm: LiveRealmPointer): FrozenRealmPointer
+    fun realm_freeze(liveRealm: RealmPointer): FrozenRealmPointer
     fun realm_is_frozen(realm: RealmPointer): Boolean
     fun realm_close(realm: RealmPointer)
     fun realm_delete_files(path: String)
@@ -237,10 +237,11 @@ expect object RealmInterop {
     fun realm_get_class(realm: RealmPointer, classKey: ClassKey): ClassInfo
     fun realm_get_class_properties(realm: RealmPointer, classKey: ClassKey, max: Long): List<PropertyInfo>
 
+    fun <T: RealmT> realm_clone(p: NativePointer<T>): NativePointer<T>
     /**
      * This method should only ever be called from `LongPointerWrapper` and `CPointerWrapper`
      */
-    internal fun realm_release(p: RealmNativePointer)
+    fun realm_release(p: RealmNativePointer)
 
     /**
      * Check if two pointers are pointing to the same underlying data.

@@ -232,8 +232,10 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_freeze(liveRealm: LiveRealmPointer): FrozenRealmPointer {
-        return LongPointerWrapper(realmc.realm_freeze(liveRealm.cptr()))
+    actual fun realm_freeze(liveRealm: RealmPointer): FrozenRealmPointer {
+        val ptr = realmc.realm_freeze(liveRealm.cptr())
+        println("realm_freeze(${liveRealm.cptr()}) -> $ptr")
+        return LongPointerWrapper(ptr)
     }
 
     actual fun realm_is_frozen(realm: RealmPointer): Boolean {
@@ -336,7 +338,10 @@ actual object RealmInterop {
         }
     }
 
-    internal actual fun realm_release(p: RealmNativePointer) {
+    actual fun <T: RealmT> realm_clone(p: NativePointer<T>): NativePointer<T> {
+        return LongPointerWrapper<T>(realmc.realm_clone(p.cptr()))
+    }
+    actual fun realm_release(p: RealmNativePointer) {
         realmc.realm_release(p.cptr())
     }
 

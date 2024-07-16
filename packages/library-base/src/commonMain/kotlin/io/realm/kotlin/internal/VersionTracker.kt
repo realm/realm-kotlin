@@ -32,21 +32,17 @@ import kotlinx.atomicfu.atomic
 internal class VersionTracker(private val owner: BaseRealmImpl, private val log: ContextLogger) {
     // Set of currently open realms. Storing the native pointer explicitly to enable us to close
     // the realm when the RealmReference is no longer referenced anymore.
-    private val intermediateReferences: AtomicRef<Set<Pair<RealmPointer, WeakReference<RealmReference>>>> = atomic(mutableSetOf())
+    private val intermediateReferences: AtomicRef<Set<WeakReference<RealmPointer>>> = atomic(mutableSetOf())
 
     fun trackAndCloseExpiredReferences(realmReference: FrozenRealmReference? = null) {
-        val references = mutableSetOf<Pair<RealmPointer, WeakReference<RealmReference>>>()
+        val references = mutableSetOf<WeakReference<RealmPointer>>()
         realmReference?.let {
             log.trace("$owner TRACK-VERSION ${realmReference.version()}")
-            references.add(Pair(realmReference.dbPointer, WeakReference(it)))
+            references.add(WeakReference(realmReference.dbPointer))
         }
-        intermediateReferences.value.forEach { entry ->
-            val (pointer, ref) = entry
-            if (ref.get() == null) {
-                log.trace("$owner CLOSE-FREED ${RealmInterop.realm_get_version_id(pointer)}")
-                RealmInterop.realm_close(pointer)
-            } else {
-                references.add(entry)
+        intermediateReferences.value.forEach { pointer ->
+            if (pointer.get() != null) {
+                references.add(pointer)
             }
         }
         intermediateReferences.value = references
@@ -54,12 +50,16 @@ internal class VersionTracker(private val owner: BaseRealmImpl, private val log:
 
     fun versions(): Set<VersionId> =
         // We could actually also report freed versions here!?
-        intermediateReferences.value.mapNotNull { it.second.get()?.version() }.toSet()
+        intermediateReferences.value.mapNotNull { it.get()?.let { it -> VersionId(RealmInterop.realm_get_version_id(it)) }}.toSet()
 
     fun close() {
-        intermediateReferences.value.forEach { (pointer, _) ->
-            log.trace("$owner CLOSE-ACTIVE ${VersionId(RealmInterop.realm_get_version_id(pointer))}")
-            RealmInterop.realm_close(pointer)
+        intermediateReferences.value.forEach { pointer ->
+            pointer.get()?.let {
+                log.trace("$owner CLOSE-ACTIVE ${VersionId(RealmInterop.realm_get_version_id(it))}")
+                RealmInterop.realm_close(it)
+//                it.release()
+//                RealmInterop.realm_release(it)
+            }
         }
     }
 }

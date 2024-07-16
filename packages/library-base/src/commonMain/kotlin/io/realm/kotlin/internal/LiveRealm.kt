@@ -66,7 +66,7 @@ internal abstract class LiveRealm(
      * [gcTrackedSnapshot] then the old reference will be closed, allowing Core to release the
      * underlying resources of the no-longer referenced version.
      */
-    private val _snapshot: AtomicRef<FrozenRealmReference> = atomic(realmReference.snapshot(owner))
+    internal val _snapshot: AtomicRef<FrozenRealmReference> = atomic(realmReference.snapshot(owner))
     /**
      * Flag used to control whether to close or track the [_snapshot] when advancing to a newer
      * version.
@@ -86,7 +86,7 @@ internal abstract class LiveRealm(
      * (which can be newer, but never older).
      */
     internal val snapshotVersion: VersionId
-        get() = _snapshot.value.uncheckedVersion()
+        get() = snapshotLock.withLock { _snapshot.value.uncheckedVersion() }
 
     /**
      * Garbage collector tracked snapshot that can be used to issue other object, query, etc.
@@ -122,18 +122,27 @@ internal abstract class LiveRealm(
     internal fun updateSnapshot() {
         snapshotLock.withLock {
             val version = _snapshot.value.version()
+            println("updateSnapshot $version ${realmReference.version()} $this")
             if (realmReference.isClosed() || version == realmReference.version()) {
                 return
             }
             if (_closeSnapshotWhenAdvancing) {
                 log.trace("${this@LiveRealm} CLOSE-UNTRACKED $version")
-                _snapshot.value.close()
+                val dbPointer = _snapshot.value.dbPointer
+                println("release $dbPointer $this")
+                dbPointer.release()
+//                RealmInterop.realm_close(_snapshot.value.dbPointer)
             } else {
                 // TODO Split into track and clean up as we don't need to hold headLock while
                 //  cleaning up as version tracker is only accessed from the same thread
                 versionTracker.trackAndCloseExpiredReferences(_snapshot.value)
             }
-            _snapshot.value = realmReference.snapshot(owner)
+            val oldSnapshot = _snapshot.value
+            println("update ${oldSnapshot.dbPointer} ${oldSnapshot.dbPointer.isReleased()} ${oldSnapshot} $this")
+//            println("update ${oldSnapshot.dbPointer} $this")
+            val frozenRealmReference = realmReference.snapshot(owner)
+            _snapshot.value = frozenRealmReference
+            println("advanced ${frozenRealmReference == oldSnapshot} ${frozenRealmReference.dbPointer} ${frozenRealmReference.dbPointer.isReleased()} $frozenRealmReference $this")
             log.trace("${this@LiveRealm} ADVANCING $version -> ${_snapshot.value.version()}")
             _closeSnapshotWhenAdvancing = true
         }
@@ -179,6 +188,14 @@ internal abstract class LiveRealm(
                     versionTracker.versions()
                 }
                 VersionData(_snapshot.value.version(), active)
+            }
+        }
+    }
+
+    fun scopedRealm(): FrozenRealmReference = runBlocking {
+        withContext(scheduler.dispatcher) {
+            realmReference.snapshot(owner).apply {
+                versionTracker.trackAndCloseExpiredReferences(this)
             }
         }
     }

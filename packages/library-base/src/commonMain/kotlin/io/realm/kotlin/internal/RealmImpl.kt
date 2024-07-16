@@ -19,6 +19,8 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.Configuration
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
+import io.realm.kotlin.ResourceScope
+import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -128,7 +130,10 @@ public class RealmImpl private constructor(
                         }
                     }
                 }
+                println("open")
                 val (frozenReference, fileCreated) = configuration.openRealm(this@RealmImpl)
+
+                println("open after")
                 realmFileCreated = assetFileCopied || fileCreated
                 versionTracker.trackAndCloseExpiredReferences(frozenReference)
                 _realmReference.value = frozenReference
@@ -265,6 +270,34 @@ public class RealmImpl private constructor(
         // not be available and will throw, so we need to track closed state separately.
         return isClosed.value
     }
+
+    override fun <T> scoped(block: TypedRealm.() -> T): T {
+
+        val realmReference = notifier.realm.scopedRealm()
+
+        val realm = TypedFrozenRealmImpl(realmReference.dbPointer, configuration)
+        val res = realm.block()
+        realmReference.close()
+        return res
+    }
+
+    override fun asScopedFlow(): Flow<RealmChange<Realm>> {
+
+        TODO("Not yet implemented")
+    }
+
+    override fun <T> live(block: MutableRealm.() -> T): T {
+        val realmReference = realmReference()
+//        val liveRealmReference = LiveRealmReference(this, RealmInterop.realm_freeze())
+        TODO()
+
+    }
+
+    //    override fun scoped(): ResourceScope {
+//        val realmReference = notifier.realm.scopedRealm()
+////        val realmReference = FrozenRealmReferenceImpl(value.owner, RealmInterop.realm_freeze(value.dbPointer), value.schemaMetadata)
+//        TODO("Not yet implemented")
+//    }
 
     override fun close() {
         // TODO Reconsider this constraint. We have the primitives to check is we are on the

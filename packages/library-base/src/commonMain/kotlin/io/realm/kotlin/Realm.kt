@@ -227,6 +227,10 @@ public interface Realm : TypedRealm {
      */
     public fun writeCopyTo(targetConfiguration: Configuration)
 
+    public fun <T> scoped(block: TypedRealm.() -> (T)): T
+    public fun asScopedFlow(): Flow<RealmChange<Realm>>
+    public fun <T> live(block: MutableRealm.() -> (T)): T
+//    public fun scoped(): ResourceScope
     /**
      * Close this realm and all underlying resources. Accessing any methods or Realm Objects after
      * this method has been called will then an [IllegalStateException].

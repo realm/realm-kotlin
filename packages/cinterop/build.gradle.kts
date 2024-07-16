@@ -206,7 +206,13 @@ kotlin {
             }
             kotlin.srcDir(versionDirectory)
         }
-        val commonTest by getting
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
+
+            }
+        }
         val jvm by creating {
             dependsOn(commonMain)
             dependencies {
@@ -215,6 +221,11 @@ kotlin {
         }
         val jvmMain by getting {
             dependsOn(jvm)
+        }
+        val jvmTest by getting {
+            dependencies {
+                implementation(kotlin("test-junit"))
+            }
         }
         val androidMain by getting {
             dependsOn(jvm)

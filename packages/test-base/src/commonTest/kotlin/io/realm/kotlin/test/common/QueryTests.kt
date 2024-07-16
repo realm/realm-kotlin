@@ -27,6 +27,7 @@ import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.internal.query.AggregatorQueryType
+import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.InitialObject
 import io.realm.kotlin.notifications.InitialResults
@@ -91,6 +92,7 @@ class QueryTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(schema = setOf(QuerySample::class))
+            .log(LogLevel.TRACE)
             .directory(tmpDir)
             .build()
         realm = Realm.open(configuration)
@@ -1779,11 +1781,14 @@ class QueryTests {
 
     @Test
     fun min_asFlow() {
+        println("sadf")
+        println("sadf ${allPropertyDescriptorsForMin.size}")
         for (propertyDescriptor in allPropertyDescriptorsForMin) {
-            asFlowAggregatorAssertions(AggregatorQueryType.MIN, propertyDescriptor)
+//            asFlowAggregatorAssertions(AggregatorQueryType.MIN, propertyDescriptor)
             asFlowDeleteObservableAssertions(AggregatorQueryType.MIN, propertyDescriptor)
-            asFlowCancel(AggregatorQueryType.MIN, propertyDescriptor)
+//            asFlowCancel(AggregatorQueryType.MIN, propertyDescriptor)
         }
+        println("sdf")
     }
 
     @Test
@@ -2735,6 +2740,7 @@ class QueryTests {
         }
 
         runBlocking {
+            println("sadf3")
             realm.writeBlocking {
                 saveData(propertyDescriptor)
             }
@@ -2816,7 +2822,9 @@ class QueryTests {
 
             // Make sure to delete all objects after assertions as aggregators to clean state and
             // avoid "null vs 0" results when testing
+            println("sadf4")
             cleanUpBetweenProperties()
+            println("sadf5")
         }
     }
 

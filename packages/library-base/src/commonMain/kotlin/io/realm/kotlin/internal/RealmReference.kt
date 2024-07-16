@@ -54,6 +54,7 @@ public interface RealmReference : RealmState {
     public fun close() {
         checkClosed()
         RealmInterop.realm_close(dbPointer)
+//        dbPointer.release()
     }
 
     public fun asValidLiveRealmReference(): LiveRealmReference {

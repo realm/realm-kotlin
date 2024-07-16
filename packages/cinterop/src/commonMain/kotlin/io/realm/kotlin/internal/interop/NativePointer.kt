@@ -50,7 +50,11 @@ public interface NativePointer<T : CapiT> {
 fun <T : CapiT, R> NativePointer<T>.use(
     block: (NativePointer<T>) -> R,
 ): R = try {
-    block(this)
+    println("tryu")
+    val x = block(this)
+    println("this")
+    x
 } finally {
-    release()
+    println("finallt")
+//    release()
 }

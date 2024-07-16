@@ -17,8 +17,9 @@
 package io.realm.kotlin.types
 
 import io.realm.kotlin.Deleteable
+import io.realm.kotlin.RealmResource
 
 /**
  * Base interface for all realm classes.
  */
-public interface BaseRealmObject : Deleteable
+public interface BaseRealmObject : Deleteable, RealmResource

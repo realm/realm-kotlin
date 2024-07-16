@@ -17,6 +17,11 @@
 package io.realm.kotlin.test
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.realm.kotlin.internal.interop.LiveRealmT
+import io.realm.kotlin.internal.interop.NativePointer
+import io.realm.kotlin.internal.interop.RealmConfigurationPointer
+import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.realm_class_flags_e
 import io.realm.kotlin.internal.interop.realm_class_info_t
 import io.realm.kotlin.internal.interop.realm_collection_type_e
@@ -760,6 +765,37 @@ class CinteropTest {
         realmc.realm_set_value(parent1, child_property.key, realm_value_t().apply { type = realm_value_type_e.RLM_TYPE_LINK; link = realmc.realm_object_as_link(child) }, false)
 
         realmc.realm_get_value(parent1, child_property.key, realm_value_t())
+    }
+
+    @Test
+    fun versionManagement() {
+        System.loadLibrary("realmc")
+        val path = Files.createTempDirectory("android_tests").absolutePathString() + "/c_api_test.realm"
+
+        val class_1 = createClass("foo", 1)
+        val prop_1_1 = createIntProperty("int")
+        val schema_1 = createSchema(listOf(Pair(class_1, listOf(prop_1_1))))
+
+        val config_1: RealmConfigurationPointer = RealmInterop.realm_config_new()
+        realmc.realm_config_set_path(config_1.cptr(), path)
+        realmc.realm_config_set_schema(config_1.cptr(), schema_1)
+        realmc.realm_config_set_schema_mode(config_1.cptr(), realm_schema_mode_e.RLM_SCHEMA_MODE_SOFT_RESET_FILE)
+        realmc.realm_config_set_schema_version(config_1.cptr(), 0)
+
+        val realm: Pair<NativePointer<LiveRealmT>, Boolean> = RealmInterop.realm_open(config_1, RealmInterop.realm_create_scheduler())
+
+        realmc.realm_open(config_1).also { realm ->
+            // insert some data
+            realmc.realm_begin_write(realm)
+            realmc.realm_object_create(realm, findTable(realm, "foo").key)
+            realmc.realm_commit(realm)
+
+            // close Realm
+            realmc.realm_release(config_1)
+            realmc.realm_release(schema_1)
+            realmc.realm_close(realm)
+        }
+
     }
 
     private fun createIntProperty(propertyName: String): realm_property_info_t {

@@ -111,10 +111,15 @@ public open class ConfigurationImpl(
         val configPtr = realm.configuration.createNativeConfiguration()
         return RealmInterop.realm_create_scheduler()
             .use { scheduler ->
+                println("as $scheduler")
                 val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr, scheduler)
+                println("as1")
                 val liveRealmReference = LiveRealmReference(realm, dbPointer)
+                println("as2")
                 val frozenReference = liveRealmReference.snapshot(realm)
+                println("as4")
                 liveRealmReference.close()
+                println("as5")
                 frozenReference to fileCreated
             }
     }

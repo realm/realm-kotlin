@@ -37,6 +37,7 @@ public class LongPointerWrapper<T : CapiT>(ptr: Long, managed: Boolean = true) :
             return if (!released.get()) {
                 _ptr
             } else {
+                println("Deleted pointer $this")
                 throw POINTER_DELETED_ERROR
             }
         }
