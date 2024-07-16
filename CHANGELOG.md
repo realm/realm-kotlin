@@ -25,7 +25,6 @@
 * Minimum R8: 8.0.34.
 
 ### Internal
-* Reworked test app initializer framework.
 * Updated to Realm Core 14.10.4 commit 4f83c590c4340dd7760d5f070e2e81613eb536aa.
 
 ## 2.1.0 (2024-07-12)
