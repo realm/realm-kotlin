@@ -37,7 +37,7 @@
 * None.
 
 ### Fixed
-* None.
+* [Sync] Platform networking was not enabled even if setting `AppConfiguration.Builder.usePlatformNetworking`. (Issue [#1811](https://github.com/realm/realm-kotlin/issues/1811)/[RKOTLIN-1114](https://jira.mongodb.org/browse/RKOTLIN-1114)).
 
 ### Compatibility
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
