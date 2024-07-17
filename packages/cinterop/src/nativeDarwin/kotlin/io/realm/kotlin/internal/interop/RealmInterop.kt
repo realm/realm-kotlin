@@ -2469,7 +2469,8 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_config_get_sync_client_config(configPointer: RealmAppConfigurationPointer): RealmSyncClientConfigurationPointer {
-        return CPointerWrapper(realm_wrapper.realm_app_config_get_sync_client_config(configPointer.cptr()))
+        // The configuration is owned by Core so don't track and release it through garbage collection of the NativePointer
+        return CPointerWrapper(realm_wrapper.realm_app_config_get_sync_client_config(configPointer.cptr()), false)
     }
 
     actual fun realm_sync_client_config_set_default_binding_thread_observer(
