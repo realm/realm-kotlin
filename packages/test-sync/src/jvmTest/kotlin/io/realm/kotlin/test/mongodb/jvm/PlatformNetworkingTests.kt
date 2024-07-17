@@ -20,7 +20,6 @@ import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
