@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.platform
 
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -39,6 +40,10 @@ actual object PlatformUtils {
             )
         }
         return dir.absolutePathString()
+    }
+
+    actual fun copyFile(originPath: String, targetPath: String) {
+        File(originPath).copyTo(File(targetPath))
     }
 
     actual fun deleteTempDir(path: String) {
