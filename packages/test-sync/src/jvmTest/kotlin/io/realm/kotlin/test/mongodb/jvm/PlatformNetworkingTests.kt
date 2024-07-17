@@ -17,6 +17,8 @@ import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.mongodb.util.DefaultFlexibleSyncAppInitializer
 import io.realm.kotlin.test.util.use
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -49,8 +51,9 @@ class PlatformNetworkingTests {
                             )
                         }
                         uploadRealm.syncSession.uploadAllLocalChanges(TIMEOUT)
-                        realm.syncSession.downloadAllServerChanges(TIMEOUT)
-                        assertEquals(1, realm.query<SyncObjectWithAllTypes>().find().size)
+                        withTimeout(TIMEOUT) {
+                            realm.query<SyncObjectWithAllTypes>().asFlow().first { it.list.size == 1 }
+                        }
                     }
                 }
                 assertTrue(
