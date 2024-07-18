@@ -20,8 +20,6 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.Direction
 import io.realm.kotlin.mongodb.sync.Progress
@@ -42,7 +40,6 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.last
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.supervisorScope
@@ -149,12 +146,10 @@ class FLXProgressListenerTests {
 
     @Test
     fun uploadProgressListener_changesOnly() = runBlocking {
-        RealmLog.setLevel(LogLevel.ALL)
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
             for (i in 0..3) {
                 realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
                 realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES)
-                    .onEach { println("Progress[$i] $it") }
                     .run {
                         withTimeout(TIMEOUT) {
                             last().let {
