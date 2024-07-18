@@ -20,6 +20,7 @@ import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
@@ -51,7 +52,11 @@ class PlatformNetworkingTests {
                         }
                         uploadRealm.syncSession.uploadAllLocalChanges(TIMEOUT)
                         withTimeout(TIMEOUT) {
-                            realm.query<SyncObjectWithAllTypes>().asFlow().first { it.list.size == 1 }
+                            realm.query<SyncObjectWithAllTypes>().asFlow().first {
+                                it.list.size == 1
+                            }.list.first().also {
+                                assertEquals(selector, it.stringField)
+                            }
                         }
                     }
                 }
