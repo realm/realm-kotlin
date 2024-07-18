@@ -296,6 +296,7 @@ class FLXProgressListenerTests {
             .initialSubscriptions {
                 add(it.query<SyncObjectWithAllTypes>("stringField = $0", getTestPartitionValue()))
             }
+            .waitForInitialRemoteData(TIMEOUT)
             .build()
     }
 
