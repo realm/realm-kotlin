@@ -147,6 +147,7 @@ class FLXProgressListenerTests {
     @Test
     fun uploadProgressListener_changesOnly() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
+            realm.syncSession.uploadAllLocalChanges(TIMEOUT)
             for (i in 0..3) {
                 realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
                 realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES)
@@ -291,7 +292,6 @@ class FLXProgressListenerTests {
             .initialSubscriptions {
                 add(it.query<SyncObjectWithAllTypes>("stringField = $0", getTestPartitionValue()))
             }
-            .waitForInitialRemoteData(TIMEOUT)
             .build()
     }
 
