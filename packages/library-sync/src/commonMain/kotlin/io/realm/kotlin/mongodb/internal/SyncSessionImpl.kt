@@ -121,7 +121,6 @@ internal open class SyncSessionImpl(
                         },
                         progressMode == ProgressMode.INDEFINITELY
                     ) { progressEstimate: Double ->
-                        println("PROGRESS-CALLBACK: $progressEstimate")
                         val progress = Progress(progressEstimate)
                         trySendWithBufferOverflowCheck(progress)
                         if (progressMode == ProgressMode.CURRENT_CHANGES && progress.isTransferComplete) {
