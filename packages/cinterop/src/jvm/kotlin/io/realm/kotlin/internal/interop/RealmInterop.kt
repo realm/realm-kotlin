@@ -1758,6 +1758,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer {
+        return LongPointerWrapper<RealmSyncConfigT>(realmc.realm_flx_sync_config_new(user.cptr()))
+    }
+
     actual fun realm_config_set_sync_config(realmConfiguration: RealmConfigurationPointer, syncConfiguration: RealmSyncConfigurationPointer) {
         realmc.realm_config_set_sync_config(realmConfiguration.cptr(), syncConfiguration.cptr())
     }
@@ -1978,14 +1982,6 @@ actual object RealmInterop {
 
     actual fun realm_object_delete(obj: RealmObjectPointer) {
         realmc.realm_object_delete(obj.cptr())
-    }
-
-    actual fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer {
-        return LongPointerWrapper<RealmSyncConfigT>(realmc.realm_flx_sync_config_new(user.cptr())).also { ptr ->
-            // Stop the session immediately when the Realm is closed, so the lifecycle of the
-            // Sync Client thread is manageable.
-            realmc.realm_sync_config_set_session_stop_policy(ptr.cptr(), realm_sync_session_stop_policy_e.RLM_SYNC_SESSION_STOP_POLICY_IMMEDIATELY)
-        }
     }
 
     actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectId {
