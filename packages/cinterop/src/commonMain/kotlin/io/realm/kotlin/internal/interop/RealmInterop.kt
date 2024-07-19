@@ -650,6 +650,8 @@ expect object RealmInterop {
         user: RealmUserPointer,
         partition: String
     ): RealmSyncConfigurationPointer
+    // Flexible Sync
+    fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer
     fun realm_sync_config_set_error_handler(
         syncConfig: RealmSyncConfigurationPointer,
         errorHandler: SyncErrorCallback
@@ -786,9 +788,6 @@ expect object RealmInterop {
         realmConfiguration: RealmConfigurationPointer,
         syncConfiguration: RealmSyncConfigurationPointer
     )
-
-    // Flexible Sync
-    fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer
 
     // Flexible Sync Subscription
     fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectId
