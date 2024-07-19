@@ -122,7 +122,9 @@ open class TestApp private constructor(
                 return
             }
 
+            println("TERMINATING SESSION")
             app.sync.waitForSessionsToTerminate()
+            println("SESSIONS TERMINATED: ${app.sync.hasSyncSessions}")
 
             // This is needed to "properly reset" all sessions across tests since deleting users
             // directly using the REST API doesn't do the trick
