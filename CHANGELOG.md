@@ -5,7 +5,7 @@
 
 ### Enhancements
 * Reduce the size of the local transaction log produced by creating objects, improving the performance of insertion-heavy transactions (Core issue [realm/realm-core#7734](https://github.com/realm/realm-core/pull/7734)).
-* Performance has been improved for range queries on integers and timestamps. Requires that you use the "BETWEEN" operation in MQL or the Query::between() method when you build the query. (Core issue [realm/realm-core#7785](https://github.com/realm/realm-core/pull/7785))
+* Performance has been improved for range queries on integers and timestamps. Requires that you use the "BETWEEN" operation in RQL or the Query::between() method when you build the query. (Core issue [realm/realm-core#7785](https://github.com/realm/realm-core/pull/7785))
 * [Sync] Report the originating error that caused a client reset to occur. (Core issue [realm/realm-core#6154](https://github.com/realm/realm-core/issues/6154)).
 * [Sync] It is no longer an error to set a base url for an App with a trailing slash - for example, `https://services.cloud.mongodb.com/` instead of `https://services.cloud.mongodb.com` - before this change that would result in a 404 error from the server (Core issue [realm/realm-core#7791](https://github.com/realm/realm-core/pull/7791)).
 * [Sync] On Windows devices Device Sync will additionally look up SSL certificates in the Windows Trusted Root Certification Authorities certificate store when establishing a connection. (Core issue [realm/realm-core#7882](https://github.com/realm/realm-core/pull/7882))
