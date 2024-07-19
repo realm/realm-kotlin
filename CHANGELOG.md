@@ -8,7 +8,8 @@
 * Performance has been improved for range queries on integers and timestamps. Requires that you use the "BETWEEN" operation in RQL or the Query::between() method when you build the query. (Core issue [realm/realm-core#7785](https://github.com/realm/realm-core/pull/7785))
 * [Sync] Report the originating error that caused a client reset to occur. (Core issue [realm/realm-core#6154](https://github.com/realm/realm-core/issues/6154)).
 * [Sync] It is no longer an error to set a base url for an App with a trailing slash - for example, `https://services.cloud.mongodb.com/` instead of `https://services.cloud.mongodb.com` - before this change that would result in a 404 error from the server (Core issue [realm/realm-core#7791](https://github.com/realm/realm-core/pull/7791)).
-* [Sync] On Windows devices Device Sync will additionally look up SSL certificates in the Windows Trusted Root Certification Authorities certificate store when establishing a connection. (Core issue [realm/realm-core#7882](https://github.com/realm/realm-core/pull/7882))
+* [Sync] On Windows devices Device Sync will additionally look up SSL certificates in the Windows Trusted Root Certification Authorities certificate store when establishing a connection. (Core issue [realm/realm-core#7882](https://github.com/realm/realm-core/pull/7882)).
+* [Sync] Role and permissions changes no longer require a client reset to update the local realm. (Core issue [realm/realm-core#7440](https://github.com/realm/realm-core/pull/7440)).
 
 ### Fixed
 * Comparing a numeric property with an argument list containing a string would throw. (Core issue [realm/realm-core#7714](https://github.com/realm/realm-core/issues/7714), since v2.0.0).
@@ -26,7 +27,8 @@
 * [Sync] Fix some client resets (such as migrating to flexible sync) potentially failing with AutoClientResetFailed if a new client reset condition (such as rolling back a flexible sync migration) occurred before the first one completed. (Core issue [realm/realm-core#7542](https://github.com/realm/realm-core/pull/7542), since v1.9.0)
 * [Sync] Fixed a change of mode from Strong to All when removing links from an embedded object that links to a tombstone. This affects sync apps that use embedded objects which have a `Lst<Mixed>` that contains a link to another top level object which has been deleted by another sync client (creating a tombstone locally). In this particular case, the switch would cause any remaining link removals to recursively delete the destination object if there were no other links to it. (Core issue [realm/realm-core#7828](https://github.com/realm/realm-core/issues/7828), since v1.15.0)
 * [Sync] `SyncSession.uploadAllLocalChanges` was inconsistent in how it handled commits which did not produce any changesets to upload. Previously it would sometimes complete immediately if all commits waiting to be uploaded were empty, and at other times it would wait for a server roundtrip. It will now always complete immediately. (Core issue [realm/realm-core#7796](https://github.com/realm/realm-core/pull/7796)).
-* [Sync] Sync client can crash if a session is resumed while the session is being suspended. (Core issue [realm/realm-core#7860](https://github.com/realm/realm-core/issues/7860), since v1.0.0)
+* [Sync] Sync client can crash if a session is resumed while the session is being suspended. (Core issue [realm/realm-core#7860](https://github.com/realm/realm-core/issues/7860), since v1.0.0).
+* [Sync] If a sync session is interrupted by a disconnect or restart while downloading a bootstrap, stale data from the previous bootstrap may be included when the session reconnects and downloads the bootstrap. This can lead to objects stored in the database that do not match the actual state of the server and potentially leading to compensating writes. (Core issue [realm/realm-core#7827](https://github.com/realm/realm-core/issues/7827), since v1.0.0).
 
 ### Compatibility
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
@@ -44,7 +46,8 @@
 * Minimum R8: 8.0.34.
 
 ### Internal
-* Updated to Realm Core 14.10.4 commit 1f0378ae53f73d67a309c9499aec512f4cde53f1.
+* Updated to Realm Core 14.11.0 commit 60867846a0aca0c7da5e482282b293236f730216.
+* Updated to Sync protocol version 14 to support server intiated bootstraps and role change updates without a client reset. (Core issue [realm/realm-core#7440](https://github.com/realm/realm-core/pull/7440)).
 
 
 ## 2.1.0 (2024-07-12)
