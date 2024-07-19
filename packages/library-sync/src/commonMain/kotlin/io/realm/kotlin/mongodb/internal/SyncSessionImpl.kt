@@ -121,6 +121,7 @@ internal open class SyncSessionImpl(
                         },
                         progressMode == ProgressMode.INDEFINITELY
                     ) { progressEstimate: Double ->
+                        realm.log.debug("PROGRESS CALLBACK: $progressEstimate")
                         val progress = Progress(progressEstimate)
                         trySendWithBufferOverflowCheck(progress)
                         if (progressMode == ProgressMode.CURRENT_CHANGES && progress.isTransferComplete) {
