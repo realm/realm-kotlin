@@ -2358,7 +2358,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_switch_user(app: RealmAppPointer, user: RealmUserPointer) {
-        realm_wrapper.realm_app_switch_user(app.cptr(), user.cptr())
+        checkedBooleanResult(realm_wrapper.realm_app_switch_user(app.cptr(), user.cptr()))
     }
 
     actual fun realm_clear_cached_apps() {
