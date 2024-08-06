@@ -1201,6 +1201,10 @@ actual object RealmInterop {
         realmc.realm_app_link_user(app.cptr(), user.cptr(), credentials.cptr(), callback)
     }
 
+    actual fun realm_app_switch_user(app: RealmAppPointer, user: RealmUserPointer) {
+        realmc.realm_app_switch_user(app.cptr(), user.cptr())
+    }
+
     actual fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer? {
         val ptr = realmc.realm_app_get_current_user(app.cptr())
         return nativePointerOrNull(ptr)

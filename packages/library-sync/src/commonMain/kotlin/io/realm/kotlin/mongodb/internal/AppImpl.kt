@@ -163,6 +163,11 @@ public class AppImpl(
         }
     }
 
+    override fun switchUser(user: User) {
+        Validation.isType<UserImpl>(user)
+        RealmInterop.realm_app_switch_user(this.nativePointer, user.nativePointer)
+    }
+
     internal fun reportAuthenticationChange(user: User, change: User.State) {
         val event: AuthenticationChange = when (change) {
             User.State.LOGGED_OUT -> LoggedOutImpl(user)
