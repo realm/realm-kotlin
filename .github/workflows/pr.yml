@@ -484,7 +484,7 @@ jobs:
       - name: Install NDK
         run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}"
         env:
-          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+          JAVA_HOME: ${{ env.JAVA_HOME_17_ARM64 }}
 
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Setup build cache
