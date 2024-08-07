@@ -431,11 +431,13 @@ jobs:
         run: |-
           echo "::add-matcher::.github/problem-matchers/kotlin.json"
 
-      - name: Setup Java 11
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          java-version: | # Last version will be used and available globally. Other Java versions can be accessed through env variables with such specification as 'JAVA_HOME_{{ MAJOR_VERSION }}_{{ ARCHITECTURE }}'
+            17 # Required for android-actions/setup-android@v3
+            ${{ vars.VERSION_JAVA }} 
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -472,9 +474,6 @@ jobs:
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
-      - name: Export Java variables to environment
-        run: echo "JAVA_HOME_17_X64=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
-
       - name: Setup Android SDK
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
@@ -482,6 +481,8 @@ jobs:
 
       - name: Install NDK
         run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}"
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
 
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Setup build cache
@@ -548,11 +549,13 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: Setup Java 11
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          java-version: | # Last version will be used and available globally. Other Java versions can be accessed through env variables with such specification as 'JAVA_HOME_{{ MAJOR_VERSION }}_{{ ARCHITECTURE }}'
+            17 # Required for android-actions/setup-android@v3
+            ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -605,9 +608,6 @@ jobs:
           ccache --show-config
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
-
-      - name: Export Java variables to environment
-        run: echo "JAVA_HOME_17_X64=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
