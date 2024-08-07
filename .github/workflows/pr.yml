@@ -474,7 +474,7 @@ jobs:
 
       - name: Setup Android SDK
         env:
-          JAVA_HOME: $(JAVA_HOME_17_X64)
+          JAVA_HOME: $JAVA_HOME_17_X64
         uses: android-actions/setup-android@v3
 
       - name: Install NDK
@@ -606,11 +606,11 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         env:
-          JAVA_HOME: $(JAVA_HOME_17_X64)
+          JAVA_HOME: $JAVA_HOME_17_X64
 
       - name: Install NDK
         env:
-          JAVA_HOME: $(JAVA_HOME_17_X64)
+          JAVA_HOME: $JAVA_HOME_17_X64
         run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}"
 
       - name: Build Android Base Test Apk
