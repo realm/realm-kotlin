@@ -472,9 +472,12 @@ jobs:
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
+      - name: Export Java variables to environment
+        run: echo "JAVA_HOME_17_X64=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
+
       - name: Setup Android SDK
         env:
-          JAVA_HOME: $JAVA_HOME_17_X64
+          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
         uses: android-actions/setup-android@v3
 
       - name: Install NDK
@@ -603,14 +606,17 @@ jobs:
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
+      - name: Export Java variables to environment
+        run: echo "JAVA_HOME_17_X64=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         env:
-          JAVA_HOME: $JAVA_HOME_17_X64
+          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
 
       - name: Install NDK
         env:
-          JAVA_HOME: $JAVA_HOME_17_X64
+          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
         run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}"
 
       - name: Build Android Base Test Apk
