@@ -132,6 +132,18 @@ public interface RealmConfiguration : Configuration {
                 this.automaticEmbeddedObjectConstraintsResolution = resolveEmbeddedObjectConstraints
             }
 
+        /**
+         * Sets the schema version of the Realm. This must be equal to or higher than the schema
+         * version of the existing Realm file, if any. If the schema version is higher than the
+         * already existing Realm, a migration is needed.
+         */
+        public fun schemaVersion(schemaVersion: Long): Builder {
+            if (schemaVersion < 0) {
+                throw IllegalArgumentException("Realm schema version numbers must be 0 (zero) or higher. Yours was: $schemaVersion")
+            }
+            return apply { this.schemaVersion = schemaVersion }
+        }
+
         override fun name(name: String): Builder = apply {
             checkName(name)
             this.name = name

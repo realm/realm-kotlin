@@ -115,6 +115,22 @@ public data class InitialRemoteDataConfiguration(
 )
 
 /**
+ * Configuration options if [SyncConfiguration.Builder.waitForInitialRemoteData] is
+ * enabled.
+ */
+public data class SyncMigrationRemoteDataConfiguration(
+
+    /**
+     * The timeout used when downloading any initial data server the first time the
+     * Realm is opened.
+     *
+     * If the timeout is hit, opening a Realm will throw an
+     * [io.realm.mongodb.exceptions.DownloadingRealmTimeOutException].
+     */
+    val timeout: Duration = Duration.INFINITE
+)
+
+/**
  * Configuration options if [SyncConfiguration.Builder.initialSubscriptions] is
  * enabled.
  */
@@ -205,6 +221,11 @@ public interface SyncConfiguration : Configuration {
     public val initialRemoteData: InitialRemoteDataConfiguration?
 
     /**
+     * TODO
+     */
+    public val schemaMigrationRemoteData: SyncMigrationRemoteDataConfiguration?
+
+    /**
      * Used to create a [SyncConfiguration]. For common use cases, a [SyncConfiguration] can be
      * created using the [SyncConfiguration.create] function.
      */
@@ -222,6 +243,7 @@ public interface SyncConfiguration : Configuration {
         private var syncClientResetStrategy: SyncClientResetStrategy? = null
         private var initialSubscriptions: InitialSubscriptionsConfiguration? = null
         private var waitForServerChanges: InitialRemoteDataConfiguration? = null
+        private var waitForSchemaMigration: SyncMigrationRemoteDataConfiguration? = null
 
         /**
          * Creates a [SyncConfiguration.Builder] for Flexible Sync. Flexible Sync must be enabled
@@ -453,6 +475,21 @@ public interface SyncConfiguration : Configuration {
             )
         }
 
+        /**
+         * Sets the schema version of the Realm. This must be equal to or higher than the schema
+         * version of the existing Realm file, if any. If the schema version is higher than the
+         * already existing Realm, a migration is needed.
+         */
+        public fun schemaVersion(schemaVersion: Long, timeout: Duration = Duration.INFINITE): Builder {
+            if (schemaVersion < 0) {
+                throw IllegalArgumentException("Realm schema version numbers must be 0 (zero) or higher. Yours was: $schemaVersion")
+            }
+            return apply {
+                this.schemaVersion = schemaVersion
+                this.waitForSchemaMigration = SyncMigrationRemoteDataConfiguration(timeout)
+            }
+        }
+
         @Suppress("LongMethod")
         override fun build(): SyncConfiguration {
             val realmLogger = ContextLogger()
@@ -536,7 +573,8 @@ public interface SyncConfiguration : Configuration {
                 errorHandler!!, // It will never be null: either default or user-provided
                 syncClientResetStrategy!!, // It will never be null: either default or user-provided
                 initialSubscriptions,
-                waitForServerChanges
+                waitForServerChanges,
+                waitForSchemaMigration,
             )
         }
 

@@ -109,7 +109,6 @@ open class BaseAppInitializer(
                 with(client) {
                     block?.invoke(this, app)
                 }
-                app.setDevelopmentMode(true)
             }
         }
     }

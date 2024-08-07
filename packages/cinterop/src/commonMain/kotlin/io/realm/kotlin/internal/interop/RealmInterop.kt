@@ -227,6 +227,8 @@ expect object RealmInterop {
     // dispatcher. The realm itself must also be opened on the same thread
     fun realm_open(config: RealmConfigurationPointer, scheduler: RealmSchedulerPointer): Pair<LiveRealmPointer, Boolean>
 
+    fun realm_open(config: RealmConfigurationPointer): LiveRealmPointer
+
     // Opening a Realm asynchronously. Only supported for synchronized realms.
     fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer
     fun realm_async_open_task_start(task: RealmAsyncOpenTaskPointer, callback: AsyncOpenCallback)
@@ -647,6 +649,10 @@ expect object RealmInterop {
     fun realm_sync_client_config_set_ping_keepalive_period(syncClientConfig: RealmSyncClientConfigurationPointer, timeoutMs: ULong)
     fun realm_sync_client_config_set_pong_keepalive_timeout(syncClientConfig: RealmSyncClientConfigurationPointer, timeoutMs: ULong)
     fun realm_sync_client_config_set_fast_reconnect_limit(syncClientConfig: RealmSyncClientConfigurationPointer, timeoutMs: ULong)
+
+    fun realm_get_persisted_schema_version(
+        config: RealmConfigurationPointer
+    ): Long
 
     fun realm_sync_config_new(
         user: RealmUserPointer,
