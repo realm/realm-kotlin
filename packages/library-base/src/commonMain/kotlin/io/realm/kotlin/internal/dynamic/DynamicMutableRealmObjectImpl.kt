@@ -22,6 +22,7 @@ import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KClass
+import kotlin.reflect.typeOf
 
 internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, DynamicRealmObjectImpl() {
 

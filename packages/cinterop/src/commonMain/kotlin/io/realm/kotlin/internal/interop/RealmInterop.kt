@@ -200,6 +200,7 @@ expect object RealmInterop {
     fun realm_config_set_automatic_backlink_handling(config: RealmConfigurationPointer, enabled: Boolean)
     fun realm_config_set_data_initialization_function(config: RealmConfigurationPointer, callback: DataInitializationCallback)
     fun realm_config_set_in_memory(config: RealmConfigurationPointer, inMemory: Boolean)
+    fun realm_config_set_relaxed_schema(config: RealmConfigurationPointer, relaxedSchema: Boolean)
     fun realm_schema_validate(schema: RealmSchemaPointer, mode: SchemaValidationMode): Boolean
 
     fun realm_create_scheduler(): RealmSchedulerPointer
@@ -299,12 +300,21 @@ expect object RealmInterop {
     fun realm_get_col_key(realm: RealmPointer, classKey: ClassKey, col: String): PropertyKey
 
     fun MemAllocator.realm_get_value(obj: RealmObjectPointer, key: PropertyKey): RealmValue
+    fun MemAllocator.realm_get_value_by_name(obj: RealmObjectPointer, name: String): RealmValue
     fun realm_set_value(
         obj: RealmObjectPointer,
         key: PropertyKey,
         value: RealmValue,
         isDefault: Boolean
     )
+    fun realm_set_value_by_name(
+        obj: RealmObjectPointer,
+        name: String,
+        value: RealmValue,
+    )
+    fun realm_has_property(obj: RealmObjectPointer, name: String): Boolean
+    fun realm_get_additional_properties(obj: RealmObjectPointer): List<String>
+    fun realm_erase_property(obj: RealmObjectPointer, key: String): Boolean
     fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer
     fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer
     fun realm_set_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer

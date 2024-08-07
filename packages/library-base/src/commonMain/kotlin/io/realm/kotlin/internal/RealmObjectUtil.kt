@@ -136,6 +136,14 @@ internal val <T : BaseRealmObject> T.realmObjectReference: RealmObjectReference<
 internal inline fun <T : BaseRealmObject, R> T.runIfManaged(block: RealmObjectReference<T>.() -> R): R? =
     realmObjectReference?.run(block)
 
+internal inline fun <T : BaseRealmObject, R> T.runIfManagedOrThrow(block: RealmObjectReference<T>.() -> R): R {
+    val realmObjectReference = realmObjectReference
+    return when (realmObjectReference) {
+        null -> throw IllegalStateException("Cannot perform operation on unmanaged object")
+        else -> realmObjectReference.run (block)
+    }
+}
+
 /**
  * Returns an identifier that uniquely identifies a RealmObject. This includes the version of the
  * object, so the same RealmObject at two different versions must have different identifiers,

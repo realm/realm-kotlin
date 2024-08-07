@@ -24,10 +24,13 @@ import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.RealmPropertyType
 import io.realm.kotlin.schema.SetPropertyType
 import io.realm.kotlin.schema.ValuePropertyType
+import io.realm.kotlin.types.BaseRealmObject
+import kotlin.reflect.KMutableProperty1
 
 internal data class RealmPropertyImpl(
     override var name: String,
     override var type: RealmPropertyType,
+    override val inDataModel: Boolean,
 ) : RealmProperty {
 
     override val isNullable: Boolean = when (type) {
@@ -37,8 +40,11 @@ internal data class RealmPropertyImpl(
         is MapPropertyType -> false
     }
 
+    override val accessor: KMutableProperty1<out BaseRealmObject, *>?
+        get() = null
+
     companion object {
-        fun fromCoreProperty(corePropertyImpl: PropertyInfo): RealmPropertyImpl {
+        fun fromCoreProperty(corePropertyImpl: PropertyInfo, inModel: Boolean): RealmPropertyImpl {
             return with(corePropertyImpl) {
                 val storageType = RealmStorageTypeImpl.fromCorePropertyType(type)
                 val type = when (collectionType) {
@@ -64,7 +70,7 @@ internal data class RealmPropertyImpl(
                     )
                     else -> error("Unsupported type $collectionType")
                 }
-                RealmPropertyImpl(name, type)
+                RealmPropertyImpl(name, type, inModel)
             }
         }
     }
