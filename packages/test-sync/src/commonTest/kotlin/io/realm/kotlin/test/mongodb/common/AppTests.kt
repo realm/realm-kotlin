@@ -62,6 +62,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class AppTests {
 
@@ -210,30 +211,30 @@ class AppTests {
         assertTrue(app.allUsers().isEmpty())
     }
 
-//    @Test
-//    fun switchUser() {
-//        val user1: User = app.login(Credentials.anonymous())
-//        assertEquals(user1, app.currentUser())
-//        val user2: User = app.login(Credentials.anonymous())
-//        assertEquals(user2, app.currentUser())
-//
-//        assertEquals(user1, app.switchUser(user1))
-//        assertEquals(user1, app.currentUser())
-//    }
-//
-//    @Test
-//    fun switchUser_throwIfUserNotLoggedIn() = runBlocking {
-//        val user1 = app.login(Credentials.anonymous())
-//        val user2 = app.login(Credentials.anonymous())
-//        assertEquals(user2, app.currentUser)
-//
-//        user1.logOut()
-//        try {
-//            app.switchUser(user1)
-//            fail()
-//        } catch (ignore: IllegalArgumentException) {
-//        }
-//    }
+    @Test
+    fun switchUser() = runBlocking {
+        val user1: User = app.login(Credentials.anonymous())
+        assertEquals(user1, app.currentUser)
+        val user2: User = app.login(Credentials.anonymous())
+        assertEquals(user2, app.currentUser)
+
+        app.switchUser(user1)
+        assertEquals(user1, app.currentUser)
+    }
+
+    @Test
+    fun switchUser_throwIfUserNotLoggedIn() = runBlocking {
+        val user1 = app.login(Credentials.anonymous())
+        val user2 = app.login(Credentials.anonymous())
+        assertEquals(user2, app.currentUser)
+
+        user1.logOut()
+        try {
+            app.switchUser(user1)
+            fail()
+        } catch (ignore: IllegalStateException) {
+        }
+    }
 
     @Test
     fun currentUser_FallbackToNextValidUser() = runBlocking {
@@ -262,21 +263,6 @@ class AppTests {
         assertNull(app.currentUser)
     }
 
-//    @Test
-//    fun switchUser_nullThrows() {
-//        try {
-//            app.switchUser(TestHelper.getNull())
-//            fail()
-//        } catch (ignore: IllegalArgumentException) {
-//        }
-//    }
-//
-//    @Ignore("Add this test once we have support for both EmailPassword and ApiKey Auth Providers")
-//    @Test
-//    fun switchUser_authProvidersLockUsers() {
-//        TODO("FIXME")
-//    }
-//
     @Test
     fun authenticationChangeAsFlow() = runBlocking<Unit> {
         val c = TestChannel<AuthenticationChange>()

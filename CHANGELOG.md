@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* [Sync] Add support for switching users with `App.switchUser(User)`. (Issue [#1813](https://github.com/realm/realm-kotlin/issues/1813)/[RKOTLIN-1115](https://jira.mongodb.org/browse/RKOTLIN-1115)).
 
 ### Fixed
 * None.
