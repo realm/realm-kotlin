@@ -364,7 +364,7 @@ class MutableRealmTests {
     }
 
     @Test
-    fun copytToRealm_existingListIsFlushed_primitiveType() {
+    fun copyToRealm_existingListIsFlushed_primitiveType() {
         val child = SampleWithPrimaryKey().apply {
             primaryKey = 1
             stringField = "INITIAL"
@@ -383,7 +383,7 @@ class MutableRealmTests {
     }
 
     @Test
-    fun copytToRealm_existingListIsFlushed_realmObject() {
+    fun copyToRealm_existingListIsFlushed_realmObject() {
         val child = SampleWithPrimaryKey().apply {
             primaryKey = 1
             stringField = "INITIAL"
