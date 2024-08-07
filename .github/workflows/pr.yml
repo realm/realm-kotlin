@@ -604,9 +604,9 @@ jobs:
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+        uses: android-actions/setup-android@v3
     
       - name: Install NDK
         env:
