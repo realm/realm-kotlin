@@ -435,8 +435,10 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: | # Last version will be used and available globally. Other Java versions can be accessed through env variables with such specification as 'JAVA_HOME_{{ MAJOR_VERSION }}_{{ ARCHITECTURE }}'
-            17 # Required for android-actions/setup-android@v3
+          # JVM 17 is required for android-actions/setup-android@v3
+          # Last version will be used and available globally. Other Java versions can be accessed through env variables with such specification as 'JAVA_HOME_{{ MAJOR_VERSION }}_{{ ARCHITECTURE }}'
+          java-version: |
+            17
             ${{ vars.VERSION_JAVA }} 
 
       - name: Setup Gradle and task/dependency caching
@@ -553,8 +555,10 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: | # Last version will be used and available globally. Other Java versions can be accessed through env variables with such specification as 'JAVA_HOME_{{ MAJOR_VERSION }}_{{ ARCHITECTURE }}'
-            17 # Required for android-actions/setup-android@v3
+          # JVM 17 is required for android-actions/setup-android@v3
+          # Last version will be used and available globally. Other Java versions can be accessed through env variables with such specification as 'JAVA_HOME_{{ MAJOR_VERSION }}_{{ ARCHITECTURE }}'
+          java-version: |
+            17
             ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
