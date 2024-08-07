@@ -478,7 +478,7 @@ jobs:
 
       - name: Setup Android SDK
         env:
-          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+          JAVA_HOME: ${{ env.JAVA_HOME_17_ARM64 }}
         uses: android-actions/setup-android@v3
 
       - name: Install NDK
