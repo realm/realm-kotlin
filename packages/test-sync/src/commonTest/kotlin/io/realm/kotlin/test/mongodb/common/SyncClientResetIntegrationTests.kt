@@ -1188,7 +1188,6 @@ class SyncClientResetIntegrationTests {
                 // Validate that files have been moved after explicit reset
                 assertFalse(fileExists(originalFilePath))
                 assertTrue(fileExists(recoveryFilePath))
-                println(exception.message)
                 assertContains(exception.message!!, "User-provided callback failed")
 
                 channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
