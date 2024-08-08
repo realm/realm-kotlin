@@ -30,7 +30,7 @@ class PlatformNetworkingTests {
 
     @Test
     fun syncRoundTrip() = runBlocking {
-        setOf(true, false).forEach { platformNetworking ->
+        setOf(false, true).forEach { platformNetworking ->
             TestApp(this::class.simpleName, DefaultFlexibleSyncAppInitializer, builder = {
                 it.usePlatformNetworking(platformNetworking)
             }).use { app ->
@@ -68,6 +68,7 @@ class PlatformNetworkingTests {
                     },
                     "Failed to verify log statements for : platformNetworking=$platformNetworking"
                 )
+                RealmLog.remove(logger)
             }
         }
     }
