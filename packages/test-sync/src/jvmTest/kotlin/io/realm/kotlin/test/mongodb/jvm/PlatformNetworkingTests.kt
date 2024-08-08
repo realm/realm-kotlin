@@ -39,7 +39,7 @@ class PlatformNetworkingTests {
                 // Setup logger to capture WebSocketClient log messages
                 val logger = CustomLogCollector()
                 RealmLog.add(logger)
-                RealmLog.setLevel(LogLevel.DEBUG, LogCategory.Realm.Sdk)
+                RealmLog.setLevel(LogLevel.ALL, LogCategory.Realm.Sdk)
 
                 Realm.open(createSyncConfig(app.createUserAndLogIn(), selector)).use { uploadRealm ->
                     Realm.open(createSyncConfig(app.createUserAndLogIn(), selector)).use { realm ->
