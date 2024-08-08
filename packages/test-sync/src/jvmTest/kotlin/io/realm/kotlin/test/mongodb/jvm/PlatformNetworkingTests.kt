@@ -29,47 +29,55 @@ class PlatformNetworkingTests {
     private val TIMEOUT = 10.seconds
 
     @Test
-    fun syncRoundTrip() = runBlocking {
-        setOf(false, true).forEach { platformNetworking ->
-            TestApp(this::class.simpleName, DefaultFlexibleSyncAppInitializer, builder = {
-                it.usePlatformNetworking(platformNetworking)
-            }).use { app ->
-                val selector = org.mongodb.kbson.ObjectId().toString()
+    fun syncRoundTrip_coreNetworking() = runBlocking {
+        roundTrip(platformNetworking = false)
+    }
 
-                // Setup logger to capture WebSocketClient log messages
-                val logger = CustomLogCollector()
-                RealmLog.add(logger)
-                RealmLog.setLevel(LogLevel.ALL, LogCategory.Realm.Sdk)
+    @Test
+    fun syncRoundTrip_platformNetworking() = runBlocking {
+        roundTrip(platformNetworking = true)
+    }
 
-                Realm.open(createSyncConfig(app.createUserAndLogIn(), selector)).use { uploadRealm ->
-                    Realm.open(createSyncConfig(app.createUserAndLogIn(), selector)).use { realm ->
-                        uploadRealm.write {
-                            copyToRealm(
-                                SyncObjectWithAllTypes().apply {
-                                    stringField = selector
+    private suspend fun roundTrip(platformNetworking: Boolean) {
+        TestApp(this::class.simpleName, DefaultFlexibleSyncAppInitializer, builder = {
+            it.usePlatformNetworking(platformNetworking)
+        }).use { app ->
+            val selector = org.mongodb.kbson.ObjectId().toString()
+
+            // Setup logger to capture WebSocketClient log messages
+            val logger = CustomLogCollector()
+            RealmLog.add(logger)
+            RealmLog.setLevel(LogLevel.DEBUG, LogCategory.Realm.Sdk)
+
+            Realm.open(createSyncConfig(app.createUserAndLogIn(), selector))
+                .use { uploadRealm ->
+                    Realm.open(createSyncConfig(app.createUserAndLogIn(), selector))
+                        .use { realm ->
+                            uploadRealm.write {
+                                copyToRealm(
+                                    SyncObjectWithAllTypes().apply {
+                                        stringField = selector
+                                    }
+                                )
+                            }
+                            uploadRealm.syncSession.uploadAllLocalChanges(TIMEOUT)
+                            withTimeout(TIMEOUT) {
+                                realm.query<SyncObjectWithAllTypes>().asFlow().first {
+                                    it.list.size == 1
+                                }.list.first().also {
+                                    assertEquals(selector, it.stringField)
                                 }
-                            )
-                        }
-                        uploadRealm.syncSession.uploadAllLocalChanges(TIMEOUT)
-                        withTimeout(TIMEOUT) {
-                            realm.query<SyncObjectWithAllTypes>().asFlow().first {
-                                it.list.size == 1
-                            }.list.first().also {
-                                assertEquals(selector, it.stringField)
                             }
                         }
-                    }
                 }
-                assertTrue(
-                    if (platformNetworking) {
-                        logger.logs.any { it.contains("\\[Websocket.*\\] onOpen".toRegex()) }
-                    } else {
-                        logger.logs.none { it.contains("\\[Websocket.*\\] onOpen".toRegex()) }
-                    },
-                    "Failed to verify log statements for : platformNetworking=$platformNetworking"
-                )
-                RealmLog.remove(logger)
-            }
+            assertTrue(
+                if (platformNetworking) {
+                    logger.logs.any { it.contains("\\[Websocket.*\\] onOpen".toRegex()) }
+                } else {
+                    logger.logs.none { it.contains("\\[Websocket.*\\] onOpen".toRegex()) }
+                },
+                "Failed to verify log statements for : platformNetworking=$platformNetworking"
+            )
         }
     }
 
