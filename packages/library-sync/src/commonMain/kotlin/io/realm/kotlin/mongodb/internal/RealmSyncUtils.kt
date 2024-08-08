@@ -17,7 +17,6 @@ import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.exceptions.SyncException
-import io.realm.kotlin.mongodb.exceptions.UnrecoverableSyncException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyConfirmedException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.kotlin.mongodb.exceptions.UserNotFoundException
@@ -91,19 +90,26 @@ internal fun convertSyncError(syncError: SyncError): SyncException {
             syncError.compensatingWrites,
             syncError.isFatal
         )
+
         ErrorCode.RLM_ERR_SYNC_PROTOCOL_INVARIANT_FAILED,
         ErrorCode.RLM_ERR_SYNC_PROTOCOL_NEGOTIATION_FAILED,
-        ErrorCode.RLM_ERR_SYNC_PERMISSION_DENIED -> {
+        ErrorCode.RLM_ERR_SYNC_PERMISSION_DENIED,
+        -> {
             // Permission denied errors should be unrecoverable according to Core, i.e. the
             // client will disconnect sync and transition to the "inactive" state
-            UnrecoverableSyncException(message)
+            @Suppress("DEPRECATION") io.realm.kotlin.mongodb.exceptions.UnrecoverableSyncException(
+                message
+            )
         }
+
         else -> {
             // An error happened we are not sure how to handle. Just report as a generic
             // SyncException.
             when (syncError.isFatal) {
                 false -> SyncException(message, syncError.isFatal)
-                true -> UnrecoverableSyncException(message)
+                true -> @Suppress("DEPRECATION") io.realm.kotlin.mongodb.exceptions.UnrecoverableSyncException(
+                    message
+                )
             }
         }
     }

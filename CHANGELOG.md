@@ -4,10 +4,30 @@
 * None.
 
 ### Enhancements
+* Reduce the size of the local transaction log produced by creating objects, improving the performance of insertion-heavy transactions (Core issue [realm/realm-core#7734](https://github.com/realm/realm-core/pull/7734)).
+* Performance has been improved for range queries on integers and timestamps. Requires that you use the "BETWEEN" operation in RQL or the Query::between() method when you build the query. (Core issue [realm/realm-core#7785](https://github.com/realm/realm-core/pull/7785))
+* [Sync] Report the originating error that caused a client reset to occur. (Core issue [realm/realm-core#6154](https://github.com/realm/realm-core/issues/6154)).
+* [Sync] It is no longer an error to set a base url for an App with a trailing slash - for example, `https://services.cloud.mongodb.com/` instead of `https://services.cloud.mongodb.com` - before this change that would result in a 404 error from the server (Core issue [realm/realm-core#7791](https://github.com/realm/realm-core/pull/7791)).
+* [Sync] On Windows devices Device Sync will additionally look up SSL certificates in the Windows Trusted Root Certification Authorities certificate store when establishing a connection. (Core issue [realm/realm-core#7882](https://github.com/realm/realm-core/pull/7882))
 * [Sync] Add support for switching users with `App.switchUser(User)`. (Issue [#1813](https://github.com/realm/realm-kotlin/issues/1813)/[RKOTLIN-1115](https://jira.mongodb.org/browse/RKOTLIN-1115)).
 
 ### Fixed
-* None.
+* Comparing a numeric property with an argument list containing a string would throw. (Core issue [realm/realm-core#7714](https://github.com/realm/realm-core/issues/7714), since v2.0.0).
+* After compacting, a file upgrade would be triggered. This could cause loss of data if schema mode is SoftResetFile (Core issue [realm/realm-core#7747](https://github.com/realm/realm-core/issues/7747), since v1.15.0).
+* Encrypted files on Windows had a maximum size of 2GB even on x64 due to internal usage of `off_t`, which is a 32-bit type on 64-bit Windows (Core issue [realm/realm-core#7698](https://github.com/realm/realm-core/pull/7698)).
+* The encryption code no longer behaves differently depending on the system page size, which should entirely eliminate a recurring source of bugs related to copying encrypted Realm files between platforms with different page sizes. One known outstanding bug was ([RNET-1141](https://github.com/realm/realm-dotnet/issues/3592)), where opening files on a system with a larger page size than the writing system would attempt to read sections of the file which had never been written to (Core issue [realm/realm-core#7698](https://github.com/realm/realm-core/pull/7698)).
+* There were several complicated scenarios which could result in stale reads from encrypted files in multiprocess scenarios. These were very difficult to hit and would typically lead to a crash, either due to an assertion failure or DecryptionFailure being thrown (Core issue [realm/realm-core#7698](https://github.com/realm/realm-core/pull/7698), since v1.8.0).
+* Encrypted files have some benign data races where we can memcpy a block of memory while another thread is writing to a limited range of it. It is logically impossible to ever read from that range when this happens, but Thread Sanitizer quite reasonably complains about this. We now perform a slower operations when running with TSan which avoids this benign race (Core issue [realm/realm-core#7698](https://github.com/realm/realm-core/pull/7698)).
+* Tokenizing strings for full-text search could pass values outside the range [-1, 255] to `isspace()`, which is undefined behavior (Core issue [realm/realm-core#7698](https://github.com/realm/realm-core/pull/7698), since the introduction of FTS).
+* Clearing a List of RealmAnys in an upgraded file would lead to an assertion failing (Core issue [realm/realm-core#7771](https://github.com/realm/realm-core/issues/7771), since v1.15.0)
+* You could get unexpected merge results when assigning to a nested collection (Core issue [realm/realm-core#7809](https://github.com/realm/realm-core/issues/7809), since v1.15.0)
+* Fixed removing backlinks from the wrong objects if the link came from a nested list, nested dictionary, top-level dictionary, or list of mixed, and the source table had more than 256 objects. This could manifest as `array_backlink.cpp:112: Assertion failed: int64_t(value >> 1) == key.value` when removing an object. (Core issue [realm/realm-core#7594](https://github.com/realm/realm-core/issues/7594), since Core v11 for dictionaries)
+* Fixed the collapse/rejoin of clusters which contained nested collections with links. This could manifest as `array.cpp:319: Array::move() Assertion failed: begin <= end [2, 1]` when removing an object. (Core issue [realm/realm-core#7839](https://github.com/realm/realm-core/issues/7839), since the introduction of nested collections in v1.15.0)
+* [Sync] Platform networking was not enabled even if setting `AppConfiguration.Builder.usePlatformNetworking`. (Issue [#1811](https://github.com/realm/realm-kotlin/issues/1811)/[RKOTLIN-1114](https://jira.mongodb.org/browse/RKOTLIN-1114)).
+* [Sync] Fix some client resets (such as migrating to flexible sync) potentially failing with AutoClientResetFailed if a new client reset condition (such as rolling back a flexible sync migration) occurred before the first one completed. (Core issue [realm/realm-core#7542](https://github.com/realm/realm-core/pull/7542), since v1.9.0)
+* [Sync] Fixed a change of mode from Strong to All when removing links from an embedded object that links to a tombstone. This affects sync apps that use embedded objects which have a `Lst<Mixed>` that contains a link to another top level object which has been deleted by another sync client (creating a tombstone locally). In this particular case, the switch would cause any remaining link removals to recursively delete the destination object if there were no other links to it. (Core issue [realm/realm-core#7828](https://github.com/realm/realm-core/issues/7828), since v1.15.0)
+* [Sync] `SyncSession.uploadAllLocalChanges` was inconsistent in how it handled commits which did not produce any changesets to upload. Previously it would sometimes complete immediately if all commits waiting to be uploaded were empty, and at other times it would wait for a server roundtrip. It will now always complete immediately. (Core issue [realm/realm-core#7796](https://github.com/realm/realm-core/pull/7796)).
+* [Sync] Sync client can crash if a session is resumed while the session is being suspended. (Core issue [realm/realm-core#7860](https://github.com/realm/realm-core/issues/7860), since v1.0.0)
 
 ### Compatibility
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
@@ -25,7 +45,7 @@
 * Minimum R8: 8.0.34.
 
 ### Internal
-* None.
+* Updated to Realm Core 14.10.4 commit 4f83c590c4340dd7760d5f070e2e81613eb536aa.
 
 
 ## 2.1.1-SNAPSHOT (YYYY-MM-DD)

@@ -56,6 +56,10 @@ actual object PlatformUtils {
         }
         SystemClock.sleep(5000) // 5 seconds to give the GC some time to process
     }
+
+    actual fun copyFile(originPath: String, targetPath: String) {
+        File(originPath).copyTo(File(targetPath))
+    }
 }
 
 // Allocs as much garbage as we can. Pass maxSize = 0 to use all available memory in the process.

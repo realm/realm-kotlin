@@ -89,7 +89,9 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
             applicationInfo = info.toString()
         }
         val sdkInfo = "RealmKotlin/$SDK_VERSION"
+
         val synClientConfig: RealmSyncClientConfigurationPointer = initializeSyncClientConfig(
+            appConfigPointer,
             websocketTransport,
             sdkInfo,
             applicationInfo.toString()
@@ -101,7 +103,6 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
             websocketTransport,
             RealmInterop.realm_app_get(
                 appConfigPointer,
-                synClientConfig,
                 appFilesDirectory()
             )
         )
@@ -158,11 +159,12 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     }
 
     private fun initializeSyncClientConfig(
+        appConfigPointer: RealmAppConfigurationPointer,
         webSocketTransport: WebSocketTransport?,
         sdkInfo: String?,
         applicationInfo: String?
     ): RealmSyncClientConfigurationPointer =
-        RealmInterop.realm_sync_client_config_new()
+        RealmInterop.realm_app_config_get_sync_client_config(appConfigPointer)
             .also { syncClientConfig ->
                 // Initialize client configuration first
                 RealmInterop.realm_sync_client_config_set_default_binding_thread_observer(syncClientConfig, appId)

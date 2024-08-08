@@ -72,4 +72,8 @@ actual object PlatformUtils {
     actual fun triggerGC() {
         GC.collect()
     }
+
+    actual fun copyFile(originPath: String, targetPath: String) {
+        platform.Foundation.NSFileManager.defaultManager.copyItemAtPath(originPath, targetPath, null)
+    }
 }

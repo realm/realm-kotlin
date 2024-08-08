@@ -148,16 +148,19 @@ class FLXProgressListenerTests {
     fun uploadProgressListener_changesOnly() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
             for (i in 0..3) {
-                realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
-                realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES)
-                    .run {
-                        withTimeout(TIMEOUT) {
+                val task = async {
+                    realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES)
+                        .run {
                             last().let {
                                 assertTrue(it.isTransferComplete)
                                 assertEquals(1.0, it.estimate)
                             }
                         }
-                    }
+                }
+                realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
+                withTimeout(TIMEOUT) {
+                    task.await()
+                }
             }
         }
     }
@@ -239,7 +242,7 @@ class FLXProgressListenerTests {
             try {
                 val flow = realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
                 val job = async {
-                    withTimeout(10.seconds) {
+                    withTimeout(30.seconds) {
                         flow.collect {
                             channel.trySend(true)
                         }

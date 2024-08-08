@@ -1154,7 +1154,6 @@ actual object RealmInterop {
 
     actual fun realm_app_get(
         appConfig: RealmAppConfigurationPointer,
-        syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
         return LongPointerWrapper(realmc.realm_app_create(appConfig.cptr()), managed = true)
@@ -1314,8 +1313,9 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
-        return LongPointerWrapper(realmc.realm_sync_client_config_new())
+    actual fun realm_app_config_get_sync_client_config(configPointer: RealmAppConfigurationPointer): RealmSyncClientConfigurationPointer {
+        // The configuration is owned by Core so don't track and release it through garbage collection of the NativePointer
+        return LongPointerWrapper(realmc.realm_app_config_get_sync_client_config(configPointer.cptr()), false)
     }
 
     actual fun realm_sync_client_config_set_default_binding_thread_observer(syncClientConfig: RealmSyncClientConfigurationPointer, appId: String) {
@@ -1762,6 +1762,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer {
+        return LongPointerWrapper<RealmSyncConfigT>(realmc.realm_flx_sync_config_new(user.cptr()))
+    }
+
     actual fun realm_config_set_sync_config(realmConfiguration: RealmConfigurationPointer, syncConfiguration: RealmSyncConfigurationPointer) {
         realmc.realm_config_set_sync_config(realmConfiguration.cptr(), syncConfiguration.cptr())
     }
@@ -1982,10 +1986,6 @@ actual object RealmInterop {
 
     actual fun realm_object_delete(obj: RealmObjectPointer) {
         realmc.realm_object_delete(obj.cptr())
-    }
-
-    actual fun realm_flx_sync_config_new(user: RealmUserPointer): RealmSyncConfigurationPointer {
-        return LongPointerWrapper(realmc.realm_flx_sync_config_new(user.cptr()))
     }
 
     actual fun realm_sync_subscription_id(subscription: RealmSubscriptionPointer): ObjectId {
