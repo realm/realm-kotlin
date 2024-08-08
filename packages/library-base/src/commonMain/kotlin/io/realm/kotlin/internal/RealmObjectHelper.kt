@@ -35,10 +35,13 @@ import io.realm.kotlin.internal.interop.ObjectKey
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert
+import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert_embedded
 import io.realm.kotlin.internal.interop.RealmInterop.realm_get_value
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmMapPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
+import io.realm.kotlin.internal.interop.RealmObjectPointer
 import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.Timestamp
@@ -49,6 +52,7 @@ import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.internal.schema.RealmStorageTypeImpl
+import io.realm.kotlin.internal.schema.SchemaMetadata
 import io.realm.kotlin.internal.schema.realmStorageType
 import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.query.RealmResults
@@ -250,6 +254,306 @@ internal object RealmObjectHelper {
                 }
                 else -> throw IllegalArgumentException("Unsupported value for transport: $value")
             }
+        }
+    }
+
+    @Suppress("ComplexMethod", "LongMethod")
+    internal inline fun setValueByKeyAndPointer(
+        obj: RealmObjectPointer,
+        key: PropertyKey,
+        value: Any?,
+        realmReference: LiveRealmReference,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: UnmanagedToManagedObjectPointerCache = mutableMapOf()
+    ) {
+        inputScope {
+            when (value) {
+                null -> RealmInterop.realm_set_value(obj, key, nullTransport(), false)
+                is String -> RealmInterop.realm_set_value(obj, key, stringTransport(value), false)
+                is ByteArray -> RealmInterop.realm_set_value(obj, key, byteArrayTransport(value), false)
+                is Long -> RealmInterop.realm_set_value(obj, key, longTransport(value), false)
+                is Boolean -> RealmInterop.realm_set_value(obj, key, booleanTransport(value), false)
+                is Timestamp -> RealmInterop.realm_set_value(obj, key, timestampTransport(value), false)
+                is Float -> RealmInterop.realm_set_value(obj, key, floatTransport(value), false)
+                is Double -> RealmInterop.realm_set_value(obj, key, doubleTransport(value), false)
+                is Decimal128 -> RealmInterop.realm_set_value(obj, key, decimal128Transport(value), false)
+                is BsonObjectId -> RealmInterop.realm_set_value(
+                    obj,
+                    key,
+                    objectIdTransport(value.toByteArray()), false
+                )
+                is RealmUUID -> RealmInterop.realm_set_value(obj, key, uuidTransport(value.bytes), false)
+                is RealmObjectInterop -> RealmInterop.realm_set_value(
+                    obj,
+                    key,
+                    realmObjectTransport(value), false
+                )
+                is MutableRealmInt -> RealmInterop.realm_set_value(obj, key, longTransport(value.get()), false)
+                is RealmAny -> {
+                    realmAnyHandler(
+                        value = value,
+                        primitiveValueAsRealmValueHandler = { realmValue ->
+                            RealmInterop.realm_set_value(obj, key, realmValue, false)
+                        },
+                        referenceAsRealmAnyHandler = { realmValue ->
+                            val realmObject: BaseRealmObject = realmValue.asRealmObject()
+                            val linkPointer: RealmObjectPointer?
+
+                            if (realmObject.isManaged()) {
+                                linkPointer = realmObject.realmObjectReference!!.objectPointer
+                            } else { // unmanaged
+                                // first check cache
+                                if (cache[realmObject] == null) {
+                                    // recursive call to persist it
+                                    linkPointer = insertToRealm(
+                                        realmReference,
+                                        realmObject,
+                                        updatePolicy,
+                                        cache
+                                    )
+                                    // update cache
+                                    cache[realmObject] = linkPointer
+                                } else {
+                                    // previously managed set the link only
+                                    linkPointer = cache[realmObject]
+                                }
+                            }
+
+                            inputScope {
+                                RealmInterop.realm_set_value(obj, key, realmObjectTransport(object: RealmObjectInterop {
+                                    override val objectPointer: RealmObjectPointer
+                                        get() = linkPointer!!
+                                }), false)
+                            }
+                        },
+                        listAsRealmAnyHandler = { realmValue ->
+                            val nativePointer = RealmInterop.realm_set_list(obj, key)
+                            RealmInterop.realm_list_clear(nativePointer)
+                            realmValue.asList().forEachIndexed { index, innerAnyValue ->
+                                insertRealmAnyInList(nativePointer, innerAnyValue, index.toLong(), realmReference, updatePolicy, cache)
+                            }
+                        },
+                        dictionaryAsRealmAnyHandler = { realmValue ->
+                            val nativePointer = RealmInterop.realm_set_dictionary(obj, key)
+                            RealmInterop.realm_dictionary_clear(nativePointer)
+                            realmValue.asDictionary().forEach {
+                                insertRealmAnyInDictionary(nativePointer, it.key, it.value, realmReference, updatePolicy, cache)
+                            }
+                        }
+                    )
+                }
+                else -> throw IllegalArgumentException("Unsupported value for transport: $value")
+            }
+        }
+    }
+
+
+    private fun insertRealmAnyInDictionary(
+        nativePointer: RealmMapPointer,
+        key: String,
+        value: RealmAny?,
+        realmReference: LiveRealmReference,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: UnmanagedToManagedObjectPointerCache = mutableMapOf()
+    ) {
+        inputScope {
+            realmAnyHandler(
+                value = value,
+                primitiveValueAsRealmValueHandler = { innerRealmValue ->
+                    realm_dictionary_insert(
+                        nativePointer, stringTransport(key), innerRealmValue
+                    )
+                },
+                referenceAsRealmAnyHandler = { innerRealmValue ->
+                    val realmObject: BaseRealmObject = innerRealmValue.asRealmObject()
+                    val linkPointer: RealmObjectPointer?
+
+                    if (realmObject.isManaged()) {
+                        linkPointer = realmObject.realmObjectReference!!.objectPointer
+                    } else { // unmanaged
+                        // first check cache
+                        if (cache[realmObject] == null) {
+                            // recursive call to persist it
+                            linkPointer = insertToRealm(
+                                realmReference,
+                                realmObject,
+                                updatePolicy,
+                                cache
+                            )
+                            // update cache
+                            cache[realmObject] = linkPointer
+                        } else {
+                            // previously managed set the link only
+                            linkPointer = cache[realmObject]
+                        }
+                    }
+                    inputScope {
+                        realm_dictionary_insert(
+                            nativePointer,
+                            stringTransport(key),
+                            realmObjectTransport(object : RealmObjectInterop {
+                                override val objectPointer: RealmObjectPointer
+                                    get() = linkPointer!!
+                            })
+                        )
+                    }
+                },
+                listAsRealmAnyHandler = { realmValue ->
+                    val innerListNativePointer = RealmInterop.realm_dictionary_insert_list(
+                        nativePointer,
+                        stringTransport(key)
+                    )
+                    RealmInterop.realm_list_clear(innerListNativePointer)
+                    realmValue.asList().forEachIndexed { index, value ->
+                        insertRealmAnyInList(
+                            innerListNativePointer,
+                            value,
+                            index.toLong(),
+                            realmReference,
+                            updatePolicy,
+                            cache
+                        )
+                    }
+
+                },
+                dictionaryAsRealmAnyHandler = { realmValue ->
+                    val innerMapNativePointer = RealmInterop.realm_dictionary_insert_dictionary(
+                        nativePointer,
+                        stringTransport(key)
+                    )
+                    RealmInterop.realm_dictionary_clear(innerMapNativePointer)
+                    realmValue.asDictionary().forEach {
+                        insertRealmAnyInDictionary(
+                            innerMapNativePointer,
+                            it.key,
+                            it.value,
+                            realmReference,
+                            updatePolicy,
+                            cache
+                        )
+                    }
+                },
+            )
+        }
+    }
+
+    private fun insertRealmAnyInSet(
+        nativePointer: RealmSetPointer,
+        value: RealmAny?,
+        realmReference: LiveRealmReference,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: UnmanagedToManagedObjectPointerCache = mutableMapOf()
+    ) {
+        inputScope {
+            realmAnyHandler(
+                value = value,
+                primitiveValueAsRealmValueHandler = { innerRealmValue ->
+                    RealmInterop.realm_set_insert(nativePointer, innerRealmValue)
+                },
+                referenceAsRealmAnyHandler = { innerRealmValue ->
+                    val realmObject: BaseRealmObject = innerRealmValue.asRealmObject()
+                    val linkPointer: RealmObjectPointer?
+
+                    if (realmObject.isManaged()) {
+                        linkPointer = realmObject.realmObjectReference!!.objectPointer
+                    } else { // unmanaged
+                        // first check cache
+                        if (cache[realmObject] == null) {
+                            // recursive call to persist it
+                            linkPointer = insertToRealm(
+                                realmReference,
+                                realmObject,
+                                updatePolicy,
+                                cache
+                            )
+                            // update cache
+                            cache[realmObject] = linkPointer
+                        } else {
+                            // previously managed set the link only
+                            linkPointer = cache[realmObject]
+                        }
+                    }
+                    inputScope {
+                        RealmInterop.realm_set_insert(
+                            nativePointer,
+                            realmObjectTransport(object : RealmObjectInterop {
+                                override val objectPointer: RealmObjectPointer
+                                    get() = linkPointer!!
+                            })
+                        )
+                    }
+                },
+                listAsRealmAnyHandler = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections ") },
+                dictionaryAsRealmAnyHandler = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections ") },
+            )
+        }
+    }
+
+
+    private fun insertRealmAnyInList(
+        nativePointer: RealmListPointer,
+        value: RealmAny?,
+        index: Long,
+        realmReference: LiveRealmReference,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: UnmanagedToManagedObjectPointerCache = mutableMapOf()
+    ) {
+
+        inputScope {
+            realmAnyHandler(value = value,
+                primitiveValueAsRealmValueHandler = { innerRealmValue ->
+                    RealmInterop.realm_list_add(nativePointer, index, innerRealmValue)
+                },
+                referenceAsRealmAnyHandler = { innerRealmValue ->
+                    val realmObject: BaseRealmObject = innerRealmValue.asRealmObject()
+                    val linkPointer: RealmObjectPointer?
+
+                    if (realmObject.isManaged()) {
+                        linkPointer = realmObject.realmObjectReference!!.objectPointer
+                    } else { // unmanaged
+                        // first check cache
+                        if (cache[realmObject] == null) {
+                            // recursive call to persist it
+                            linkPointer = insertToRealm(
+                                realmReference,
+                                realmObject,
+                                updatePolicy,
+                                cache
+                            )
+                            // update cache
+                            cache[realmObject] = linkPointer
+                        } else {
+                            // previously managed set the link only
+                            linkPointer = cache[realmObject]
+                        }
+                    }
+                    inputScope {
+                        RealmInterop.realm_list_add(
+                            nativePointer,
+                            index,
+                            // TODO add extension function toRealmObjectTransport
+                            realmObjectTransport(object : RealmObjectInterop {
+                                override val objectPointer: RealmObjectPointer
+                                    get() = linkPointer!!
+                            })
+                        )
+                    }
+                },
+                listAsRealmAnyHandler = { innerRealmValue ->
+                    val innerListNativePointer =
+                        RealmInterop.realm_list_insert_list(nativePointer, index)
+                    RealmInterop.realm_list_clear(innerListNativePointer)
+                    innerRealmValue.asList().forEachIndexed { index, realmAny ->
+                        insertRealmAnyInList(
+                            innerListNativePointer,
+                            realmAny,
+                            index.toLong(),
+                            realmReference,
+                            updatePolicy,
+                            cache
+                        )
+                    }
+                })
         }
     }
 
@@ -749,6 +1053,22 @@ internal object RealmObjectHelper {
         }
     }
 
+    internal fun assignByPointer(
+        target: RealmObjectPointer,
+        source: BaseRealmObject,
+        realmReference: LiveRealmReference,
+        schema: SchemaMetadata,
+        metadata: ClassMetadata,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectPointerCache
+    ) {
+        if (target is DynamicRealmObject) {
+            TODO("DynamicRealmObject not supported yet")
+        } else {
+            assignByPointerTyped(target, source, schema, realmReference, metadata, updatePolicy, cache)
+        }
+    }
+
     @Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod")
     internal fun assignTyped(
         target: BaseRealmObject,
@@ -846,6 +1166,570 @@ internal object RealmObjectHelper {
                             val elements = accessor.get(source) as RealmDictionary<*>
                             operator.putAll(elements, updatePolicy, cache)
                         }
+                }
+                else -> TODO("Collection type ${property.collectionType} is not supported")
+            }
+        }
+    }
+
+    @Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod")
+    internal fun assignByPointerTyped(
+        target: RealmObjectPointer,
+        source: BaseRealmObject,
+        schema: SchemaMetadata,
+        realmReference: LiveRealmReference,
+        metadata: ClassMetadata,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectPointerCache
+    ) {
+        // TODO OPTIMIZE We could set all properties at once with one C-API call
+        metadata.properties.filter {
+            // Primary keys are set at construction time
+            // Computed properties have no assignment
+            !it.isComputed && !it.isPrimaryKey
+        }.forEach { property ->
+            // For synced Realms in ADDITIVE mode, Object Store will return the full on-disk
+            // schema, including fields not defined in the user schema. This makes it problematic
+            // to iterate through the Realm schema and assume that all properties will have kotlin
+            // properties associated with them. To avoid throwing errors we double check that
+            val accessor: KProperty1<BaseRealmObject, Any?> = property.accessor
+                ?: if (property.isUserDefined()) {
+                    sdkError("Typed object should always have an accessor: ${metadata.className}.${property.name}")
+                } else {
+                    return@forEach // Property is only visible on disk, ignore.
+                }
+            accessor as KMutableProperty1<BaseRealmObject, Any?>
+            when (property.collectionType) {
+                CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
+                    PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
+                        val isTargetEmbedded =
+                            schema.getOrThrow(property.linkTarget).isEmbeddedRealmObject
+                        if (isTargetEmbedded) {
+                            val value = accessor.get(source) as EmbeddedRealmObject?
+                            if (value != null) {
+                                val embedded: RealmObjectPointer = RealmInterop.realm_set_embedded(target, property.key)
+
+                                assignByPointer(embedded, value, realmReference, schema, realmReference.schemaMetadata[value::class.simpleName!!]!!, updatePolicy, cache)
+                            } else {
+                                inputScope {
+                                    RealmInterop.realm_set_value(target, property.key, nullTransport(), false)
+                                }
+                            }
+                        } else {
+                            val value = accessor.get(source) as RealmObject?
+                            value?.let {
+                                val linkPointer: RealmObjectPointer?
+
+                                if (value.isManaged()) {
+                                    linkPointer = (value as BaseRealmObject).realmObjectReference!!.objectPointer
+                                } else { // unmanaged
+                                    // first check cache
+                                    if (cache[it] == null) {
+                                        // recursive call to persist it
+                                        linkPointer = insertToRealm(realmReference, value, updatePolicy, cache)
+                                        // update cache
+                                        cache[value] = linkPointer
+                                    } else {
+                                        // previously managed set the link only
+                                        linkPointer = cache[it]
+                                    }
+                                }
+
+                                // set link using linkPointer
+                                inputScope {
+                                    RealmInterop.realm_set_value(target, property.key, realmObjectTransport(object: RealmObjectInterop {
+                                        override val objectPointer: RealmObjectPointer
+                                            get() = linkPointer!!
+                                    }), false)
+                                }
+                            } ?: {
+                                // set link to null
+                                inputScope {
+                                    RealmInterop.realm_set_value(target, property.key, realmObjectTransport(null), false)
+                                }
+                            }
+                        }
+                    }
+                    else -> {
+                        val getterValue = accessor.get(source)
+                        setValueByKeyAndPointer(target,
+                            property.key,
+                            getterValue,
+                            realmReference
+                        )
+                    }
+                }
+                CollectionType.RLM_COLLECTION_TYPE_LIST -> {
+                    val realmListPointer =
+                        RealmInterop.realm_get_list(target, property.key)
+                    RealmInterop.realm_list_clear(realmListPointer)
+
+                    // TODO this could be optimised to get the type of the elements outside the forEachIndexed iteration
+                    (accessor.get(source) as RealmList<*>).forEachIndexed { index, item: Any? ->
+                        when (property.type) {
+                            PropertyType.RLM_PROPERTY_TYPE_INT -> {
+                                inputScope {
+                                    RealmInterop.realm_list_add(
+                                        realmListPointer,
+                                        index.toLong(),
+                                        longTransport(item as Long?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_BOOL ->
+                                inputScope {
+                                    RealmInterop.realm_list_add(
+                                        realmListPointer,
+                                        index.toLong(),
+                                        booleanTransport(item as Boolean?)
+                                    )
+                                }
+                            PropertyType.RLM_PROPERTY_TYPE_STRING -> {
+                                inputScope {
+                                    RealmInterop.realm_list_add(
+                                        realmListPointer,
+                                        index.toLong(),
+                                        stringTransport(item as String?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_BINARY -> {
+                                inputScope {
+                                    RealmInterop.realm_list_add(
+                                        realmListPointer,
+                                        index.toLong(),
+                                        byteArrayTransport(item as ByteArray?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_FLOAT -> {
+                                inputScope {
+                                    RealmInterop.realm_list_add(
+                                        realmListPointer,
+                                        index.toLong(),
+                                        floatTransport(item as Float?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> {
+                                inputScope {
+                                    RealmInterop.realm_list_add(
+                                        realmListPointer,
+                                        index.toLong(),
+                                        doubleTransport(item as Double?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_DECIMAL128 -> {
+                                inputScope {
+                                    RealmInterop.realm_list_add(
+                                        realmListPointer,
+                                        index.toLong(),
+                                        decimal128Transport( item as Decimal128?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP -> {
+                                inputScope {
+                                    RealmInterop.realm_list_add(
+                                        realmListPointer,
+                                        index.toLong(),
+                                        timestampTransport(item as Timestamp?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID -> {
+                                inputScope {
+                                    RealmInterop.realm_list_add(
+                                        realmListPointer,
+                                        index.toLong(),
+                                        objectIdTransport(
+                                            (item as BsonObjectId?)?.toByteArray()
+                                        )
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_UUID -> {
+                                inputScope {
+                                    RealmInterop.realm_list_add(
+                                        realmListPointer,
+                                        index.toLong(),
+                                        uuidTransport(
+                                            (item as RealmUUID?)?.bytes
+                                        )
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_MIXED -> {
+                                insertRealmAnyInList(realmListPointer,
+                                    item as RealmAny?,
+                                    index.toLong(),
+                                    realmReference,
+                                    updatePolicy,
+                                    cache)
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
+                                val isTargetEmbedded =
+                                    schema.getOrThrow(property.linkTarget).isEmbeddedRealmObject
+                                if (isTargetEmbedded) {
+                                    val value = item as EmbeddedRealmObject?
+                                    if (value != null) {
+                                        val embeddedPointer =
+                                            RealmInterop.realm_list_insert_embedded(
+                                                realmListPointer,
+                                                index.toLong()
+                                            )
+                                        assignByPointer(embeddedPointer, value, realmReference, schema, realmReference.schemaMetadata[value::class.simpleName!!]!!, updatePolicy, cache)
+                                    } // should not have a nullable RealmObject/RealmEmbedded element
+                                } else {
+                                    val realmObject: BaseRealmObject = item as BaseRealmObject
+                                    val linkPointer: RealmObjectPointer?
+                                    if (realmObject.isManaged()) {
+                                        linkPointer = realmObject.realmObjectReference!!.objectPointer
+                                    } else { // unmanaged
+                                        // first check cache
+                                        if (cache[realmObject] == null) {
+                                            // recursive call to persist it
+                                            linkPointer = insertToRealm(
+                                                realmReference,
+                                                realmObject,
+                                                updatePolicy,
+                                                cache
+                                            )
+                                            // update cache
+                                            cache[realmObject] = linkPointer
+                                        } else {
+                                            // previously managed set the link only
+                                            linkPointer = cache[realmObject]
+                                        }
+                                    }
+
+                                    // set link using linkPointer
+                                    inputScope {
+                                        RealmInterop.realm_list_add(
+                                            realmListPointer,
+                                            index.toLong(),
+                                            realmObjectTransport(object : RealmObjectInterop {
+                                                override val objectPointer: RealmObjectPointer
+                                                    get() = linkPointer!!
+                                            })
+                                        )
+                                    }
+                                }
+                            }
+                            else -> TODO("Collection type ${property.collectionType} is not supported")
+                        }
+                    }
+                }
+                CollectionType.RLM_COLLECTION_TYPE_SET -> {
+                    val realmSetPointer =
+                        RealmInterop.realm_get_set(target, property.key)
+                    RealmInterop.realm_set_clear(realmSetPointer)
+                    (accessor.get(source) as RealmSet<*>).forEach { item: Any? ->
+                        when (property.type) {
+                            PropertyType.RLM_PROPERTY_TYPE_INT -> {
+                                inputScope {
+                                    RealmInterop.realm_set_insert(
+                                        realmSetPointer,
+                                        longTransport((item as Int?)?.toLong())
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_BOOL -> {
+                                inputScope {
+                                    RealmInterop.realm_set_insert(
+                                        realmSetPointer,
+                                        booleanTransport(item as Boolean?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_STRING -> {
+                                inputScope {
+                                    RealmInterop.realm_set_insert(
+                                        realmSetPointer,
+                                        stringTransport(item as String?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_BINARY -> {
+                                inputScope {
+                                    RealmInterop.realm_set_insert(
+                                        realmSetPointer,
+                                        byteArrayTransport(item as ByteArray?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_FLOAT -> {
+                                inputScope {
+                                    RealmInterop.realm_set_insert(
+                                        realmSetPointer,
+                                        floatTransport(item as Float?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> {
+                                inputScope {
+                                    RealmInterop.realm_set_insert(
+                                        realmSetPointer,
+                                        doubleTransport(item as Double?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_DECIMAL128 -> {
+                                inputScope {
+                                    RealmInterop.realm_set_insert(
+                                        realmSetPointer,
+                                        decimal128Transport(item as Decimal128?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP -> {
+                                inputScope {
+                                    RealmInterop.realm_set_insert(
+                                        realmSetPointer,
+                                        timestampTransport(item as Timestamp?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID -> {
+                                inputScope {
+                                    RealmInterop.realm_set_insert(
+                                        realmSetPointer,
+                                        objectIdTransport((item as BsonObjectId?)?.toByteArray())
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_UUID -> {
+                                inputScope {
+                                    RealmInterop.realm_set_insert(
+                                        realmSetPointer,
+                                        uuidTransport((item as RealmUUID?)?.bytes)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_MIXED -> {
+                                insertRealmAnyInSet(realmSetPointer,
+                                    item as RealmAny?,
+                                    realmReference,
+                                    updatePolicy,
+                                    cache)
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
+                                val realmObject: BaseRealmObject = item as BaseRealmObject
+                                val linkPointer: RealmObjectPointer?
+                                if (realmObject.isManaged()) {
+                                    linkPointer = realmObject.realmObjectReference!!.objectPointer
+                                } else { // unmanaged
+                                    // first check cache
+                                    if (cache[realmObject] == null) {
+                                        // recursive call to persist it
+                                        linkPointer = insertToRealm(
+                                            realmReference,
+                                            realmObject,
+                                            updatePolicy,
+                                            cache
+                                        )
+                                        // update cache
+                                        cache[realmObject] = linkPointer
+                                    } else {
+                                        // previously managed set the link only
+                                        linkPointer = cache[realmObject]
+                                    }
+                                }
+
+                                // set link using linkPointer
+                                inputScope {
+                                    RealmInterop.realm_set_insert(
+                                        realmSetPointer,
+                                        realmObjectTransport(object : RealmObjectInterop {
+                                            override val objectPointer: RealmObjectPointer
+                                                get() = linkPointer!!
+                                        })
+                                    )
+                                }
+                            }
+
+                            else -> {}
+                        }
+                    }
+                }
+                CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> {
+                    val realmDictionaryPointer: RealmMapPointer =
+                        RealmInterop.realm_get_dictionary(target, property.key)
+                    RealmInterop.realm_dictionary_clear(realmDictionaryPointer)
+                    (accessor.get(source) as RealmDictionary<*>).map {
+                        when (property.type) {
+                            PropertyType.RLM_PROPERTY_TYPE_INT -> {
+                                inputScope {
+                                    realm_dictionary_insert(
+                                        realmDictionaryPointer,
+                                        stringTransport(it.key),
+                                        longTransport((it.value as Int?)?.toLong())
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_BOOL -> {
+                                inputScope {
+                                    realm_dictionary_insert(
+                                        realmDictionaryPointer,
+                                        stringTransport(it.key),
+                                        booleanTransport(it.value as Boolean?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_STRING -> {
+                                inputScope {
+                                    realm_dictionary_insert(
+                                        realmDictionaryPointer,
+                                        stringTransport(it.key),
+                                        stringTransport(it.value as String?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_BINARY -> {
+                                inputScope {
+                                    realm_dictionary_insert(
+                                        realmDictionaryPointer,
+                                        stringTransport(it.key),
+                                        byteArrayTransport(it.value as ByteArray?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_FLOAT -> {
+                                inputScope {
+                                    realm_dictionary_insert(
+                                        realmDictionaryPointer,
+                                        stringTransport(it.key),
+                                        floatTransport(it.value as Float?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> {
+                                inputScope {
+                                    realm_dictionary_insert(
+                                        realmDictionaryPointer,
+                                        stringTransport(it.key),
+                                        doubleTransport(it.value as Double?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_DECIMAL128 -> {
+                                inputScope {
+                                    realm_dictionary_insert(
+                                        realmDictionaryPointer,
+                                        stringTransport(it.key),
+                                        decimal128Transport(it.value as Decimal128?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP -> {
+                                inputScope {
+                                    realm_dictionary_insert(
+                                        realmDictionaryPointer,
+                                        stringTransport(it.key),
+                                        timestampTransport(it.value as Timestamp?)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID -> {
+                                inputScope {
+                                    realm_dictionary_insert(
+                                        realmDictionaryPointer,
+                                        stringTransport(it.key),
+                                        objectIdTransport((it.value as BsonObjectId?)?.toByteArray())
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_UUID -> {
+                                inputScope {
+                                    realm_dictionary_insert(
+                                        realmDictionaryPointer,
+                                        stringTransport(it.key),
+                                        uuidTransport((it.value as RealmUUID?)?.bytes)
+                                    )
+                                }
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_MIXED -> {
+                                insertRealmAnyInDictionary(realmDictionaryPointer,
+                                    it.key,
+                                    it.value as RealmAny?,
+                                    realmReference,
+                                    updatePolicy,
+                                    cache)
+                            }
+                            PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
+                                inputScope {
+                                    val isTargetEmbedded =
+                                        schema.getOrThrow(property.linkTarget).isEmbeddedRealmObject
+                                    if (isTargetEmbedded) {
+                                        val value = it.value as EmbeddedRealmObject?
+                                        val embeddedPointer = RealmInterop.realm_get_object(
+                                            realmReference.dbPointer,
+                                            realm_dictionary_insert_embedded(
+                                                realmDictionaryPointer,
+                                                stringTransport(it.key)
+                                            ).getLink()
+                                        )
+                                        if (value != null) {
+                                            assignByPointer(
+                                                embeddedPointer,
+                                                value,
+                                                realmReference,
+                                                schema,
+                                                realmReference.schemaMetadata[value::class.simpleName!!]!!,
+                                                updatePolicy,
+                                                cache
+                                            )
+                                        } else {
+                                            realm_dictionary_insert(realmDictionaryPointer, stringTransport(it.key), nullTransport())
+                                        }
+                                    } else {
+                                        val realmObject: BaseRealmObject? =
+                                            it.value as BaseRealmObject?
+                                        if (realmObject != null) {
+                                            val linkPointer: RealmObjectPointer?
+                                            if (realmObject.isManaged()) {
+                                                linkPointer =
+                                                    realmObject.realmObjectReference!!.objectPointer
+                                            } else { // unmanaged
+                                                // first check cache
+                                                if (cache[realmObject] == null) {
+                                                    // recursive call to persist it
+                                                    linkPointer = insertToRealm(
+                                                        realmReference,
+                                                        realmObject,
+                                                        updatePolicy,
+                                                        cache
+                                                    )
+                                                    // update cache
+                                                    cache[realmObject] = linkPointer
+                                                } else {
+                                                    // previously managed set the link only
+                                                    linkPointer = cache[realmObject]
+                                                }
+                                            }
+                                            realm_dictionary_insert(
+                                                realmDictionaryPointer,
+                                                stringTransport(it.key),
+                                                realmObjectTransport(object : RealmObjectInterop {
+                                                    override val objectPointer: RealmObjectPointer
+                                                        get() = linkPointer!!
+                                                })
+                                            )
+                                        } else {
+                                            realm_dictionary_insert(
+                                                realmDictionaryPointer,
+                                                stringTransport(it.key),
+                                                nullTransport()
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            else -> {}
+                        }
+                    }
+
                 }
                 else -> TODO("Collection type ${property.collectionType} is not supported")
             }

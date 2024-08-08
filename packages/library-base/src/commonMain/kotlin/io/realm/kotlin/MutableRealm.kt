@@ -87,6 +87,10 @@ public interface MutableRealm : TypedRealm {
      */
     public fun <T : RealmObject> copyToRealm(instance: T, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): T
 
+    public fun <T : RealmObject> insertToRealm(instance: T, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR)
+
+    public fun <T : RealmObject> insertToRealm(instances: Collection<T>, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR)
+
     /**
      * Returns a [RealmQuery] matching the predicate represented by [query].
      *

@@ -23,12 +23,14 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.RealmObjectHelper.assign
+import io.realm.kotlin.internal.RealmObjectHelper.assignByPointer
 import io.realm.kotlin.internal.RealmValueArgumentConverter.kAnyToPrimaryKeyRealmValue
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.ObjectKey
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmObjectPointer
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
@@ -47,6 +49,7 @@ import kotlin.reflect.KProperty1
 // This cache is only valid for unmanaged realm objects as, for them we only consider the users
 // `equals` method, which in general just is the memory address of the object.
 internal typealias UnmanagedToManagedObjectCache = MutableMap<BaseRealmObject, BaseRealmObject> // Map<OriginalUnmanagedObject, CachedManagedObject>
+internal typealias UnmanagedToManagedObjectPointerCache = MutableMap<BaseRealmObject, RealmObjectPointer> // Map<OriginalUnmanagedObject, CachedManagedObject>
 
 // For managed realm objects we use `<ClassKey, ObjectKey, Version, Path>` as a unique identifier
 // We are using a hash on the Kotlin side so we can use a HashMap for O(1) lookup rather than
@@ -110,6 +113,16 @@ internal fun <T : BaseRealmObject> create(
     }
 }
 
+internal fun createAsReference(
+    realm: LiveRealmReference,
+    className: String
+): RealmObjectPointer {
+    val key = realm.schemaMetadata.getOrThrow(className).classKey
+    return key.let {
+        RealmInterop.realm_object_create(realm.dbPointer, key)
+    }
+}
+
 @Suppress("LongParameterList")
 internal fun <T : BaseRealmObject> create(
     mediator: Mediator,
@@ -137,6 +150,30 @@ internal fun <T : BaseRealmObject> create(
             mediator = mediator,
             clazz = type,
         )
+    }
+}
+
+@Suppress("LongParameterList")
+internal fun createAsReference(
+    realm: LiveRealmReference,
+    className: String,
+    primaryKey: RealmValue,
+    updatePolicy: UpdatePolicy
+): RealmObjectPointer {
+    val key = realm.schemaMetadata.getOrThrow(className).classKey
+    return key.let {
+        when (updatePolicy) {
+            UpdatePolicy.ERROR -> RealmInterop.realm_object_create_with_primary_key(
+                realm.dbPointer,
+                key,
+                primaryKey
+            )
+            UpdatePolicy.ALL -> RealmInterop.realm_object_get_or_create_with_primary_key(
+                realm.dbPointer,
+                key,
+                primaryKey
+            )
+        }
     }
 }
 
@@ -220,6 +257,176 @@ internal fun <T : BaseRealmObject> copyToRealm(
         cache[element] = target
         assign(target, element, updatePolicy, cache)
         target
+    }
+}
+
+
+internal fun <T : BaseRealmObject> insertToRealm(
+    realmReference: LiveRealmReference,
+    element: T,
+    updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
+    cache: UnmanagedToManagedObjectPointerCache = mutableMapOf(),
+): RealmObjectPointer {
+    // Throw if object is not valid
+    if (!element.isValid()) {
+        throw IllegalArgumentException("Cannot copy an invalid managed object to Realm.")
+    }
+
+    cache[element]?.let {
+        return it
+    }
+
+    // Create a new object if it wasn't managed
+    val className: String?
+    var hasPrimaryKey: Boolean = false
+    var primaryKey: Any? = null
+    if (element is DynamicUnmanagedRealmObject) {
+        className = element.type
+        val primaryKeyName: String? =
+            realmReference.schemaMetadata[className]?.let { classMetaData ->
+                if (classMetaData.isEmbeddedRealmObject) {
+                    throw IllegalArgumentException("Cannot create embedded object without a parent")
+                }
+                classMetaData.primaryKeyProperty?.key?.let { key: PropertyKey ->
+                    classMetaData[key]?.name
+                }
+            }
+        hasPrimaryKey = primaryKeyName != null
+        primaryKey = primaryKeyName?.let {
+            val properties = element.properties
+            if (properties.containsKey(primaryKeyName)) {
+                properties[primaryKeyName]
+            } else {
+                throw IllegalArgumentException("Cannot create object of type '$className' without primary key property '$primaryKeyName'")
+            }
+        }
+    } else {
+        val companion = realmObjectCompanionOrThrow(element::class)
+        className = companion.io_realm_kotlin_className
+        if (companion.io_realm_kotlin_classKind == RealmClassKind.EMBEDDED) {
+            throw IllegalArgumentException("Cannot create embedded object without a parent")
+        }
+        companion.io_realm_kotlin_primaryKey?.let {
+            hasPrimaryKey = true
+            primaryKey = (it as KProperty1<BaseRealmObject, Any?>).get(element)
+        }
+    }
+    val target: RealmObjectPointer = if (hasPrimaryKey) {
+        inputScope {
+            try {
+                createAsReference(
+                    realmReference,
+                    className,
+                    kAnyToPrimaryKeyRealmValue(primaryKey),
+                    updatePolicy
+                )
+            } catch (e: IllegalStateException) {
+                // Remap exception to avoid a breaking change. To core this is an IllegalStateException
+                // as it considers that there is no issue with the argument.
+                throw IllegalArgumentException(e.message, e.cause)
+            }
+        }
+    } else {
+        createAsReference(realmReference, className)
+    }
+
+    cache[element] = target
+    assignByPointer(target, element, realmReference, realmReference.schemaMetadata, realmReference.schemaMetadata[className]!!, updatePolicy, cache)
+    return target
+}
+
+internal fun <T : BaseRealmObject> insertToRealm(
+    realmReference: LiveRealmReference,
+    elements: Collection<T>,
+    updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
+    cache: UnmanagedToManagedObjectPointerCache = mutableMapOf(),
+) {
+    when (elements.size) {
+        0 -> Unit
+        1 -> insertToRealm(realmReference, elements.elementAt(0), updatePolicy, cache)
+        else -> {
+            // we factor common checks (primary key, companion etc.)
+            val className: String?
+            var hasPrimaryKey: Boolean = false
+            var isDynamic = false
+            var companion: RealmObjectCompanion? = null
+            var primaryKey: Any? = null
+            var primaryKeyName: String? = null
+
+            val element = elements.elementAt(0)
+            if (element is DynamicUnmanagedRealmObject) {
+                isDynamic = true
+                className = element.type
+                primaryKeyName =
+                    realmReference.schemaMetadata[className]?.let { classMetaData ->
+                        if (classMetaData.isEmbeddedRealmObject) {
+                            throw IllegalArgumentException("Cannot create embedded object without a parent")
+                        }
+                        classMetaData.primaryKeyProperty?.key?.let { key: PropertyKey ->
+                            classMetaData[key]?.name
+                        }
+                    }
+                hasPrimaryKey = primaryKeyName != null
+                primaryKeyName?.let {
+                    val properties = element.properties
+                    if (!properties.containsKey(primaryKeyName)) {
+                        throw IllegalArgumentException("Cannot create object of type '$className' without primary key property '$primaryKeyName'")
+                    }
+                }
+
+            } else {
+                companion = realmObjectCompanionOrThrow(element::class)
+                className = companion.io_realm_kotlin_className
+                if (companion.io_realm_kotlin_classKind == RealmClassKind.EMBEDDED) {
+                    throw IllegalArgumentException("Cannot create embedded object without a parent")
+                }
+                companion.io_realm_kotlin_primaryKey?.let {
+                    hasPrimaryKey = true
+                }
+            }
+
+            // iterate all the elements
+            for (e in elements) {
+                if (!e.isValid()) {
+                    throw IllegalArgumentException("Cannot copy an invalid managed object to Realm.")
+                }
+
+                if (cache[e] == null) {
+                    if (isDynamic) {
+                        if (hasPrimaryKey) {
+                            primaryKey = (e as DynamicUnmanagedRealmObject).properties[primaryKeyName]
+                        }
+
+                    } else {
+                        if (hasPrimaryKey) {
+                            primaryKey = (companion!!.io_realm_kotlin_primaryKey as KProperty1<BaseRealmObject, Any?>).get(e)
+                        }
+                    }
+                    // Create a new object if it wasn't managed
+                    val target: RealmObjectPointer = if (hasPrimaryKey) {
+                        inputScope {
+                            try {
+                                createAsReference(
+                                    realmReference,
+                                    className,
+                                    kAnyToPrimaryKeyRealmValue(primaryKey),
+                                    updatePolicy
+                                )
+                            } catch (e: IllegalStateException) {
+                                // Remap exception to avoid a breaking change. To core this is an IllegalStateException
+                                // as it considers that there is no issue with the argument.
+                                throw IllegalArgumentException(e.message, e.cause)
+                            }
+                        }
+                    } else {
+                        createAsReference(realmReference, className)
+                    }
+
+                    cache[e] = target
+                    assignByPointer(target, e, realmReference, realmReference.schemaMetadata, realmReference.schemaMetadata[className]!!, updatePolicy, cache)
+                }
+            }
+        }
     }
 }
 
