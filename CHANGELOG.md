@@ -11,6 +11,7 @@
 * [Sync] It is no longer an error to set a base url for an App with a trailing slash - for example, `https://services.cloud.mongodb.com/` instead of `https://services.cloud.mongodb.com` - before this change that would result in a 404 error from the server (Core issue [realm/realm-core#7791](https://github.com/realm/realm-core/pull/7791)).
 * [Sync] On Windows devices Device Sync will additionally look up SSL certificates in the Windows Trusted Root Certification Authorities certificate store when establishing a connection. (Core issue [realm/realm-core#7882](https://github.com/realm/realm-core/pull/7882))
 * [Sync] Role and permissions changes no longer require a client reset to update the local realm. (Core issue [realm/realm-core#7440](https://github.com/realm/realm-core/pull/7440)).
+* [Sync] Sync log statements now include the app services connection id in their prefix (e.g `Connection[1:<connection id>] Session[1]: log message`) to make correlating sync activity to server logs easier during troubleshooting (Core issue [realm/realm-core#7849)](https://github.com/realm/realm-core/pull/7849)).
 
 ### Fixed
 * Comparing a numeric property with an argument list containing a string would throw. (Core issue [realm/realm-core#7714](https://github.com/realm/realm-core/issues/7714), since v2.0.0).
@@ -30,6 +31,7 @@
 * [Sync] `SyncSession.uploadAllLocalChanges` was inconsistent in how it handled commits which did not produce any changesets to upload. Previously it would sometimes complete immediately if all commits waiting to be uploaded were empty, and at other times it would wait for a server roundtrip. It will now always complete immediately. (Core issue [realm/realm-core#7796](https://github.com/realm/realm-core/pull/7796)).
 * [Sync] Sync client can crash if a session is resumed while the session is being suspended. (Core issue [realm/realm-core#7860](https://github.com/realm/realm-core/issues/7860), since v1.0.0)
 * [Sync] If a sync session is interrupted by a disconnect or restart while downloading a bootstrap, stale data from the previous bootstrap may be included when the session reconnects and downloads the bootstrap. This can lead to objects stored in the database that do not match the actual state of the server and potentially leading to compensating writes. (Core issue [realm/realm-core#7827](https://github.com/realm/realm-core/issues/7827), since v1.0.0).
+* [Sync] App subscription callback was getting fired before the user profile was retrieved on login, leading to an empty user profile when using the callback. ([#7889](https://github.com/realm/realm-core/issues/7889), since v14.7.0).
 
 ### Compatibility
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
@@ -47,7 +49,7 @@
 * Minimum R8: 8.0.34.
 
 ### Internal
-* Updated to Realm Core 14.11.0 commit 60867846a0aca0c7da5e482282b293236f730216.
+* Updated to Realm Core 14.11.2 commit 117c1cbf2b96eaa1bf51562e4f45d3649b3bdad2.
 * Updated to Sync protocol version 14 to support server intiated bootstraps and role change updates without a client reset. (Core issue [realm/realm-core#7440](https://github.com/realm/realm-core/pull/7440)).
 
 
