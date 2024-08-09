@@ -120,9 +120,6 @@ actual enum class WebsocketErrorCode(
     RLM_ERR_WEBSOCKET_UNAUTHORIZED("Unauthorized", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_UNAUTHORIZED),
     RLM_ERR_WEBSOCKET_FORBIDDEN("Forbidden", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_FORBIDDEN),
     RLM_ERR_WEBSOCKET_MOVEDPERMANENTLY("MovedPermanently", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_MOVEDPERMANENTLY),
-    RLM_ERR_WEBSOCKET_CLIENT_TOO_OLD("ClientTooOld", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_CLIENT_TOO_OLD),
-    RLM_ERR_WEBSOCKET_CLIENT_TOO_NEW("ClientTooNew", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_CLIENT_TOO_NEW),
-    RLM_ERR_WEBSOCKET_PROTOCOL_MISMATCH("ProtocolMismatch", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_PROTOCOL_MISMATCH),
 
     RLM_ERR_WEBSOCKET_RESOLVE_FAILED("ResolveFailed", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_RESOLVE_FAILED),
     RLM_ERR_WEBSOCKET_CONNECTION_FAILED("ConnectionFailed", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_CONNECTION_FAILED),
