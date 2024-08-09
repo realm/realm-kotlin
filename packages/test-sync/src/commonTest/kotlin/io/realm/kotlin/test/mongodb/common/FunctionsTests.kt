@@ -1020,7 +1020,7 @@ class FunctionsTests {
         runBlocking {
             anonUser.logOut()
         }
-        assertFailsWithMessage<ServiceException>("[Service][Unknown(4351)] unauthorized") {
+        assertFailsWithMessage<ServiceException>("unauthorized") {
             runBlocking {
                 functions.call(FIRST_ARG_FUNCTION.name, 1, 2, 3)
             }

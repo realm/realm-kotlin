@@ -431,11 +431,15 @@ jobs:
         run: |-
           echo "::add-matcher::.github/problem-matchers/kotlin.json"
 
-      - name: Setup Java 11
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          # JVM 17 is required for android-actions/setup-android@v3
+          # Last version will be used and available globally. Other Java versions can be accessed through env variables with such specification as 'JAVA_HOME_{{ MAJOR_VERSION }}_{{ ARCHITECTURE }}'
+          java-version: |
+            17
+            ${{ vars.VERSION_JAVA }} 
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -474,11 +478,13 @@ jobs:
 
       - name: Setup Android SDK
         env:
-          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+          JAVA_HOME: ${{ env.JAVA_HOME_17_ARM64 }}
         uses: android-actions/setup-android@v3
-  
+
       - name: Install NDK
         run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}"
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_17_ARM64 }}
 
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Setup build cache
@@ -545,11 +551,15 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: Setup Java 11
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          # JVM 17 is required for android-actions/setup-android@v3
+          # Last version will be used and available globally. Other Java versions can be accessed through env variables with such specification as 'JAVA_HOME_{{ MAJOR_VERSION }}_{{ ARCHITECTURE }}'
+          java-version: |
+            17
+            ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -605,7 +615,9 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-    
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+
       - name: Install NDK
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}

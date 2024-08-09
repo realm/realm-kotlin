@@ -1,4 +1,4 @@
-## 2.1.1-SNAPSHOT (YYYY-MM-DD)
+## 2.2.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
@@ -6,9 +6,10 @@
 ### Enhancements
 * Reduce the size of the local transaction log produced by creating objects, improving the performance of insertion-heavy transactions (Core issue [realm/realm-core#7734](https://github.com/realm/realm-core/pull/7734)).
 * Performance has been improved for range queries on integers and timestamps. Requires that you use the "BETWEEN" operation in RQL or the Query::between() method when you build the query. (Core issue [realm/realm-core#7785](https://github.com/realm/realm-core/pull/7785))
+* [Sync] Add support for switching users with `App.switchUser(User)`. (Issue [#1813](https://github.com/realm/realm-kotlin/issues/1813)/[RKOTLIN-1115](https://jira.mongodb.org/browse/RKOTLIN-1115)).
 * [Sync] Report the originating error that caused a client reset to occur. (Core issue [realm/realm-core#6154](https://github.com/realm/realm-core/issues/6154)).
 * [Sync] It is no longer an error to set a base url for an App with a trailing slash - for example, `https://services.cloud.mongodb.com/` instead of `https://services.cloud.mongodb.com` - before this change that would result in a 404 error from the server (Core issue [realm/realm-core#7791](https://github.com/realm/realm-core/pull/7791)).
-* [Sync] On Windows devices Device Sync will additionally look up SSL certificates in the Windows Trusted Root Certification Authorities certificate store when establishing a connection. (Core issue [realm/realm-core#7882](https://github.com/realm/realm-core/pull/7882)).
+* [Sync] On Windows devices Device Sync will additionally look up SSL certificates in the Windows Trusted Root Certification Authorities certificate store when establishing a connection. (Core issue [realm/realm-core#7882](https://github.com/realm/realm-core/pull/7882))
 * [Sync] Role and permissions changes no longer require a client reset to update the local realm. (Core issue [realm/realm-core#7440](https://github.com/realm/realm-core/pull/7440)).
 
 ### Fixed
@@ -27,7 +28,7 @@
 * [Sync] Fix some client resets (such as migrating to flexible sync) potentially failing with AutoClientResetFailed if a new client reset condition (such as rolling back a flexible sync migration) occurred before the first one completed. (Core issue [realm/realm-core#7542](https://github.com/realm/realm-core/pull/7542), since v1.9.0)
 * [Sync] Fixed a change of mode from Strong to All when removing links from an embedded object that links to a tombstone. This affects sync apps that use embedded objects which have a `Lst<Mixed>` that contains a link to another top level object which has been deleted by another sync client (creating a tombstone locally). In this particular case, the switch would cause any remaining link removals to recursively delete the destination object if there were no other links to it. (Core issue [realm/realm-core#7828](https://github.com/realm/realm-core/issues/7828), since v1.15.0)
 * [Sync] `SyncSession.uploadAllLocalChanges` was inconsistent in how it handled commits which did not produce any changesets to upload. Previously it would sometimes complete immediately if all commits waiting to be uploaded were empty, and at other times it would wait for a server roundtrip. It will now always complete immediately. (Core issue [realm/realm-core#7796](https://github.com/realm/realm-core/pull/7796)).
-* [Sync] Sync client can crash if a session is resumed while the session is being suspended. (Core issue [realm/realm-core#7860](https://github.com/realm/realm-core/issues/7860), since v1.0.0).
+* [Sync] Sync client can crash if a session is resumed while the session is being suspended. (Core issue [realm/realm-core#7860](https://github.com/realm/realm-core/issues/7860), since v1.0.0)
 * [Sync] If a sync session is interrupted by a disconnect or restart while downloading a bootstrap, stale data from the previous bootstrap may be included when the session reconnects and downloads the bootstrap. This can lead to objects stored in the database that do not match the actual state of the server and potentially leading to compensating writes. (Core issue [realm/realm-core#7827](https://github.com/realm/realm-core/issues/7827), since v1.0.0).
 
 ### Compatibility
@@ -48,6 +49,36 @@
 ### Internal
 * Updated to Realm Core 14.11.0 commit 60867846a0aca0c7da5e482282b293236f730216.
 * Updated to Sync protocol version 14 to support server intiated bootstraps and role change updates without a client reset. (Core issue [realm/realm-core#7440](https://github.com/realm/realm-core/pull/7440)).
+
+
+## 2.1.1-SNAPSHOT (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
+* Realm Studio 15.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 2.0.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.4.0.
+* Minimum Gradle version: 7.2.
+* Minimum Android Gradle Plugin version: 7.1.3.
+* Minimum Android SDK: 16.
+* Minimum R8: 8.0.34.
+
+### Internal
+* None.
 
 
 ## 2.1.0 (2024-07-12)

@@ -122,6 +122,15 @@ public interface App {
     public suspend fun login(credentials: Credentials): User
 
     /**
+     * Switch current user.
+     *
+     * @param user the user that should be the new current user. The user must be one of the users
+     * that are already logged in.
+     * @throws IllegalStateException If the [user] is not logged in.
+     */
+    public fun switchUser(user: User)
+
+    /**
      * Create a [Flow] of [AuthenticationChange]-events to receive notifications of updates to all
      * app user authentication states: login, logout and removal.
      *

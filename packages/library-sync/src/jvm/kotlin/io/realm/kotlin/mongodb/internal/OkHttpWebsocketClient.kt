@@ -75,6 +75,7 @@ public class OkHttpWebsocketClient(
         scope.launch {
             okHttpClient.newWebSocket(request, this@OkHttpWebsocketClient)
         }
+        logger.debug("init")
     }
 
     override fun onOpen(webSocket: WebSocket, response: Response) {
