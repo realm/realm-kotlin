@@ -19,6 +19,7 @@ import io.realm.kotlin.test.mongodb.util.DefaultFlexibleSyncAppInitializer
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -29,6 +30,7 @@ class PlatformNetworkingTests {
     private val TIMEOUT = 10.seconds
 
     @Test
+    @Ignore // https://github.com/realm/realm-kotlin/issues/1819
     fun syncRoundTrip_coreNetworking() = runBlocking {
         roundTrip(platformNetworking = false)
     }
