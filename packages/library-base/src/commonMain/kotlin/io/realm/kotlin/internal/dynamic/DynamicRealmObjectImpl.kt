@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.RealmObjectReference
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
@@ -30,6 +31,10 @@ import kotlin.reflect.KClass
 public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
     override val type: String
         get() = this.`io_realm_kotlin_objectReference`!!.className
+
+    override var io_realm_kotlin_extras: Map<String, RealmAny>? =
+        get() = TODO("Not yet implemented")
+        set(value) {}
 
     // This should never be null after initialization of a dynamic object, but we currently cannot
     // represent that in the type system as we one some code paths construct the Kotlin object

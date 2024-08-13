@@ -335,7 +335,7 @@ public class RealmImpl private constructor(
 
 // Returns a DynamicRealm of the current version of the Realm. Only used to be able to test the
 // DynamicRealm API outside of a migration.
-internal fun Realm.asDynamicRealm(): DynamicRealm {
+public fun Realm.asDynamicRealm(): DynamicRealm {
     val dbPointer = (this as RealmImpl).realmReference.dbPointer
     return DynamicRealmImpl(this@asDynamicRealm.configuration, dbPointer)
 }

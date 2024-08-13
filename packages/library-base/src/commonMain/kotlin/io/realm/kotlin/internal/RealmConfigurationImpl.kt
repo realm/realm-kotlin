@@ -45,6 +45,7 @@ internal class RealmConfigurationImpl(
     initialDataCallback: InitialDataCallback?,
     inMemory: Boolean,
     initialRealmFileConfiguration: InitialRealmFileConfiguration?,
+    relaxedSchema: Boolean,
     logger: ContextLogger
 ) : ConfigurationImpl(
     directory,
@@ -66,6 +67,7 @@ internal class RealmConfigurationImpl(
     false,
     inMemory,
     initialRealmFileConfiguration,
+    relaxedSchema,
     logger
 ),
     RealmConfiguration

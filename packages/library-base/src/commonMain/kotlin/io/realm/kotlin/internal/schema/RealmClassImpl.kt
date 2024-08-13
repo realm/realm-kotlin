@@ -22,18 +22,20 @@ import io.realm.kotlin.schema.RealmClass
 import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.ValuePropertyType
+import kotlin.reflect.KClass
 
 // TODO Public due to being a transitive dependency to RealmObjectCompanion
 public data class RealmClassImpl(
     // Optimization: Store the schema in the C-API alike structure directly from compiler plugin to
     // avoid unnecessary repeated initializations for realm_schema_new
     val cinteropClass: ClassInfo,
-    val cinteropProperties: List<PropertyInfo>
+    val cinteropProperties: List<PropertyInfo>,
+    override val inDataModel: Boolean = true,
 ) : RealmClass {
 
     override val name: String = cinteropClass.name
     override val properties: Collection<RealmProperty> = cinteropProperties.map {
-        RealmPropertyImpl.fromCoreProperty(it)
+        RealmPropertyImpl.fromCoreProperty(it, inDataModel)
     }
     override val primaryKey: RealmProperty? = properties.firstOrNull {
         it.type.run { this is ValuePropertyType && isPrimaryKey }
@@ -47,4 +49,9 @@ public data class RealmClassImpl(
         }
 
     override fun get(key: String): RealmProperty? = properties.firstOrNull { it.name == key }
+    override val kClass: KClass<*>?
+        get() = TODO("Not yet implemented")
+
+    //    override val userDefined: Boolean
+//        get() = TODO("Not yet implemented")
 }
