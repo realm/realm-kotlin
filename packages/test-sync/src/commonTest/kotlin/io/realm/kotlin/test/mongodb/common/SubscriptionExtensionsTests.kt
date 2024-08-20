@@ -41,6 +41,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -260,6 +261,8 @@ class SubscriptionExtensionsTests {
     }
 
     @Test
+    @Ignore
+    // See https://github.com/realm/realm-kotlin/issues/1823
     fun realmResults_subscribe_waitFirstTime() = runBlocking {
         val section = Random.nextInt()
 
