@@ -197,6 +197,8 @@ class SubscriptionExtensionsTests {
     }
 
     @Test
+    @Ignore
+    // See https://github.com/realm/realm-kotlin/issues/1823
     fun realmQuery_subscribe_waitNever() = runBlocking {
         // Un-named
         realm.query<FlexParentObject>().subscribe(mode = WaitForSync.NEVER)
