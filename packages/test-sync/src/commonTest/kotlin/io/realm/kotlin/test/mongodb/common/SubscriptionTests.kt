@@ -36,6 +36,7 @@ import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -127,6 +128,8 @@ class SubscriptionTests {
     }
 
     @Test
+    @Ignore
+    // See https://github.com/realm/realm-kotlin/issues/1823
     fun asQuery() = runBlocking {
         val sub: Subscription = realm.subscriptions.update { realm ->
             add(realm.query<ParentPk>("name = $0", "my-name"))
