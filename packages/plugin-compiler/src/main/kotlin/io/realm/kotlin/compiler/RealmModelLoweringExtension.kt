@@ -80,7 +80,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             throw e
         } catch (e: Throwable) {
             throw CompilationException(
-                "Internal error in file lowering  $it",
+                "Internal error in file lowering $it",
                 e,
                 null
             )
