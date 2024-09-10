@@ -1,5 +1,13 @@
 ## 2.2.0-SNAPSHOT (YYYY-MM-DD)
 
+> [!WARNING]
+> This is the last version compatible with Sync feature.
+We announced the deprecation of Atlas Device Sync + Realm SDKs in September 2024. For more information please see:
+> - [SDK Deprecation](https://www.mongodb.com/docs/atlas/device-sdks/device-sdk-deprecation)
+> - [Device Sync Deprecation](https://www.mongodb.com/docs/atlas/app-services/sync/device-sync-deprecation)
+>
+> For a version of `realm-kotlin` without sync features, install version 3.0.0 or see the `community` branch.
+
 ### Breaking Changes
 * None.
 
@@ -18,6 +26,7 @@
 * [Sync] Client reset cycle detection now checks if the previous recovery attempt was made by the same core version, and if not attempts recovery again (Core issue [realm/realm-core#7944](https://github.com/realm/realm-core/pull/7944)).
 
 ### Fixed
+* Via https://github.com/realm/realm-kotlin/pull/1826. Fix compiler crash caused by a change in Kotlin 2.0.20. (Issue [#1825](https://github.com/realm/realm-kotlin/issues/1825)). Thanks @KitsuneAlex.
 * Comparing a numeric property with an argument list containing a string would throw. (Core issue [realm/realm-core#7714](https://github.com/realm/realm-core/issues/7714), since v2.0.0).
 * After compacting, a file upgrade would be triggered. This could cause loss of data if schema mode is SoftResetFile (Core issue [realm/realm-core#7747](https://github.com/realm/realm-core/issues/7747), since v1.15.0).
 * Encrypted files on Windows had a maximum size of 2GB even on x64 due to internal usage of `off_t`, which is a 32-bit type on 64-bit Windows (Core issue [realm/realm-core#7698](https://github.com/realm/realm-core/pull/7698)).
