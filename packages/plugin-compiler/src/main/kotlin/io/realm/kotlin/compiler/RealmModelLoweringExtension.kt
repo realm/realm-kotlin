@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.backend.common.CompilationException
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.runOnFilePostfix
+import org.jetbrains.kotlin.backend.common.wrapWithCompilationException
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -75,15 +76,14 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             // Unfortunately we cannot access the IR element of e uniformly across 1.9 and 2.0 so
             // leaving it as null. Hopefully the embedded cause will give the appropriate pointers
             // to fix this.
-            throw CompilationException("Internal error in realm lowering $it", e, null)
+            throw e.wrapWithCompilationException("Internal error in realm lowering", it, null)
         } catch (e: KotlinExceptionWithAttachments) {
             throw e
         } catch (e: Throwable) {
-            throw CompilationException(
-                "Internal error in file lowering $it",
-                e,
-                null
-            )
+            throw e.wrapWithCompilationException(
+                "Internal error in file lowering",
+                it,
+                null)
         }
     }
 
