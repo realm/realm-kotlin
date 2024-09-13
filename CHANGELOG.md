@@ -4,6 +4,7 @@
 * None.
 
 ### Enhancements
+* Support Android 15 page size 16 KB. (Issue [#1787](https://github.com/realm/realm-kotlin/issues/1787) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1105)).
 * Reduce the size of the local transaction log produced by creating objects, improving the performance of insertion-heavy transactions (Core issue [realm/realm-core#7734](https://github.com/realm/realm-core/pull/7734)).
 * Performance has been improved for range queries on integers and timestamps. Requires that you use the "BETWEEN" operation in RQL or the Query::between() method when you build the query. (Core issue [realm/realm-core#7785](https://github.com/realm/realm-core/pull/7785))
 * Updated bundled OpenSSL version to 3.3.1 (Core issue [realm/realm-core#7947](https://github.com/realm/realm-core/pull/7947)).

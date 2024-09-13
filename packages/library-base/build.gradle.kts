@@ -178,6 +178,12 @@ android {
     buildFeatures {
         buildConfig = false
     }
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
 }
 
 realmPublish {
