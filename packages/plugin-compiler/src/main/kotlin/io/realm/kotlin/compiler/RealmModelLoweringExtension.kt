@@ -83,7 +83,8 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             throw e.wrapWithCompilationException(
                 "Internal error in file lowering",
                 it,
-                null)
+                null
+            )
         }
     }
 

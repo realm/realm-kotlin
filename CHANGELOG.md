@@ -1,13 +1,5 @@
 ## 2.2.0-SNAPSHOT (YYYY-MM-DD)
 
-> [!WARNING]
-> This is the last version compatible with Sync feature.
-We announced the deprecation of Atlas Device Sync + Realm SDKs in September 2024. For more information please see:
-> - [SDK Deprecation](https://www.mongodb.com/docs/atlas/device-sdks/device-sdk-deprecation)
-> - [Device Sync Deprecation](https://www.mongodb.com/docs/atlas/app-services/sync/device-sync-deprecation)
->
-> For a version of `realm-kotlin` without sync features, install version 3.0.0 or see the `community` branch.
-
 ### Breaking Changes
 * None.
 
