@@ -1,4 +1,4 @@
-## 2.2.0-SNAPSHOT (YYYY-MM-DD)
+## 2.2.0 (2024-09-13)
 
 ### Breaking Changes
 * None.
