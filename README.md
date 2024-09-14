@@ -1,6 +1,5 @@
 
 > [!WARNING]
-> This is the last version compatible with Sync feature.
 We announced the deprecation of Atlas Device Sync + Realm SDKs in September 2024. For more information please see:
 > - [SDK Deprecation](https://www.mongodb.com/docs/atlas/device-sdks/device-sdk-deprecation)
 > - [Device Sync Deprecation](https://www.mongodb.com/docs/atlas/app-services/sync/device-sync-deprecation)
@@ -14,7 +13,7 @@ We announced the deprecation of Atlas Device Sync + Realm SDKs in September 2024
 
 [![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/realm/kotlin/io.realm.kotlin.gradle.plugin/maven-metadata.xml.svg?colorB=ff6b00&label=Gradle%20Plugin%20Portal)](https://plugins.gradle.org/plugin/io.realm.kotlin)
 [![Maven Central](https://img.shields.io/maven-central/v/io.realm.kotlin/gradle-plugin?colorB=4dc427&label=Maven%20Central)](https://search.maven.org/artifact/io.realm.kotlin/gradle-plugin)
-[![Kotlin](https://img.shields.io/badge/kotlin-1.8.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/kotlin-2.0.20-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![License](https://img.shields.io/badge/License-Apache-blue.svg)](https://github.com/realm/realm-kotlin/blob/master/LICENSE)
 
 
@@ -337,7 +336,7 @@ SDK supports. In the matrix below, you will find the minimum supported version f
 
 | Realm Version | Requirements                                                                                                                                                                                             |
 |---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 2.2.0         | <ul><li>Kotlin 2.0.20+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.7.0+.</li><li>Gradle 7.2 - 8.5</li><li>The new memory model only.</li></ul>         |
+| 2.3.0         | <ul><li>Kotlin 2.0.20+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.7.0+.</li><li>Gradle 7.2 - 8.5</li><li>The new memory model only.</li></ul>         |
 | 2.0.0         | <ul><li>Kotlin 2.0.0+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.7.0+.</li><li>Gradle 7.2 - 8.5</li><li>The new memory model only.</li></ul>         |
 | 1.16.0        | <ul><li>Kotlin 1.9.0+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.7.0+.</li><li>Gradle 6.8.3 - 8.5</li><li>The new memory model only.</li></ul>         |
 | 1.15.0        | <ul><li>Kotlin 1.9.0+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.7.0+.</li><li>Gradle 6.8.3 - 8.5</li><li>The new memory model only.</li></ul>         |
