@@ -26,6 +26,13 @@ buildscript {
                 it.substringAfter("\"").substringBefore("\"")
             }
 
+        extra["kotlinVersion"] = file("${rootProject.rootDir.absolutePath}/../../../buildSrc/src/main/kotlin/Config.kt")
+            .readLines()
+            .first { it.contains("const val kotlin") }
+            .let {
+                it.substringAfter("\"").substringBefore("\"")
+            }
+
         repositories {
             maven(url = "file://${rootProject.rootDir.absolutePath}/../../../packages/build/m2-buildrepo")
             gradlePluginPortal()
@@ -34,7 +41,7 @@ buildscript {
         }
         dependencies {
             classpath("com.android.tools.build:gradle:8.1.0")
-            classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.0")
+            classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${rootProject.extra["kotlinVersion"]}")
             classpath("io.realm.kotlin:gradle-plugin:${rootProject.extra["realmVersion"]}")
         }
 }
