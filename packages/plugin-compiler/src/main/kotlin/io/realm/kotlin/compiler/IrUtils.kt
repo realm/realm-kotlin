@@ -97,7 +97,6 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
-import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.classId
@@ -633,7 +632,7 @@ fun getCollectionElementType(backingFieldType: IrType): IrType? {
         @Suppress("UNCHECKED_CAST")
         val values: List<IrTypeArgument> = args.get(backingFieldType) as List<IrTypeArgument>
         if (values.isNotEmpty()) {
-            return (values[0] as IrTypeBase).type
+            return (values[0] as IrType).type
         }
     }
     return null

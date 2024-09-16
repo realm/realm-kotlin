@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.backend.common.DeclarationContainerLoweringPass
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.runOnFilePostfix
-import org.jetbrains.kotlin.backend.common.wrapWithCompilationException
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationContainer
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -180,15 +179,25 @@ private class SyncLowering(private val pluginContext: IrPluginContext, private v
             // Unfortunately we cannot access the IR element of e uniformly across 1.9 and 2.0 so
             // leaving it as null. Hopefully the embedded cause will give the appropriate pointers
             // to fix this.
-            throw e.wrapWithCompilationException("Internal error in realm lowering", it, null)
+            throw CompilationException(
+                "Internal error in realm lowering : ${this::class.qualifiedName}: ${e.message}",
+                it,
+                null,
+                cause = e
+            ).apply {
+                stackTrace = e.stackTrace
+            }
         } catch (e: KotlinExceptionWithAttachments) {
             throw e
         } catch (e: Throwable) {
-            throw e.wrapWithCompilationException(
-                "Internal error in file lowering",
+            throw CompilationException(
+                "Internal error in file lowering : ${this::class.qualifiedName}: ${e.message}",
                 it,
-                null
-            )
+                null,
+                cause = e
+            ).apply {
+                stackTrace = e.stackTrace
+            }
         }
     }
 
