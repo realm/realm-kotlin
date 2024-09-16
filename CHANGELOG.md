@@ -1,4 +1,4 @@
-## 2.2.0 (2024-09-13)
+## 2.3.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
@@ -19,6 +19,7 @@
 * [Sync] Client reset cycle detection now checks if the previous recovery attempt was made by the same core version, and if not attempts recovery again (Core issue [realm/realm-core#7944](https://github.com/realm/realm-core/pull/7944)).
 
 ### Fixed
+* Via https://github.com/realm/realm-kotlin/pull/1826. Fix compiler crash caused by a change in Kotlin 2.0.20. (Issue [#1825](https://github.com/realm/realm-kotlin/issues/1825)). Thanks @KitsuneAlex.
 * Comparing a numeric property with an argument list containing a string would throw. (Core issue [realm/realm-core#7714](https://github.com/realm/realm-core/issues/7714), since v2.0.0).
 * After compacting, a file upgrade would be triggered. This could cause loss of data if schema mode is SoftResetFile (Core issue [realm/realm-core#7747](https://github.com/realm/realm-core/issues/7747), since v1.15.0).
 * Encrypted files on Windows had a maximum size of 2GB even on x64 due to internal usage of `off_t`, which is a 32-bit type on 64-bit Windows (Core issue [realm/realm-core#7698](https://github.com/realm/realm-core/pull/7698)).
@@ -46,7 +47,7 @@
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
 * Realm Studio 15.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
-  * Kotlin 2.0.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Kotlin 2.0.20 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
   * Ktor 2.1.2 and above.
   * Coroutines 1.7.0 and above.
   * AtomicFu 0.18.3 and above.
