@@ -1,7 +1,5 @@
 %module(directors="1") realmc
 
-#define REALM_APP_SERVICES 1
-
 %{
 #include "realm.h"
 #include <cstring>
@@ -197,22 +195,6 @@ protected void finalize() {
     $1 = reinterpret_cast<realm_return_apikey_list_func_t>(app_apikey_list_callback);
     $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
     $3 = [](void *userdata) {
-        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-    };
-}
-
-// Thread Observer callback
-%typemap(jstype) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "Object" ;
-%typemap(jtype) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "Object" ;
-%typemap(javain) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "$javainput";
-%typemap(jni) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "jobject";
-%typemap(in) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) {
-    auto jenv = get_env(true);
-    $1 = reinterpret_cast<realm_on_object_store_thread_callback_t>(realm_sync_thread_created);
-    $2 = reinterpret_cast<realm_on_object_store_thread_callback_t>(realm_sync_thread_destroyed);
-    $3 = reinterpret_cast<realm_on_object_store_error_callback_t>(realm_sync_thread_error);
-    $4 = static_cast<jobject>(jenv->NewGlobalRef($input));
-    $5 = [](void *userdata) {
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
     };
 }
@@ -463,6 +445,10 @@ $result = SWIG_JavaArrayOutLonglong(jenv, (long long *)result, 2);
 %ignore "realm_set_add_notification_callback";
 %ignore "realm_dictionary_add_notification_callback";
 %ignore "realm_results_add_notification_callback";
+%ignore "realm_sync_socket_callback_result_e";
+%ignore "realm_sync_errno_connection_e";
+%ignore "realm_sync_errno_session_e";
+%ignore "realm_web_socket_errno_e";
 
 // Swig doesn't understand __attribute__ so eliminate it
 #define __attribute__(x)

@@ -38,9 +38,7 @@ object CoreErrorConverter {
         return userError ?: when {
             ErrorCode.RLM_ERR_INDEX_OUT_OF_BOUNDS == errorCode ->
                 IndexOutOfBoundsException(message)
-            ErrorCategory.RLM_ERR_CAT_INVALID_ARG in categories && ErrorCategory.RLM_ERR_CAT_SYNC_ERROR !in categories -> {
-                // Some sync errors flagged as both logical and illegal. In our case, we consider those
-                // IllegalState, so discard them them here and let them fall through to the bottom case
+            ErrorCategory.RLM_ERR_CAT_INVALID_ARG in categories -> {
                 IllegalArgumentException(message)
             }
             ErrorCategory.RLM_ERR_CAT_LOGIC in categories || ErrorCategory.RLM_ERR_CAT_RUNTIME in categories ->

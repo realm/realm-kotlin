@@ -1,6 +1,5 @@
 headers = realm.h realm/error_codes.h
 headerFilter = realm.h realm/error_codes.h
-compilerOpts = -DREALM_APP_SERVICES=1
 // Relative paths in def file depends are resolved differently dependent on execution
 // location
 // https://youtrack.jetbrains.com/issue/KT-43439
@@ -12,7 +11,7 @@ compilerOpts = -DREALM_APP_SERVICES=1
 // libraryPaths.macos_x64 = ../external/core/build-macos_x64/src/realm/object-store/c_api ../external/core/build-macos_x64/src/realm ../external/core/build-macos_x64/src/realm/parser ../external/core/build-macos_x64/src/realm/object-store/
 // libraryPaths.ios_x64 = ../external/core/build-macos_x64/src/realm/object-store/c_api ../external/core/build-macos_x64/src/realm ../external/core/build-macos_x64/src/realm/parser ../external/core/build-macos_x64/src/realm/object-store/
 linkerOpts = -lcompression -lz -framework Foundation -framework CoreFoundation -framework Security
-strictEnums = realm_errno realm_error_category realm_sync_errno_client realm_sync_errno_connection realm_sync_errno_session realm_web_socket_errno realm_sync_socket_callback_result
+strictEnums = realm_errno realm_error_category
 
 // We don't want to convert Websocket binary data to String
 noStringConversion = realm_sync_socket_websocket_message

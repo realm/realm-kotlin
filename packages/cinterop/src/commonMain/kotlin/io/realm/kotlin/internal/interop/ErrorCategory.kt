@@ -25,15 +25,7 @@ expect enum class ErrorCategory : CodeDescription {
     RLM_ERR_CAT_RUNTIME,
     RLM_ERR_CAT_INVALID_ARG,
     RLM_ERR_CAT_FILE_ACCESS,
-    RLM_ERR_CAT_SYSTEM_ERROR,
-    RLM_ERR_CAT_APP_ERROR,
-    RLM_ERR_CAT_CLIENT_ERROR,
-    RLM_ERR_CAT_JSON_ERROR,
-    RLM_ERR_CAT_SERVICE_ERROR,
-    RLM_ERR_CAT_HTTP_ERROR,
-    RLM_ERR_CAT_CUSTOM_ERROR,
-    RLM_ERR_CAT_WEBSOCKET_ERROR,
-    RLM_ERR_CAT_SYNC_ERROR;
+    RLM_ERR_CAT_SYSTEM_ERROR;
 
     override val nativeValue: Int
     override val description: String?
