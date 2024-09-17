@@ -19,7 +19,6 @@ import io.realm.kotlin.internal.platform.OS_NAME
 import io.realm.kotlin.internal.platform.RUNTIME
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class PlatformInfoTest {
     @Test
