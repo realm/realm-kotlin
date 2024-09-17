@@ -1,57 +1,16 @@
 @file:JvmName("SystemUtilsJvm")
 package io.realm.kotlin.internal.platform
 
-import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.RealmInstant
 import kotlin.jvm.JvmName
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
 
-// TODO All methods and properties in this file are public as they are used by both `library-sync`
-//  and tests.
-
-/**
- * Runtime identifier. Either 'JVM', 'Android' or 'Native'
- */
-public expect val RUNTIME: SyncConnectionParams.Runtime
-
-/**
- * Version of the runtime. On Android this this the Android version, e.g. `33`.
- * On JVM this is the JVM version, e.g. `11.0.15`
- * On Native, the empty string is returned.
- */
-public expect val RUNTIME_VERSION: String
-
-/**
- * Which CPU architecture is the code running on.
- */
-public expect val CPU_ARCH: String
-
 /**
  * Operating system name.
  */
 public expect val OS_NAME: String
-
-/**
- * Operating system version.
- */
-public expect val OS_VERSION: String
-
-/**
- * For mobile devices, this will be the manufacturer of the phone.
- *
- * On Desktop, this returns the empty string.
- */
-public expect val DEVICE_MANUFACTURER: String
-
-/**
- * For mobile devices, this will return the unique model number of
- * the phone, e.g `GT-I9100`
- *
- * On Desktop, this returns the empty string..
- */
-public expect val DEVICE_MODEL: String
 
 /**
  * Path separator.

@@ -16,7 +16,6 @@
 package io.realm.kotlin.test.ios
 
 import io.realm.kotlin.internal.platform.OS_NAME
-import io.realm.kotlin.internal.platform.OS_VERSION
 import io.realm.kotlin.internal.platform.RUNTIME
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,6 +26,5 @@ class PlatformInfoTest {
     fun platformInfo() {
         assertEquals("Native", RUNTIME.description)
         assertEquals("iOS", OS_NAME)
-        assertTrue(OS_VERSION.startsWith("Version "))
     }
 }
