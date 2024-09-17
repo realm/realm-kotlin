@@ -29,7 +29,6 @@ open class RealmPlugin : Plugin<Project> {
     private val logger: Logger = Logging.getLogger("realm-plugin")
 
     override fun apply(project: Project) {
-        project.pluginManager.apply(RealmCompilerSubplugin::class.java)
         project.configurations.all { conf: Configuration ->
             // Ensure that android unit tests uses the Realm JVM variant rather than Android.
             // This is a bit britle. See https://github.com/realm/realm-kotlin/issues/1404 for

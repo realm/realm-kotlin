@@ -46,9 +46,8 @@ import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 
-// TODO Public due to being accessed from `library-sync`
 @Suppress("LongParameterList")
-public open class ConfigurationImpl(
+internal open class ConfigurationImpl(
     directory: String,
     name: String,
     schema: Set<KClass<out BaseRealmObject>>,
@@ -62,7 +61,6 @@ public open class ConfigurationImpl(
     private val userMigration: RealmMigration?,
     automaticBacklinkHandling: Boolean,
     initialDataCallback: InitialDataCallback?,
-    override val isFlexibleSyncConfiguration: Boolean,
     inMemory: Boolean,
     initialRealmFileConfiguration: InitialRealmFileConfiguration?,
     override val logger: ContextLogger

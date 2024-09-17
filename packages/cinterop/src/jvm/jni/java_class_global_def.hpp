@@ -48,30 +48,10 @@ private:
         , m_java_lang_string(env, "java/lang/String", false)
         , m_kotlin_jvm_functions_function0(env, "kotlin/jvm/functions/Function0", false)
         , m_kotlin_jvm_functions_function1(env, "kotlin/jvm/functions/Function1", false)
-        , m_io_realm_kotlin_internal_interop_sync_network_transport(env, "io/realm/kotlin/internal/interop/sync/NetworkTransport", false)
-        , m_io_realm_kotlin_internal_interop_sync_response(env, "io/realm/kotlin/internal/interop/sync/Response", false)
         , m_io_realm_kotlin_internal_interop_long_pointer_wrapper(env, "io/realm/kotlin/internal/interop/LongPointerWrapper", false)
-        , m_io_realm_kotlin_internal_interop_sync_sync_error(env, "io/realm/kotlin/internal/interop/sync/SyncError", false)
-        , m_io_realm_kotlin_internal_interop_sync_core_compensating_write_info(env, "io/realm/kotlin/internal/interop/sync/CoreCompensatingWriteInfo", false)
-        , m_io_realm_kotlin_internal_interop_sync_app_error(env, "io/realm/kotlin/internal/interop/sync/AppError", false)
         , m_io_realm_kotlin_internal_interop_log_callback(env, "io/realm/kotlin/internal/interop/LogCallback", false)
-        , m_io_realm_kotlin_internal_interop_sync_error_callback(env, "io/realm/kotlin/internal/interop/SyncErrorCallback", false)
-        , m_io_realm_kotlin_internal_interop_sync_jvm_sync_session_transfer_completion_callback(env, "io/realm/kotlin/internal/interop/sync/JVMSyncSessionTransferCompletionCallback", false)
-        , m_io_realm_kotlin_internal_interop_sync_response_callback_impl(env, "io/realm/kotlin/internal/interop/sync/ResponseCallbackImpl", false)
-        , m_io_realm_kotlin_internal_interop_subscription_set_callback(env, "io/realm/kotlin/internal/interop/SubscriptionSetCallback", false)
-        , m_io_realm_kotlin_internal_interop_sync_before_client_reset_handler(env, "io/realm/kotlin/internal/interop/SyncBeforeClientResetHandler", false)
-        , m_io_realm_kotlin_internal_interop_sync_after_client_reset_handler(env, "io/realm/kotlin/internal/interop/SyncAfterClientResetHandler", false)
         , m_io_realm_kotlin_internal_interop_core_error_converter(env, "io/realm/kotlin/internal/interop/CoreErrorConverter", false)
-        , m_io_realm_kotlin_internal_interop_sync_async_open_callback(env, "io/realm/kotlin/internal/interop/AsyncOpenCallback", false)
-        , m_io_realm_kotlin_internal_interop_progress_callback(env, "io/realm/kotlin/internal/interop/ProgressCallback", false)
-        , m_io_realm_kotlin_internal_interop_app_callback(env, "io/realm/kotlin/internal/interop/AppCallback", false)
-        , m_io_realm_kotlin_internal_interop_connection_state_change_callback(env, "io/realm/kotlin/internal/interop/ConnectionStateChangeCallback", false)
-        , m_io_realm_kotlin_internal_interop_sync_thread_observer(env, "io/realm/kotlin/internal/interop/SyncThreadObserver", false)
-        , m_io_realm_kotlin_internal_interop_sync_websocket_transport(env, "io/realm/kotlin/internal/interop/sync/WebSocketTransport", false)
-        , m_io_realm_kotlin_internal_interop_sync_websocket_client(env, "io/realm/kotlin/internal/interop/sync/WebSocketClient", false)
         , m_io_realm_kotlin_internal_interop_notification_callback(env, "io/realm/kotlin/internal/interop/NotificationCallback", false)
-        , m_io_realm_kotlin_internal_interop_sync_connection_state(env, "io/realm/kotlin/internal/interop/sync/CoreConnectionState", false)
-
     {
     }
 
@@ -80,29 +60,10 @@ private:
     jni_util::JavaClass m_java_lang_string;
     jni_util::JavaClass m_kotlin_jvm_functions_function0;
     jni_util::JavaClass m_kotlin_jvm_functions_function1;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_network_transport;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_response;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_long_pointer_wrapper;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_sync_error;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_core_compensating_write_info;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_app_error;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_log_callback;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_error_callback;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_jvm_sync_session_transfer_completion_callback;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_response_callback_impl;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_subscription_set_callback;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_before_client_reset_handler;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_after_client_reset_handler;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_core_error_converter;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_async_open_callback;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_progress_callback;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_app_callback;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_connection_state_change_callback;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_thread_observer;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_websocket_transport;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_websocket_client;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_notification_callback;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_connection_state;
 
     inline static std::unique_ptr<JavaClassGlobalDef>& instance()
     {
@@ -143,101 +104,18 @@ public:
         return instance()->m_java_lang_string;
     }
 
-    inline static const jni_util::JavaClass& network_transport_class()
-    {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_network_transport;
-    }
-
-    inline static const jni_util::JavaClass& network_transport_response_class()
-    {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_response;
-    }
-
     inline static const jni_util::JavaClass& long_pointer_wrapper()
     {
         return instance()->m_io_realm_kotlin_internal_interop_long_pointer_wrapper;
     }
-
-    inline static const jni_util::JavaClass& sync_error()
-    {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_sync_error;
-    }
-
-    inline static const jni_util::JavaClass& core_compensating_write_info()
-    {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_core_compensating_write_info;
-    }
-
-    inline static const jni_util::JavaClass& app_error()
-    {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_app_error;
-    }
-
-    inline static const jni_util::JavaClass& connection_state()
-    {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_connection_state;
-    }
-
     inline static const jni_util::JavaClass& log_callback()
     {
         return instance()->m_io_realm_kotlin_internal_interop_log_callback;
     }
 
-    inline static const jni_util::JavaClass& sync_error_callback()
-    {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_error_callback;
-    }
-
-    inline static const jni_util::JavaClass& sync_session_transfer_completion_callback()
-    {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_jvm_sync_session_transfer_completion_callback;
-    };
-
-    inline static const jni_util::JavaClass& app_response_callback()
-    {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_response_callback_impl;
-    };
-
-    inline static const jni_util::JavaClass& subscriptionset_changed_callback() {
-        return instance()->m_io_realm_kotlin_internal_interop_subscription_set_callback;
-    }
-
-    inline static const jni_util::JavaClass& sync_before_client_reset() {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_before_client_reset_handler;
-    }
-
-    inline static const jni_util::JavaClass& sync_after_client_reset() {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_after_client_reset_handler;
-    }
-
     inline static const jni_util::JavaClass& core_error_converter()
     {
         return instance()->m_io_realm_kotlin_internal_interop_core_error_converter;
-    }
-
-    inline static const jni_util::JavaClass& async_open_callback()
-    {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_async_open_callback;
-    }
-
-    inline static const jni_util::JavaClass& progress_callback()
-    {
-        return instance()->m_io_realm_kotlin_internal_interop_progress_callback;
-    }
-
-    inline static const jni_util::JavaClass& app_callback()
-    {
-        return instance()->m_io_realm_kotlin_internal_interop_app_callback;
-    }
-
-    inline static const jni_util::JavaClass& connection_state_change_callback()
-    {
-        return instance()->m_io_realm_kotlin_internal_interop_connection_state_change_callback;
-    }
-
-    inline static const jni_util::JavaClass& sync_thread_observer()
-    {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_thread_observer;
     }
 
     inline static const jni_util::JavaClass& notification_callback()
@@ -253,14 +131,6 @@ public:
     inline static const jni_util::JavaMethod function1Method(JNIEnv* env) {
         return jni_util::JavaMethod(env, instance()->m_kotlin_jvm_functions_function1, "invoke",
                 "(Ljava/lang/Object;)Ljava/lang/Object;");
-    }
-
-    inline static const jni_util::JavaClass& sync_websocket_transport() {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_websocket_transport;
-    }
-
-    inline static const jni_util::JavaClass& sync_websocket_client() {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_websocket_client;
     }
 };
 
