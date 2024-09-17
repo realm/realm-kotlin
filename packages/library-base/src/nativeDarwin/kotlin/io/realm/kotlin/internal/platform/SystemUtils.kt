@@ -16,7 +16,6 @@
 package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.internal.RealmInstantImpl
-import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.internal.util.Exceptions
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.RealmInstant
@@ -48,12 +47,6 @@ import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.identityHashCode
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
-
-@Suppress("MayBeConst") // Cannot make expect/actual const
-public actual val RUNTIME: SyncConnectionParams.Runtime = SyncConnectionParams.Runtime.NATIVE
-
-@Suppress("MayBeConst") // Cannot make expect/actual const
-public actual val RUNTIME_VERSION: String = ""
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
 public actual val PATH_SEPARATOR: String = "/"
