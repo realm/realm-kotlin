@@ -90,12 +90,6 @@ class Registrar : org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar {
                 LoadingOrder.LAST,
                 project
             )
-            configuration.get(bundleIdConfigurationKey)?.let { bundleId ->
-                getExtensionPoint(IrGenerationExtension.extensionPointName).registerExtension(
-                    SyncLoweringExtension(bundleId),
-                    project
-                )
-            }
         }
     }
 

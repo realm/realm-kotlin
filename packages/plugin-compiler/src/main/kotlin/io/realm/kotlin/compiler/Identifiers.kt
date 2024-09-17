@@ -16,8 +16,6 @@
 
 package io.realm.kotlin.compiler
 
-import io.realm.kotlin.compiler.FqNames.PACKAGE_MONGODB
-import io.realm.kotlin.compiler.FqNames.PACKAGE_MONGODB_INTERNAL
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -101,8 +99,6 @@ internal object FqNames {
     val PACKAGE_REALM_INTEROP = FqName("io.realm.kotlin.internal.interop")
     val PACKAGE_REALM_INTERNAL = FqName("io.realm.kotlin.internal")
     val PACKAGE_MONGODB = FqName("io.realm.kotlin.mongodb")
-    val PACKAGE_MONGODB_INTERNAL = FqName("io.realm.kotlin.mongodb.internal")
-    val APP_CONFIGURATION_BUILDER = FqName("AppConfiguration.Builder")
 }
 
 object ClassIds {
@@ -161,11 +157,4 @@ object ClassIds {
     val REALM_UUID = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("RealmUUID"))
     val REALM_MUTABLE_INTEGER = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("MutableRealmInt"))
     val REALM_ANY = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("RealmAny"))
-
-    // Sync types
-    val APP = ClassId(PACKAGE_MONGODB, Name.identifier("App"))
-    val APP_IMPL = ClassId(PACKAGE_MONGODB_INTERNAL, Name.identifier("AppImpl"))
-    val APP_CONFIGURATION = ClassId(PACKAGE_MONGODB, Name.identifier("AppConfiguration"))
-    val APP_CONFIGURATION_IMPL = ClassId(PACKAGE_MONGODB_INTERNAL, Name.identifier("AppConfigurationImpl"))
-    val APP_CONFIGURATION_BUILDER = ClassId(PACKAGE_MONGODB, FqNames.APP_CONFIGURATION_BUILDER, false)
 }

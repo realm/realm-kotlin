@@ -14,8 +14,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  REALM_DISABLE_ANALYTICS: true
-  REALM_PRINT_ANALYTICS: true
   CMAKE_C_COMPILER: /usr/local/bin/ccache-clang
   CMAKE_CXX_COMPILER: /usr/local/bin/ccache-clang++
   # Workflow environment variables are not available in Job if statements: https://github.com/actions/runner/issues/1661
