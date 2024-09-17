@@ -19,7 +19,6 @@ import io.realm.kotlin.Deleteable
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.ext.isValid
-import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject

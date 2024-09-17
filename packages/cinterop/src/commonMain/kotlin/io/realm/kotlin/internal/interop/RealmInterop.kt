@@ -19,7 +19,6 @@
 package io.realm.kotlin.internal.interop
 
 import kotlinx.coroutines.CoroutineDispatcher
-import org.mongodb.kbson.ObjectId
 import kotlin.jvm.JvmInline
 import kotlin.jvm.JvmMultifileClass
 import kotlin.jvm.JvmName

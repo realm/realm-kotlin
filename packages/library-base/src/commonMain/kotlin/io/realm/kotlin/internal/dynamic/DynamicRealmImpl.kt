@@ -26,7 +26,6 @@ import io.realm.kotlin.internal.interop.FrozenRealmPointer
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.query.RealmQuery
-import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.schema.RealmSchema
 
 internal open class DynamicRealmImpl(
