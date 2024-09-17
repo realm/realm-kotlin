@@ -35,8 +35,6 @@ on:
         value: ${{ jobs.android.outputs.packages-android-cache-hit }}
       android-test-base-apk-cache-hit:
         value: ${{ jobs.android-test-base.outputs.android-test-base-apk-cache-hit }}
-      android-test-sync-apk-cache-hit:
-        value: ${{ jobs.android-test-sync.outputs.android-test-sync-apk-cache-hit }}
       packages-macos-x64-cache-hit:
         value: ${{ jobs.macos-x64.outputs.packages-macos-x64-cache-hit }}
       packages-macos-arm64-cache-hit: 
@@ -294,36 +292,6 @@ jobs:
         name: android-base-test-apk-${{ needs.checksum.outputs.version-label }}
         path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
         retention-days: 1
-
-  #
-  # Android Sync Test APK
-  #
-  android-test-sync:
-    runs-on: ubuntu-latest
-    needs: checksum
-    name: Android Sync Test APK
-    outputs:  
-      android-test-sync-apk-cache-hit: ${{ steps.android-test-sync-apk.outputs.cache-hit }}
-
-    steps:
-    - name: Check Android Sync Test APK
-      id: android-test-sync-apk
-      uses: actions/cache@v4
-      with:
-        key: android-sync-test-apk-key-${{ needs.checksum.outputs.packages-sha }}
-        path: |
-          ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
-          ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
-
-    - name: Save Android Sync Test APK
-      uses: actions/upload-artifact@v4
-      if: always() && !cancelled() && steps.android-test-sync-apk.outputs.cache-hit == 'true'
-      with:
-        name: android-sync-test-apk-${{ needs.checksum.outputs.version-label }}
-        retention-days: 1
-        path: |
-          ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
-          ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
 
   #
   # MacOS arm64
