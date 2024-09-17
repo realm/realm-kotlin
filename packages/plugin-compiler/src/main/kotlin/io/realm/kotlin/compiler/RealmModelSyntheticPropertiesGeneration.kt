@@ -437,7 +437,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             classKindType.defaultType
         ) { startOffset, endOffset ->
             val isEmbedded = clazz.isEmbeddedRealmObject
-            val isAsymmetric = clazz.isAsymmetricRealmObject
             IrGetEnumValueImpl(
                 startOffset = startOffset,
                 endOffset = endOffset,
@@ -446,7 +445,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                     // These names must match the values in io.realm.kotlin.schema.RealmClassKind
                     it.name == when {
                         isEmbedded -> Name.identifier("EMBEDDED")
-                        isAsymmetric -> Name.identifier("ASYMMETRIC")
                         else -> Name.identifier("STANDARD")
                     }
                 }.symbol
@@ -477,8 +475,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             logError("Embedded object is not allowed to have a primary key", irClass.locationOf())
         }
 
-        val asymmetric = irClass.isAsymmetricRealmObject
-
         val primaryKey: String? = when (primaryKeyFields.size) {
             0 -> null
             1 -> primaryKeyFields.entries.first().value.persistedName
@@ -507,7 +503,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             type = classInfoClass.defaultType,
                             symbol = classInfoCreateMethod.symbol,
                             typeArgumentsCount = 0,
-                            valueArgumentsCount = 5
+                            valueArgumentsCount = 4
                         ).apply {
                             dispatchReceiver = irGetObject(classInfoClass.companionObject()!!.symbol)
                             var arg = 0
@@ -527,7 +523,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             // num properties
                             putValueArgument(arg++, irLong(fields.size.toLong()))
                             putValueArgument(arg++, irBoolean(embedded))
-                            putValueArgument(arg++, irBoolean(asymmetric))
                         }
                     )
                     putValueArgument(
@@ -622,38 +617,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 if (publicName != "") {
                                     ensureValidName(publicName, persistedAndPublicNameToLocation, location)
                                     persistedAndPublicNameToLocation[publicName] = location
-                                }
-
-                                // Validate asymmetric object constraints:
-                                // - Asymmetric objects can only contain embedded objects.
-                                // - RealmObject and EmbeddedObject cannot contain a Asymmetric object.
-                                // I.e. Asymmetric objects are only allowed as top-level objects.
-                                when (type) {
-                                    objectType -> {
-                                        // Collections of type RealmObject require the type parameter be retrieved from the generic argument
-                                        when (value.collectionType) {
-                                            CollectionType.NONE -> {
-                                                backingField.type
-                                            }
-                                            CollectionType.LIST,
-                                            CollectionType.SET,
-                                            CollectionType.DICTIONARY -> {
-                                                getCollectionElementType(backingField.type)
-                                                    ?: error("Could not get collection type from ${backingField.type}")
-                                            }
-                                        }
-                                    }
-                                    else -> null
-                                }?.let { linkedType: IrType ->
-                                    if (asymmetric) {
-                                        if (!linkedType.isEmbeddedRealmObject) {
-                                            logError("AsymmetricObjects can only reference EmbeddedRealmObject classes.", property.locationOf())
-                                        }
-                                    } else {
-                                        if (linkedType.isAsymmetricRealmObject) {
-                                            logError("RealmObjects and EmbeddedRealmObjects cannot reference AsymmetricRealmObjects.", property.locationOf())
-                                        }
-                                    }
                                 }
 
                                 // Define the Realm `PropertyType` enum value for this kind of

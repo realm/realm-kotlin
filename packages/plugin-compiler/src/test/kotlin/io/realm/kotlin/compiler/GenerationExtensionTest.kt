@@ -96,7 +96,7 @@ class GenerationExtensionTest {
             stripInputPath(outputFile, fileMap)
             val expected = File("${expectedDir()}/02_AFTER.ValidateIrBeforeLowering.ir").readText()
             val actual = outputFile.readText()
-            assertEquals(expected, actual)
+            assertEquals(expected, actual, "Not equal")
         }
     }
 

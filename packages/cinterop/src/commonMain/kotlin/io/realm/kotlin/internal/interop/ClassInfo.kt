@@ -29,7 +29,6 @@ data class ClassInfo(
 ) {
 
     val isEmbedded = flags and ClassFlags.RLM_CLASS_EMBEDDED != 0
-    val isAsymmetric = flags and ClassFlags.RLM_CLASS_ASYMMETRIC != 0
 
     companion object {
         // Convenience wrapper to ease maintaining compiler plugin
@@ -38,11 +37,9 @@ data class ClassInfo(
             primaryKey: String?,
             numProperties: Long,
             isEmbedded: Boolean = false,
-            isAsymmetric: Boolean = false
         ): ClassInfo {
             val flags: Int = when {
                 isEmbedded -> ClassFlags.RLM_CLASS_EMBEDDED
-                isAsymmetric -> ClassFlags.RLM_CLASS_ASYMMETRIC
                 else -> ClassFlags.RLM_CLASS_NORMAL
             }
             return ClassInfo(name, primaryKey ?: SCHEMA_NO_VALUE, numProperties, 0, flags = flags)

@@ -74,9 +74,7 @@ internal interface InternalMutableRealm : MutableRealm {
     }
 
     override fun deleteAll() {
-        schema().classes.filter {
-            it.kind != RealmClassKind.ASYMMETRIC
-        }.forEach {
+        schema().classes.forEach {
             val clazz: KClass<out TypedRealmObject>? = realmReference.schemaMetadata[it.name]?.clazz
             if (clazz != null) {
                 delete(clazz)

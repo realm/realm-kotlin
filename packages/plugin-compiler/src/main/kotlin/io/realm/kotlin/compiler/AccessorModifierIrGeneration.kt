@@ -18,7 +18,6 @@
 
 package io.realm.kotlin.compiler
 
-import io.realm.kotlin.compiler.ClassIds.ASYMMETRIC_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.ClassIds.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.ClassIds.IGNORE_ANNOTATION
 import io.realm.kotlin.compiler.ClassIds.KBSON_DECIMAL128
@@ -222,11 +221,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
         objectReferenceProperty = irClass.lookupProperty(OBJECT_REFERENCE)
         objectReferenceType = objectReferenceProperty.backingField!!.type
-
-        // Attempt to find the interface for asymmetric objects.
-        // The class will normally only be on the classpath for library-sync builds, not
-        // library-base builds.
-        val asymmetricRealmObjectInterface: IrClass? = pluginContext.referenceClass(ASYMMETRIC_OBJECT_INTERFACE)?.owner
 
         irClass.transformChildrenVoid(object : IrElementTransformerVoid() {
             @Suppress("LongMethod")
@@ -645,19 +639,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             fromPublic = null,
                             toRealmValue = null
                         )
-                    }
-                    asymmetricRealmObjectInterface != null && propertyType.isSubtypeOfClass(asymmetricRealmObjectInterface.symbol) -> {
-                        // Asymmetric objects must be top-level objects, so any link to one
-                        // should be illegal. This will be detected later when creating the
-                        // schema methods. So for now, just add the field to the list of schema
-                        // properties, but do not modify the accessor.
-                        logDebug("Object property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
-                        val schemaProperty = SchemaProperty(
-                            propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
-                            declaration = declaration,
-                            collectionType = CollectionType.NONE
-                        )
-                        fields[name] = schemaProperty
                     }
                     propertyType.isSubtypeOfClass(realmObjectInterface) -> {
                         logDebug("Object property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")

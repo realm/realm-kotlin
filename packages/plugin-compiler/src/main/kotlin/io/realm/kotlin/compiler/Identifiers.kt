@@ -26,7 +26,6 @@ internal object Names {
 
     val REALM_OBJECT: Name = Name.identifier("RealmObject")
     val EMBEDDED_REALM_OBJECT: Name = Name.identifier("EmbeddedRealmObject")
-    val ASYMMETRIC_REALM_OBJECT: Name = Name.identifier("AsymmetricRealmObject")
 
     val REALM_OBJECT_COMPANION_CLASS_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}class")
@@ -116,7 +115,6 @@ object ClassIds {
     val REALM_OBJECT_INTERFACE = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("RealmObject"))
     val TYPED_REALM_OBJECT_INTERFACE = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("TypedRealmObject"))
     val EMBEDDED_OBJECT_INTERFACE = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("EmbeddedRealmObject"))
-    val ASYMMETRIC_OBJECT_INTERFACE = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("AsymmetricRealmObject"))
 
     val CLASS_APP_CONFIGURATION = ClassId(FqNames.PACKAGE_MONGODB, Name.identifier("AppConfiguration"))
 

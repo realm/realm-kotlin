@@ -41,9 +41,6 @@ internal open class DynamicRealmImpl(
         query: String,
         vararg args: Any?
     ): RealmQuery<DynamicRealmObject> {
-        if (realmReference.owner.schema()[className]?.kind == RealmClassKind.ASYMMETRIC) {
-            throw IllegalArgumentException("Queries on asymmetric objects are not allowed: $className")
-        }
         return ObjectQuery(
             realmReference,
             realmReference.schemaMetadata.getOrThrow(className).classKey,
