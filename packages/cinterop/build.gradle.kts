@@ -486,7 +486,6 @@ fun getSharedCMakeFlags(buildType: BuildType, ccache: Boolean = true): Array<Str
     }
     with(args) {
         add("-DCMAKE_BUILD_TYPE=$cmakeBuildType")
-        add("-DREALM_ENABLE_SYNC=0")
         add("-DREALM_NO_TESTS=1")
         add("-DREALM_BUILD_LIB_ONLY=true")
         add("-DREALM_CORE_SUBMODULE_BUILD=true")
