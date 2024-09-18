@@ -22,6 +22,6 @@ import kotlin.test.assertEquals
 class PlatformInfoTest {
     @Test
     fun platformInfo() {
-]        assertEquals("MacOS", OS_NAME)
+        assertEquals("MacOS", OS_NAME)
     }
 }
