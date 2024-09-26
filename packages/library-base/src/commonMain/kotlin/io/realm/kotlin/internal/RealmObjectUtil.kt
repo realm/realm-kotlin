@@ -95,13 +95,12 @@ internal fun <T : BaseRealmObject> RealmObjectPointer.toRealmObject(
  * Instantiates a [BaseRealmObject] from its Core [RealmObjectReference] representation. For internal use only.
  */
 internal fun <T : BaseRealmObject> RealmObjectReference<T>.toRealmObject(): T =
-    mediator.createInstanceOf(type)
-        .manage(
-            realm = owner,
-            mediator = mediator,
-            type = type,
-            objectPointer = objectPointer,
-        )
+    mediator.createInstanceOf(type).manage(
+        realm = owner,
+        mediator = mediator,
+        type = type,
+        objectPointer = objectPointer,
+    )
 
 /**
  * Returns the [RealmObjectCompanion] associated with a given [BaseRealmObject]'s [KClass].
