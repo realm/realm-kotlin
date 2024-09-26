@@ -1,6 +1,6 @@
 <picture>
     <source srcset="./images/logo-dark.svg" media="(prefers-color-scheme: dark)" alt="realm by MongoDB">
-    <img src="./images/logo.svg" alt="realm by MongoDB">
+    <img src="./images/logo.svg"  alt="realm by MongoDB">
 </picture>
 
 [![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/realm/kotlin/io.realm.kotlin.gradle.plugin/maven-metadata.xml.svg?colorB=ff6b00&label=Gradle%20Plugin%20Portal)](https://plugins.gradle.org/plugin/io.realm.kotlin)
