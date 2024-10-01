@@ -18,7 +18,6 @@ This repository holds the source code for the Kotlin SDK for Realm, which runs o
 * **Intuitive to Developers:** Realm’s object-oriented data model is simple to learn, doesn’t need an ORM, and lets you write less code.
 * **Built for Mobile:** Realm is fully-featured, lightweight, and efficiently uses memory, disk space, and battery life.
 * **Designed for Offline Use:** Realm’s local database persists data on-disk, so apps work as well offline as they do online.
-* **[Atlas Device Sync](https://www.mongodb.com/docs/atlas/app-services/sync/)**: Makes it simple to keep data in sync across users, devices, and your backend in real-time. Get started for free with [a template application](https://github.com/mongodb/template-app-kotlin-todo) and [create the cloud backend](http://mongodb.com/realm/register?utm_medium=github_atlas_CTA&utm_source=realm_kotlin_github).
 
 # General Availability 
 
@@ -37,7 +36,7 @@ If you are migrating from [Realm Java](https://github.com/realm/realm-java), ple
 
 ## Installation
 
-Installation differs slightly depending on the type of project and whether or not you are using Device Sync. See the details in the documentation:
+Installation differs slightly depending on the type of project. See the details in the documentation:
 
 * [Android](https://www.mongodb.com/docs/atlas/device-sdks/sdk/kotlin/install/#std-label-kotlin-install-android)
 * [Kotlin Multiplatform](https://www.mongodb.com/docs/atlas/device-sdks/sdk/kotlin/install/#std-label-kotlin-install-kotlin-multiplatform)

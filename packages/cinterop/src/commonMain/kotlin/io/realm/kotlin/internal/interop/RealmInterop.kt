@@ -81,46 +81,6 @@ typealias RealmChangesPointer = NativePointer<RealmChangesT>
 typealias RealmSchedulerPointer = NativePointer<RealmSchedulerT>
 typealias RealmKeyPathArrayPointer = NativePointer<RealmKeyPathArrayT>
 
-/**
- * Class for grouping and normalizing values we want to send as part of
- * logging in Sync Users.
- */
-@Suppress("LongParameterList")
-class SyncConnectionParams(
-    sdkVersion: String,
-    bundleId: String,
-    platformVersion: String,
-    device: String,
-    deviceVersion: String,
-    framework: Runtime,
-    frameworkVersion: String
-) {
-    val sdkName = "Kotlin"
-    val bundleId: String
-    val sdkVersion: String
-    val platformVersion: String
-    val device: String
-    val deviceVersion: String
-    val framework: String
-    val frameworkVersion: String
-
-    enum class Runtime(public val description: String) {
-        JVM("JVM"),
-        ANDROID("Android"),
-        NATIVE("Native")
-    }
-
-    init {
-        this.sdkVersion = sdkVersion
-        this.bundleId = bundleId
-        this.platformVersion = platformVersion
-        this.device = device
-        this.deviceVersion = deviceVersion
-        this.framework = framework.description
-        this.frameworkVersion = frameworkVersion
-    }
-}
-
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
     fun realm_value_get(value: RealmValue): Any?
