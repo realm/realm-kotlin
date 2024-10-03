@@ -17,16 +17,12 @@
 package io.realm.kotlin.test.android
 
 import io.realm.kotlin.internal.platform.OS_NAME
-import io.realm.kotlin.internal.platform.OS_VERSION
-import io.realm.kotlin.internal.platform.RUNTIME
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class PlatformInfoTest {
     @Test
     fun platformInfo() {
-        assertEquals("Android", RUNTIME.description)
         assertEquals("Android", OS_NAME)
-        assertEquals(android.os.Build.VERSION.RELEASE, OS_VERSION)
     }
 }

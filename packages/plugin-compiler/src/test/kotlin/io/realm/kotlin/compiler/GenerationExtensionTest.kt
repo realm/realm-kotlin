@@ -92,11 +92,11 @@ class GenerationExtensionTest {
         ).joinToString(separator = File.separator)
 
         fun assertGeneratedIR() {
-            val outputFile = File("${outputDir()}/main/02_AFTER.ValidateIrBeforeLowering.ir")
+            val outputFile = File("${outputDir()}/main/02_AFTER.JvmValidateIrBeforeLowering.ir")
             stripInputPath(outputFile, fileMap)
             val expected = File("${expectedDir()}/02_AFTER.ValidateIrBeforeLowering.ir").readText()
             val actual = outputFile.readText()
-            assertEquals(expected, actual)
+            assertEquals(expected, actual, "Not equal")
         }
     }
 
@@ -366,23 +366,6 @@ class GenerationExtensionTest {
         // assertEquals("Hello Zepp", nameProperty.call(sampleModel))
     }
 
-    @Test
-    fun testBundleIdRewiring() {
-        val inputs = Files("/sync")
-        val result = compile(
-            inputs,
-            options = listOf(
-                PluginOption(
-                    pluginId = "io.realm.kotlin",
-                    optionName = "bundleId",
-                    optionValue = "BUNDLE_ID"
-                ),
-            )
-        )
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-        inputs.assertGeneratedIR()
-    }
-
     @Suppress("deprecation")
     private fun compile(
         inputs: Files,
@@ -397,7 +380,7 @@ class GenerationExtensionTest {
             kotlincArguments = listOf(
                 "-Xjvm-default=all-compatibility",
                 "-Xdump-directory=${inputs.outputDir()}",
-                "-Xphases-to-dump-after=ValidateIrBeforeLowering"
+                "-Xphases-to-dump-after=JvmValidateIrBeforeLowering"
             )
             commandLineProcessors = listOf(RealmCommandLineProcessor())
             pluginOptions = options

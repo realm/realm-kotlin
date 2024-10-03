@@ -41,7 +41,6 @@ fun getPropertyValue(propertyName: String): String? {
         include(":plugin-compiler")
         include(":plugin-compiler-shaded")
         include(":library-base")
-        include(":library-sync")
         include(":cinterop")
         include(":jni-swig-stub")
     }
@@ -49,6 +48,5 @@ fun getPropertyValue(propertyName: String): String? {
 (getPropertyValue("includeTestModules")?.let { it.toBoolean() } ?: true).let {
     if (it) {
         include(":test-base")
-        include(":test-sync")
     }
 }

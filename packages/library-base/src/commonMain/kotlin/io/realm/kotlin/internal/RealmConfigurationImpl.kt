@@ -63,7 +63,6 @@ internal class RealmConfigurationImpl(
     migration,
     automaticBacklinkHandling,
     initialDataCallback,
-    false,
     inMemory,
     initialRealmFileConfiguration,
     logger

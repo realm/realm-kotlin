@@ -83,7 +83,6 @@ val nativeLibraryIncludesMacosUniversalRelease = includeBinaries(
         "Release/librealm.a",
         "parser/Release/librealm-parser.a",
         "object-store/Release/librealm-object-store.a",
-        "sync/Release/librealm-sync.a"
     ).map { "$absoluteCorePath/build-macos_universal/src/realm/$it" }
 )
 val nativeLibraryIncludesMacosUniversalDebug = includeBinaries(
@@ -92,7 +91,6 @@ val nativeLibraryIncludesMacosUniversalDebug = includeBinaries(
         "Debug/librealm-dbg.a",
         "parser/Debug/librealm-parser-dbg.a",
         "object-store/Debug/librealm-object-store-dbg.a",
-        "sync/Debug/librealm-sync-dbg.a"
     ).map { "$absoluteCorePath/build-macos_universal-dbg/src/realm/$it" }
 )
 val releaseLibs = listOf(
@@ -100,14 +98,12 @@ val releaseLibs = listOf(
     "librealm.a",
     "librealm-parser.a",
     "librealm-object-store.a",
-    "librealm-sync.a"
 )
 val debugLibs = listOf(
     "librealm-ffi-static-dbg.a",
     "librealm-dbg.a",
     "librealm-parser-dbg.a",
     "librealm-object-store-dbg.a",
-    "librealm-sync-dbg.a"
 )
 val nativeLibraryIncludesIosArm64Debug =
     includeBinaries(debugLibs.map { "$absoluteCorePath/build-capi_ios_Arm64-dbg/lib/$it" })
@@ -490,7 +486,6 @@ fun getSharedCMakeFlags(buildType: BuildType, ccache: Boolean = true): Array<Str
     }
     with(args) {
         add("-DCMAKE_BUILD_TYPE=$cmakeBuildType")
-        add("-DREALM_ENABLE_SYNC=1")
         add("-DREALM_NO_TESTS=1")
         add("-DREALM_BUILD_LIB_ONLY=true")
         add("-DREALM_CORE_SUBMODULE_BUILD=true")
@@ -616,7 +611,6 @@ fun Task.build_C_API_Macos_Universal(buildVariant: BuildType) {
     outputs.file(project.file("$directory/src/realm/$buildVariant/librealm.a"))
     outputs.file(project.file("$directory/src/realm/object-store/c_api/$buildVariant/librealm-ffi-static.a"))
     outputs.file(project.file("$directory/src/realm/object-store/$buildVariant/librealm-object-store.a"))
-    outputs.file(project.file("$directory/src/realm/sync/$buildVariant/librealm-sync.a"))
 }
 
 fun Task.build_C_API_Simulator(arch: String, buildType: BuildType) {
@@ -658,7 +652,6 @@ fun Task.build_C_API_Simulator(arch: String, buildType: BuildType) {
     outputs.file(project.file("$directory/lib/librealm${buildType.buildDirSuffix}.a"))
     outputs.file(project.file("$directory/lib/librealm-parser${buildType.buildDirSuffix}.a"))
     outputs.file(project.file("$directory/lib/librealm-object-store${buildType.buildDirSuffix}.a"))
-    outputs.file(project.file("$directory/lib/librealm-sync${buildType.buildDirSuffix}.a"))
 }
 
 fun Task.build_C_API_iOS_Arm64(buildType: BuildType) {
@@ -701,7 +694,6 @@ fun Task.build_C_API_iOS_Arm64(buildType: BuildType) {
     outputs.file(project.file("$directory/lib/librealm${buildType.buildDirSuffix}.a"))
     outputs.file(project.file("$directory/lib/librealm-parser${buildType.buildDirSuffix}.a"))
     outputs.file(project.file("$directory/lib/librealm-object-store${buildType.buildDirSuffix}.a"))
-    outputs.file(project.file("$directory/lib/librealm-sync${buildType.buildDirSuffix}.a"))
 }
 
 afterEvaluate {

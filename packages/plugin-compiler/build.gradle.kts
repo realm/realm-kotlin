@@ -42,7 +42,6 @@ dependencies {
     // Have to be mentioned explicitly as it is not an api dependency of library
     implementation(project(":cinterop"))
     testImplementation(project(":library-base"))
-    testImplementation(project(":library-sync"))
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

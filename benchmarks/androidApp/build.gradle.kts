@@ -47,7 +47,7 @@ android {
 }
 
 dependencies {
-    androidTestImplementation("io.realm.kotlin:library-sync:${Realm.version}")
+    androidTestImplementation("io.realm.kotlin:library-base:${Realm.version}")
     androidTestImplementation("androidx.test:runner:${Versions.androidxTest}")
     androidTestImplementation("androidx.test.ext:junit:${Versions.androidxJunit}")
     androidTestImplementation("junit:junit:${Versions.junit}")

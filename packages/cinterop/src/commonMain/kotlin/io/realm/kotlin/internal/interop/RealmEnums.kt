@@ -31,7 +31,6 @@ expect enum class SchemaMode {
 expect object ClassFlags {
     val RLM_CLASS_NORMAL: Int
     val RLM_CLASS_EMBEDDED: Int
-    val RLM_CLASS_ASYMMETRIC: Int
 }
 
 expect enum class PropertyType {

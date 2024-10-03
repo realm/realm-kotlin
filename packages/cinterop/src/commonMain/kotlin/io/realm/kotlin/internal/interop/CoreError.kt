@@ -34,17 +34,9 @@ data class CategoryFlags(val categoryFlags: Int) {
          * associated either.
          */
         val CATEGORY_ORDER: List<ErrorCategory> = listOf(
-            ErrorCategory.RLM_ERR_CAT_CUSTOM_ERROR,
-            ErrorCategory.RLM_ERR_CAT_WEBSOCKET_ERROR,
-            ErrorCategory.RLM_ERR_CAT_SYNC_ERROR,
-            ErrorCategory.RLM_ERR_CAT_SERVICE_ERROR,
-            ErrorCategory.RLM_ERR_CAT_JSON_ERROR,
-            ErrorCategory.RLM_ERR_CAT_CLIENT_ERROR,
             ErrorCategory.RLM_ERR_CAT_SYSTEM_ERROR,
             ErrorCategory.RLM_ERR_CAT_FILE_ACCESS,
-            ErrorCategory.RLM_ERR_CAT_HTTP_ERROR,
             ErrorCategory.RLM_ERR_CAT_INVALID_ARG,
-            ErrorCategory.RLM_ERR_CAT_APP_ERROR,
             ErrorCategory.RLM_ERR_CAT_LOGIC,
             ErrorCategory.RLM_ERR_CAT_RUNTIME,
         )

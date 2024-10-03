@@ -34,7 +34,6 @@ import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.toRealmObject
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.schema.RealmClass
-import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.schema.RealmSchema
 
 // Public due to tests needing to access `close` and trying to make the class visible through
@@ -59,7 +58,6 @@ public open class DynamicMutableRealmImpl(
         query: String,
         vararg args: Any?
     ): RealmQuery<DynamicMutableRealmObject> {
-        checkAsymmetric(className, "Queries on asymmetric objects are not allowed: $className")
         return ObjectQuery(
             realmReference,
             realmReference.schemaMetadata.getOrThrow(className).classKey,
@@ -76,7 +74,6 @@ public open class DynamicMutableRealmImpl(
         obj: DynamicRealmObject,
         updatePolicy: UpdatePolicy
     ): DynamicMutableRealmObject {
-        checkAsymmetric(obj.type, "Asymmetric Realm objects can only be added using the `insert()` method.")
         return io.realm.kotlin.internal.copyToRealm(configuration.mediator, realmReference, obj, updatePolicy, mutableMapOf()) as DynamicMutableRealmObject
     }
 
@@ -102,22 +99,13 @@ public open class DynamicMutableRealmImpl(
     }
 
     override fun delete(className: String) {
-        checkAsymmetric(className, "Asymmetric Realm objects cannot be deleted manually: $className")
         delete(query(className).find())
-    }
-
-    private fun checkAsymmetric(className: String, errorMessage: String) {
-        if (realmReference.owner.schema()[className]?.kind == RealmClassKind.ASYMMETRIC) {
-            throw IllegalArgumentException(errorMessage)
-        }
     }
 
     override fun deleteAll() {
         schema().let { schema: RealmSchema ->
             for (schemaClass: RealmClass in schema.classes) {
-                if (schema[schemaClass.name]?.kind != RealmClassKind.ASYMMETRIC) {
-                    delete(schemaClass.name)
-                }
+                delete(schemaClass.name)
             }
         }
     }

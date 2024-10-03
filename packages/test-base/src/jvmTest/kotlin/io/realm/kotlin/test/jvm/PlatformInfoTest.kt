@@ -17,16 +17,12 @@
 package io.realm.kotlin.test.jvm
 
 import io.realm.kotlin.internal.platform.OS_NAME
-import io.realm.kotlin.internal.platform.OS_VERSION
-import io.realm.kotlin.internal.platform.RUNTIME
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class PlatformInfoTest {
     @Test
     fun platformInfo() {
-        assertEquals("JVM", RUNTIME.description)
         assertEquals(System.getProperty("os.name"), OS_NAME)
-        assertEquals(System.getProperty("os.version"), OS_VERSION)
     }
 }

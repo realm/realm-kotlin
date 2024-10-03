@@ -102,15 +102,12 @@ tasks.register("publishCIPackages") {
                     ":cinterop:publishIosSimulatorArm64PublicationToTestRepository",
                     ":library-base:publishIosArm64PublicationToTestRepository",
                     ":library-base:publishIosSimulatorArm64PublicationToTestRepository",
-                    ":library-sync:publishIosArm64PublicationToTestRepository",
-                    ":library-sync:publishIosSimulatorArm64PublicationToTestRepository",
                 )
             }
             "iosX64" -> {
                 dependsOn(
                     ":cinterop:publishIosX64PublicationToTestRepository",
                     ":library-base:publishIosX64PublicationToTestRepository",
-                    ":library-sync:publishIosX64PublicationToTestRepository",
                 )
             }
             "jvm" -> {
@@ -118,21 +115,18 @@ tasks.register("publishCIPackages") {
                     ":jni-swig-stub:publishAllPublicationsToTestRepository",
                     ":cinterop:publishJvmPublicationToTestRepository",
                     ":library-base:publishJvmPublicationToTestRepository",
-                    ":library-sync:publishJvmPublicationToTestRepository",
                 )
             }
             "macosX64" -> {
                 dependsOn(
                     ":cinterop:publishMacosX64PublicationToTestRepository",
                     ":library-base:publishMacosX64PublicationToTestRepository",
-                    ":library-sync:publishMacosX64PublicationToTestRepository",
                 )
             }
             "macosArm64" -> {
                 dependsOn(
                     ":cinterop:publishMacosArm64PublicationToTestRepository",
                     ":library-base:publishMacosArm64PublicationToTestRepository",
-                    ":library-sync:publishMacosArm64PublicationToTestRepository",
                 )
             }
             "android" -> {
@@ -140,14 +134,12 @@ tasks.register("publishCIPackages") {
                     ":jni-swig-stub:publishAllPublicationsToTestRepository",
                     ":cinterop:publishAndroidReleasePublicationToTestRepository",
                     ":library-base:publishAndroidReleasePublicationToTestRepository",
-                    ":library-sync:publishAndroidReleasePublicationToTestRepository",
                 )
             }
             "metadata" -> {
                 dependsOn(
                     ":cinterop:publishKotlinMultiplatformPublicationToTestRepository",
                     ":library-base:publishKotlinMultiplatformPublicationToTestRepository",
-                    ":library-sync:publishKotlinMultiplatformPublicationToTestRepository",
                 )
             }
             "compilerPlugin" -> {

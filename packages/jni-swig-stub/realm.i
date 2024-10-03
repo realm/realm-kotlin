@@ -1,7 +1,5 @@
 %module(directors="1") realmc
 
-#define REALM_APP_SERVICES 1
-
 %{
 #include "realm.h"
 #include <cstring>
@@ -123,19 +121,6 @@ protected void finalize() {
     };
 }
 
-// reuse void callback type as template for `realm_sync_wait_for_completion_func_t`
-%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
-(realm_sync_wait_for_completion_func_t, void* userdata, realm_free_userdata_func_t)
-};
-%typemap(in) (realm_sync_wait_for_completion_func_t, void* userdata, realm_free_userdata_func_t) {
-    auto jenv = get_env(true);
-    $1 = reinterpret_cast<realm_sync_wait_for_completion_func_t>(transfer_completion_callback);
-    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
-    $3 = [](void *userdata) {
-        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-    };
-}
-
 // reuse void callback type as template for `realm_migration_func_t` function
 %apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
     (realm_migration_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
@@ -214,63 +199,6 @@ protected void finalize() {
     };
 }
 
-// reuse void callback type as template for `realm_async_open_task_completion_func_t` function
-%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
-(realm_async_open_task_completion_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
-};
-%typemap(in) (realm_async_open_task_completion_func_t, void* userdata, realm_free_userdata_func_t userdata_free) {
-    auto jenv = get_env(true);
-    $1 = reinterpret_cast<realm_async_open_task_completion_func_t>(realm_async_open_task_callback);
-    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
-    $3 = [](void *userdata) {
-        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-    };
-}
-
-
-// reuse void callback type as template for `realm_sync_connection_state_changed_func_t` function
-%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
-    (realm_sync_connection_state_changed_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
-};
-%typemap(in) (realm_sync_connection_state_changed_func_t, void* userdata, realm_free_userdata_func_t userdata_free) {
-    auto jenv = get_env(true);
-    $1 = reinterpret_cast<realm_sync_connection_state_changed_func_t>(realm_sync_session_connection_state_change_callback);
-    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
-    $3 = [](void *userdata) {
-        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-    };
-}
-
-// Core isn't strict about naming their callbacks, so sometimes SWIG cannot map correctly :/
-%typemap(jstype) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;
-%typemap(jtype) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;
-%typemap(javain) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "$javainput";
-%typemap(jni) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "jobject";
-%typemap(in) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) {
-    auto jenv = get_env(true);
-    $1 = reinterpret_cast<realm_sync_on_subscription_state_changed_t>(realm_subscriptionset_changed_callback);
-    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
-    $3 = [](void *userdata) {
-        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-    };
-}
-
-// Thread Observer callback
-%typemap(jstype) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "Object" ;
-%typemap(jtype) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "Object" ;
-%typemap(javain) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "$javainput";
-%typemap(jni) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "jobject";
-%typemap(in) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) {
-    auto jenv = get_env(true);
-    $1 = reinterpret_cast<realm_on_object_store_thread_callback_t>(realm_sync_thread_created);
-    $2 = reinterpret_cast<realm_on_object_store_thread_callback_t>(realm_sync_thread_destroyed);
-    $3 = reinterpret_cast<realm_on_object_store_error_callback_t>(realm_sync_thread_error);
-    $4 = static_cast<jobject>(jenv->NewGlobalRef($input));
-    $5 = [](void *userdata) {
-        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-    };
-}
-
 // String handling
 typedef jstring realm_string_t;
 // Typemap used for passing realm_string_t into the C-API in situations where the string buffer
@@ -303,15 +231,9 @@ typedef jstring realm_string_t;
 // Reuse above type maps on other pointers too
 %apply void* { realm_t*, realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t*,
                realm_results_t*, realm_notification_token_t*, realm_object_changes_t*,
-               realm_list_t*, realm_app_credentials_t*, realm_app_config_t*, realm_app_t*,
-               realm_sync_client_config_t*, realm_user_t*, realm_sync_config_t*,
-               realm_sync_session_t*, realm_http_completion_func_t, realm_http_transport_t*,
-               realm_collection_changes_t*, realm_callback_token_t*,
-               realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
-               realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
+               realm_list_t*, realm_collection_changes_t*, realm_callback_token_t*,
                realm_set_t*, realm_async_open_task_t*, realm_dictionary_t*,
-               realm_sync_session_connection_state_notification_token_t*,
-               realm_dictionary_changes_t*, realm_scheduler_t*, realm_sync_socket_t*,
+               realm_dictionary_changes_t*, realm_scheduler_t*,
                realm_key_path_array_t* };
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
@@ -342,10 +264,6 @@ bool realm_object_is_valid(const realm_object_t*);
     jresult = (jboolean)result;
 }
 
-%typemap(javaimports) realm_sync_socket_callback_result %{
-import static io.realm.kotlin.internal.interop.realm_errno_e.*;
-%}
-
 // Just showcasing a wrapping concept. Maybe we should just go with `long` (apply void* as above)
 //%typemap(jstype) realm_t* "LongPointerWrapper"
 //%typemap(javain) realm_t* "$javainput.ptr()"
@@ -366,8 +284,6 @@ import static io.realm.kotlin.internal.interop.realm_errno_e.*;
 %array_functions(realm_index_range_t, indexRangeArray);
 %array_functions(realm_collection_move_t, collectionMoveArray);
 %array_functions(realm_query_arg_t, queryArgArray);
-%array_functions(realm_user_identity_t, identityArray);
-%array_functions(realm_app_user_apikey_t, apiKeyArray);
 // Workaround for updated Swig behavior with 4.2.0
 // https://github.com/swig/swig/commit/ecaa052f3d319834a66aaa07047be3662e5e52e2#diff-cd2fcc891412baae0fc46479c0870cbdd18133d06d68dcd216be8a37ecf77b37R10
 %clear size_t nelements, size_t index;
@@ -394,9 +310,6 @@ import static io.realm.kotlin.internal.interop.realm_errno_e.*;
 SWIG_JavaArrayArgoutSchar(jenv, jarr$argnum, (signed char *)$1, $input);
 %}
 %typemap(freearg) uint8_t*;
-
-// Reuse above typemap for passing uint8_t[64] parameter for realm_sync_client_config_set_metadata_encryption_key as Byte[]
-%apply uint8_t* {uint8_t [64]};
 
 // Enable passing void** as long[]
 %apply int64_t[] {void **};
@@ -532,6 +445,10 @@ $result = SWIG_JavaArrayOutLonglong(jenv, (long long *)result, 2);
 %ignore "realm_set_add_notification_callback";
 %ignore "realm_dictionary_add_notification_callback";
 %ignore "realm_results_add_notification_callback";
+%ignore "realm_sync_socket_callback_result_e";
+%ignore "realm_sync_errno_connection_e";
+%ignore "realm_sync_errno_session_e";
+%ignore "realm_web_socket_errno_e";
 
 // Swig doesn't understand __attribute__ so eliminate it
 #define __attribute__(x)

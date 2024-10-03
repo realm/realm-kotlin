@@ -42,7 +42,6 @@ public data class RealmClassImpl(
     override val kind: RealmClassKind
         get() = when {
             cinteropClass.isEmbedded -> RealmClassKind.EMBEDDED
-            cinteropClass.isAsymmetric -> RealmClassKind.ASYMMETRIC
             else -> RealmClassKind.STANDARD
         }
 

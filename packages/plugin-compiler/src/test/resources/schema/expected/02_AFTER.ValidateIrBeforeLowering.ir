@@ -49,13 +49,12 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public final fun io_realm_kotlin_schema (): kotlin.Any declared in schema.input.A.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.kotlin.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>) [primary] declared in io.realm.kotlin.internal.schema.RealmClassImpl' type=io.realm.kotlin.internal.schema.RealmClassImpl origin=null
-                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean, isAsymmetric: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
+                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.ClassInfo.Companion
                   name: CONST String type=kotlin.String value="A"
                   primaryKey: CONST Null type=kotlin.Nothing? value=null
                   numProperties: CONST Long type=kotlin.Long value=0
                   isEmbedded: CONST Boolean type=kotlin.Boolean value=false
-                  isAsymmetric: CONST Boolean type=kotlin.Boolean value=false
                 cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo> origin=null
                   <T>: io.realm.kotlin.internal.interop.PropertyInfo
                   elements: VARARG type=kotlin.Array<io.realm.kotlin.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>
@@ -90,7 +89,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<schema.input.A> declared in schema.input.A.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<schema.input.A> visibility:private' type=kotlin.reflect.KClass<schema.input.A> origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<schema.input.A> visibility:private declared in schema.input.A.Companion' type=kotlin.reflect.KClass<schema.input.A> origin=null
                   receiver: GET_VAR '<this>: schema.input.A.Companion declared in schema.input.A.Companion.<get-io_realm_kotlin_class>' type=schema.input.A.Companion origin=null
         PROPERTY name:io_realm_kotlin_className visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private
@@ -103,7 +102,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_className> (): kotlin.String declared in schema.input.A.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private' type=kotlin.String origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private declared in schema.input.A.Companion' type=kotlin.String origin=null
                   receiver: GET_VAR '<this>: schema.input.A.Companion declared in schema.input.A.Companion.<get-io_realm_kotlin_className>' type=schema.input.A.Companion origin=null
         PROPERTY name:io_realm_kotlin_fields visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> visibility:private
@@ -119,7 +118,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_fields> (): kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> declared in schema.input.A.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> visibility:private' type=kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> visibility:private declared in schema.input.A.Companion' type=kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> origin=null
                   receiver: GET_VAR '<this>: schema.input.A.Companion declared in schema.input.A.Companion.<get-io_realm_kotlin_fields>' type=schema.input.A.Companion origin=null
         PROPERTY name:io_realm_kotlin_primaryKey visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.A, kotlin.Any?> visibility:private
@@ -132,7 +131,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_primaryKey> (): kotlin.reflect.KMutableProperty1<schema.input.A, kotlin.Any?> declared in schema.input.A.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.A, kotlin.Any?> visibility:private' type=kotlin.reflect.KMutableProperty1<schema.input.A, kotlin.Any?> origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.A, kotlin.Any?> visibility:private declared in schema.input.A.Companion' type=kotlin.reflect.KMutableProperty1<schema.input.A, kotlin.Any?> origin=null
                   receiver: GET_VAR '<this>: schema.input.A.Companion declared in schema.input.A.Companion.<get-io_realm_kotlin_primaryKey>' type=schema.input.A.Companion origin=null
         PROPERTY name:io_realm_kotlin_classKind visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private
@@ -145,7 +144,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in schema.input.A.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private' type=io.realm.kotlin.schema.RealmClassKind origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private declared in schema.input.A.Companion' type=io.realm.kotlin.schema.RealmClassKind origin=null
                   receiver: GET_VAR '<this>: schema.input.A.Companion declared in schema.input.A.Companion.<get-io_realm_kotlin_classKind>' type=schema.input.A.Companion origin=null
       PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
         FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.A>? visibility:private
@@ -158,7 +157,7 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<schema.input.A>? declared in schema.input.A'
-              GET_FIELD 'FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.A>? visibility:private' type=io.realm.kotlin.internal.RealmObjectReference<schema.input.A>? origin=null
+              GET_FIELD 'FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.A>? visibility:private declared in schema.input.A' type=io.realm.kotlin.internal.RealmObjectReference<schema.input.A>? origin=null
                 receiver: GET_VAR '<this>: schema.input.A declared in schema.input.A.<get-io_realm_kotlin_objectReference>' type=schema.input.A origin=null
         FUN name:<set-io_realm_kotlin_objectReference> visibility:public modality:OPEN <> ($this:schema.input.A, <set-?>:io.realm.kotlin.internal.RealmObjectReference<schema.input.A>?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
@@ -167,7 +166,7 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.kotlin.internal.RealmObjectReference<schema.input.A>?
           BLOCK_BODY
-            SET_FIELD 'FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.A>? visibility:private' type=kotlin.Unit origin=null
+            SET_FIELD 'FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.A>? visibility:private declared in schema.input.A' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.A declared in schema.input.A.<set-io_realm_kotlin_objectReference>' type=schema.input.A origin=null
               value: GET_VAR '<set-?>: io.realm.kotlin.internal.RealmObjectReference<schema.input.A>? declared in schema.input.A.<set-io_realm_kotlin_objectReference>' type=io.realm.kotlin.internal.RealmObjectReference<schema.input.A>? origin=null
     CLASS CLASS name:B modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.RealmObject; io.realm.kotlin.internal.RealmObjectInternal]
@@ -218,13 +217,12 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public final fun io_realm_kotlin_schema (): kotlin.Any declared in schema.input.B.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.kotlin.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>) [primary] declared in io.realm.kotlin.internal.schema.RealmClassImpl' type=io.realm.kotlin.internal.schema.RealmClassImpl origin=null
-                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean, isAsymmetric: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
+                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.ClassInfo.Companion
                   name: CONST String type=kotlin.String value="B"
                   primaryKey: CONST Null type=kotlin.Nothing? value=null
                   numProperties: CONST Long type=kotlin.Long value=0
                   isEmbedded: CONST Boolean type=kotlin.Boolean value=false
-                  isAsymmetric: CONST Boolean type=kotlin.Boolean value=false
                 cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo> origin=null
                   <T>: io.realm.kotlin.internal.interop.PropertyInfo
                   elements: VARARG type=kotlin.Array<io.realm.kotlin.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>
@@ -259,7 +257,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<schema.input.B> declared in schema.input.B.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<schema.input.B> visibility:private' type=kotlin.reflect.KClass<schema.input.B> origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<schema.input.B> visibility:private declared in schema.input.B.Companion' type=kotlin.reflect.KClass<schema.input.B> origin=null
                   receiver: GET_VAR '<this>: schema.input.B.Companion declared in schema.input.B.Companion.<get-io_realm_kotlin_class>' type=schema.input.B.Companion origin=null
         PROPERTY name:io_realm_kotlin_className visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private
@@ -272,7 +270,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_className> (): kotlin.String declared in schema.input.B.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private' type=kotlin.String origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private declared in schema.input.B.Companion' type=kotlin.String origin=null
                   receiver: GET_VAR '<this>: schema.input.B.Companion declared in schema.input.B.Companion.<get-io_realm_kotlin_className>' type=schema.input.B.Companion origin=null
         PROPERTY name:io_realm_kotlin_fields visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> visibility:private
@@ -288,7 +286,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_fields> (): kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> declared in schema.input.B.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> visibility:private' type=kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> visibility:private declared in schema.input.B.Companion' type=kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> origin=null
                   receiver: GET_VAR '<this>: schema.input.B.Companion declared in schema.input.B.Companion.<get-io_realm_kotlin_fields>' type=schema.input.B.Companion origin=null
         PROPERTY name:io_realm_kotlin_primaryKey visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.B, kotlin.Any?> visibility:private
@@ -301,7 +299,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_primaryKey> (): kotlin.reflect.KMutableProperty1<schema.input.B, kotlin.Any?> declared in schema.input.B.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.B, kotlin.Any?> visibility:private' type=kotlin.reflect.KMutableProperty1<schema.input.B, kotlin.Any?> origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.B, kotlin.Any?> visibility:private declared in schema.input.B.Companion' type=kotlin.reflect.KMutableProperty1<schema.input.B, kotlin.Any?> origin=null
                   receiver: GET_VAR '<this>: schema.input.B.Companion declared in schema.input.B.Companion.<get-io_realm_kotlin_primaryKey>' type=schema.input.B.Companion origin=null
         PROPERTY name:io_realm_kotlin_classKind visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private
@@ -314,7 +312,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in schema.input.B.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private' type=io.realm.kotlin.schema.RealmClassKind origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private declared in schema.input.B.Companion' type=io.realm.kotlin.schema.RealmClassKind origin=null
                   receiver: GET_VAR '<this>: schema.input.B.Companion declared in schema.input.B.Companion.<get-io_realm_kotlin_classKind>' type=schema.input.B.Companion origin=null
       PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
         FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.B>? visibility:private
@@ -327,7 +325,7 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<schema.input.B>? declared in schema.input.B'
-              GET_FIELD 'FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.B>? visibility:private' type=io.realm.kotlin.internal.RealmObjectReference<schema.input.B>? origin=null
+              GET_FIELD 'FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.B>? visibility:private declared in schema.input.B' type=io.realm.kotlin.internal.RealmObjectReference<schema.input.B>? origin=null
                 receiver: GET_VAR '<this>: schema.input.B declared in schema.input.B.<get-io_realm_kotlin_objectReference>' type=schema.input.B origin=null
         FUN name:<set-io_realm_kotlin_objectReference> visibility:public modality:OPEN <> ($this:schema.input.B, <set-?>:io.realm.kotlin.internal.RealmObjectReference<schema.input.B>?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
@@ -336,7 +334,7 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.kotlin.internal.RealmObjectReference<schema.input.B>?
           BLOCK_BODY
-            SET_FIELD 'FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.B>? visibility:private' type=kotlin.Unit origin=null
+            SET_FIELD 'FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.B>? visibility:private declared in schema.input.B' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.B declared in schema.input.B.<set-io_realm_kotlin_objectReference>' type=schema.input.B origin=null
               value: GET_VAR '<set-?>: io.realm.kotlin.internal.RealmObjectReference<schema.input.B>? declared in schema.input.B.<set-io_realm_kotlin_objectReference>' type=io.realm.kotlin.internal.RealmObjectReference<schema.input.B>? origin=null
     CLASS CLASS name:C modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.RealmObject; io.realm.kotlin.internal.RealmObjectInternal]
@@ -387,13 +385,12 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public final fun io_realm_kotlin_schema (): kotlin.Any declared in schema.input.C.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.kotlin.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>) [primary] declared in io.realm.kotlin.internal.schema.RealmClassImpl' type=io.realm.kotlin.internal.schema.RealmClassImpl origin=null
-                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean, isAsymmetric: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
+                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.ClassInfo.Companion
                   name: CONST String type=kotlin.String value="C"
                   primaryKey: CONST Null type=kotlin.Nothing? value=null
                   numProperties: CONST Long type=kotlin.Long value=0
                   isEmbedded: CONST Boolean type=kotlin.Boolean value=false
-                  isAsymmetric: CONST Boolean type=kotlin.Boolean value=false
                 cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo> origin=null
                   <T>: io.realm.kotlin.internal.interop.PropertyInfo
                   elements: VARARG type=kotlin.Array<io.realm.kotlin.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>
@@ -428,7 +425,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<schema.input.C> declared in schema.input.C.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<schema.input.C> visibility:private' type=kotlin.reflect.KClass<schema.input.C> origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<schema.input.C> visibility:private declared in schema.input.C.Companion' type=kotlin.reflect.KClass<schema.input.C> origin=null
                   receiver: GET_VAR '<this>: schema.input.C.Companion declared in schema.input.C.Companion.<get-io_realm_kotlin_class>' type=schema.input.C.Companion origin=null
         PROPERTY name:io_realm_kotlin_className visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private
@@ -441,7 +438,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_className> (): kotlin.String declared in schema.input.C.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private' type=kotlin.String origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private declared in schema.input.C.Companion' type=kotlin.String origin=null
                   receiver: GET_VAR '<this>: schema.input.C.Companion declared in schema.input.C.Companion.<get-io_realm_kotlin_className>' type=schema.input.C.Companion origin=null
         PROPERTY name:io_realm_kotlin_fields visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> visibility:private
@@ -457,7 +454,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_fields> (): kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> declared in schema.input.C.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> visibility:private' type=kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> visibility:private declared in schema.input.C.Companion' type=kotlin.collections.Map<kotlin.String, kotlin.Pair<kotlin.reflect.KClass<*>, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>>> origin=null
                   receiver: GET_VAR '<this>: schema.input.C.Companion declared in schema.input.C.Companion.<get-io_realm_kotlin_fields>' type=schema.input.C.Companion origin=null
         PROPERTY name:io_realm_kotlin_primaryKey visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.C, kotlin.Any?> visibility:private
@@ -470,7 +467,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_primaryKey> (): kotlin.reflect.KMutableProperty1<schema.input.C, kotlin.Any?> declared in schema.input.C.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.C, kotlin.Any?> visibility:private' type=kotlin.reflect.KMutableProperty1<schema.input.C, kotlin.Any?> origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.C, kotlin.Any?> visibility:private declared in schema.input.C.Companion' type=kotlin.reflect.KMutableProperty1<schema.input.C, kotlin.Any?> origin=null
                   receiver: GET_VAR '<this>: schema.input.C.Companion declared in schema.input.C.Companion.<get-io_realm_kotlin_primaryKey>' type=schema.input.C.Companion origin=null
         PROPERTY name:io_realm_kotlin_classKind visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private
@@ -483,7 +480,7 @@ MODULE_FRAGMENT name:<main>
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
             BLOCK_BODY
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in schema.input.C.Companion'
-                GET_FIELD 'FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private' type=io.realm.kotlin.schema.RealmClassKind origin=null
+                GET_FIELD 'FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private declared in schema.input.C.Companion' type=io.realm.kotlin.schema.RealmClassKind origin=null
                   receiver: GET_VAR '<this>: schema.input.C.Companion declared in schema.input.C.Companion.<get-io_realm_kotlin_classKind>' type=schema.input.C.Companion origin=null
       PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
         FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.C>? visibility:private
@@ -496,7 +493,7 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<schema.input.C>? declared in schema.input.C'
-              GET_FIELD 'FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.C>? visibility:private' type=io.realm.kotlin.internal.RealmObjectReference<schema.input.C>? origin=null
+              GET_FIELD 'FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.C>? visibility:private declared in schema.input.C' type=io.realm.kotlin.internal.RealmObjectReference<schema.input.C>? origin=null
                 receiver: GET_VAR '<this>: schema.input.C declared in schema.input.C.<get-io_realm_kotlin_objectReference>' type=schema.input.C origin=null
         FUN name:<set-io_realm_kotlin_objectReference> visibility:public modality:OPEN <> ($this:schema.input.C, <set-?>:io.realm.kotlin.internal.RealmObjectReference<schema.input.C>?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
@@ -505,7 +502,7 @@ MODULE_FRAGMENT name:<main>
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.kotlin.internal.RealmObjectReference<schema.input.C>?
           BLOCK_BODY
-            SET_FIELD 'FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.C>? visibility:private' type=kotlin.Unit origin=null
+            SET_FIELD 'FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.C>? visibility:private declared in schema.input.C' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: schema.input.C declared in schema.input.C.<set-io_realm_kotlin_objectReference>' type=schema.input.C origin=null
               value: GET_VAR '<set-?>: io.realm.kotlin.internal.RealmObjectReference<schema.input.C>? declared in schema.input.C.<set-io_realm_kotlin_objectReference>' type=io.realm.kotlin.internal.RealmObjectReference<schema.input.C>? origin=null
     PROPERTY name:conf1 visibility:public modality:FINAL [val]
