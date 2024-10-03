@@ -20,7 +20,7 @@ package io.realm.kotlin.test.common
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.dynamic.getValue
+import io.realm.kotlin.dynamic.get
 import io.realm.kotlin.ext.backlinks
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
@@ -217,10 +217,10 @@ class PersistedNameTests {
             .single()
 
         assertNotNull(dynamicSample)
-        assertEquals("Realm", dynamicSample.getValue("persistedNameStringField"))
+        assertEquals("Realm", dynamicSample.get("persistedNameStringField"))
         // We can access property via the public name because the dynamic Realm is build upon a typed
         // Realm via the extension function `asDynamicRealm`.
-        assertEquals("Realm", dynamicSample.getValue("publicNameStringField"))
+        assertEquals("Realm", dynamicSample.get("publicNameStringField"))
     }
 
     // --------------------------------------------------

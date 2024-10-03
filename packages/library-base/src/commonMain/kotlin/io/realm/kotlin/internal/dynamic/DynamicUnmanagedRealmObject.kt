@@ -14,7 +14,7 @@ import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
-import kotlin.reflect.KClass
+import kotlin.reflect.KType
 
 internal class DynamicUnmanagedRealmObject(
     override val type: String,
@@ -29,59 +29,17 @@ internal class DynamicUnmanagedRealmObject(
 
     val properties: MutableMap<String, Any?> = properties.toMutableMap()
 
-    override fun <T : Any> getValue(propertyName: String, clazz: KClass<T>): T =
-        properties[propertyName] as T
-
-    override fun <T : Any> getNullableValue(propertyName: String, clazz: KClass<T>): T? =
-        properties[propertyName] as T?
-
-    override fun getObject(propertyName: String): DynamicMutableRealmObject? =
-        properties[propertyName] as DynamicMutableRealmObject?
-
-    override fun <T : Any> getValueList(propertyName: String, clazz: KClass<T>): RealmList<T> =
-        properties.getOrPut(propertyName) { realmListOf<T>() } as RealmList<T>
-
-    override fun <T : Any> getNullableValueList(
-        propertyName: String,
-        clazz: KClass<T>
-    ): RealmList<T?> = properties.getOrPut(propertyName) { realmListOf<T?>() } as RealmList<T?>
-
-    override fun getObjectList(propertyName: String): RealmList<DynamicMutableRealmObject> =
-        properties.getOrPut(propertyName) { realmListOf<DynamicMutableRealmObject>() }
-            as RealmList<DynamicMutableRealmObject>
-
-    override fun <T : Any> getValueSet(propertyName: String, clazz: KClass<T>): RealmSet<T> =
-        properties.getOrPut(propertyName) { realmSetOf<T>() } as RealmSet<T>
-
-    override fun <T : Any> getNullableValueSet(
-        propertyName: String,
-        clazz: KClass<T>
-    ): RealmSet<T?> = properties.getOrPut(propertyName) { realmSetOf<T?>() } as RealmSet<T?>
-
-    override fun <T : Any> getValueDictionary(
-        propertyName: String,
-        clazz: KClass<T>
-    ): RealmDictionary<T> =
-        properties.getOrPut(propertyName) { realmDictionaryOf<T?>() } as RealmDictionary<T>
-
-    override fun <T : Any> getNullableValueDictionary(
-        propertyName: String,
-        clazz: KClass<T>
-    ): RealmDictionary<T?> =
-        properties.getOrPut(propertyName) { realmDictionaryOf<T?>() } as RealmDictionary<T?>
+    override fun <T> get(propertyName: String, type: KType): T =
+        when (type.classifier) {
+            // FIXME Generic parameter for collection constructors needs to be of the element type
+            RealmList::class -> properties.getOrPut(propertyName) { realmListOf<T>() } as T
+            RealmSet::class -> properties.getOrPut(propertyName) { realmSetOf<T>() } as T
+            RealmDictionary::class -> properties.getOrPut(propertyName) { realmDictionaryOf<T>() } as T
+            else -> properties[propertyName] as T
+        }
 
     override fun getBacklinks(propertyName: String): RealmResults<out DynamicRealmObject> =
         throw IllegalStateException("Unmanaged dynamic realm objects do not support backlinks.")
-
-    override fun getObjectSet(propertyName: String): RealmSet<DynamicMutableRealmObject> =
-        properties.getOrPut(propertyName) { realmSetOf<DynamicMutableRealmObject>() }
-            as RealmSet<DynamicMutableRealmObject>
-
-    override fun getObjectDictionary(
-        propertyName: String
-    ): RealmDictionary<DynamicMutableRealmObject?> =
-        properties.getOrPut(propertyName) { realmDictionaryOf<DynamicMutableRealmObject>() }
-            as RealmDictionary<DynamicMutableRealmObject?>
 
     override fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject {
         properties[propertyName] = value as Any
