@@ -57,6 +57,24 @@ internal interface InternalMutableRealm : MutableRealm {
         return copyToRealm(configuration.mediator, realmReference, instance, updatePolicy)
     }
 
+    override fun <T : RealmObject> insertToRealm(instance: T, updatePolicy: UpdatePolicy) {
+        val cache: UnmanagedToManagedObjectPointerCache = mutableMapOf()
+
+        insertToRealm(realmReference, instance, updatePolicy, cache)
+
+        cache.forEach { it.value.release() }
+        cache.clear()
+    }
+
+    override fun <T : RealmObject> insertToRealm(instances: Collection<T>, updatePolicy: UpdatePolicy) {
+        val cache: UnmanagedToManagedObjectPointerCache = mutableMapOf()
+
+        insertToRealm(realmReference, instances, updatePolicy, cache)
+
+        cache.forEach { it.value.release() }
+        cache.clear()
+    }
+
     override fun delete(deleteable: Deleteable) {
         deleteable.asInternalDeleteable().delete()
     }
