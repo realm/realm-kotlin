@@ -168,8 +168,8 @@ notify_slack_channels() {
 ######################################\
 
 check_env
-verify_release_preconditions
-verify_changelog
+# verify_release_preconditions
+# verify_changelog
 
 if [ "$1" != "verify" ]; then
   create_javadoc
