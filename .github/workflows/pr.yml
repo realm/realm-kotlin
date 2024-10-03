@@ -8,6 +8,7 @@ on:
     branches:
       - main
       - releases
+      - community
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,17 +19,17 @@ env:
   CMAKE_CXX_COMPILER: /usr/local/bin/ccache-clang++
   # Workflow environment variables are not available in Job if statements: https://github.com/actions/runner/issues/1661
   # For now move this check to the `deploy-snapshot` job and figure out if there is a better way to do this.
-  # IS_RELEASE_BRANCH: "${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' }}" 
+  # IS_RELEASE_BRANCH: "${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' }}"
 
 jobs:
   static-analysis:
     uses: ./.github/workflows/include-static-analysis.yml
-   
+
   check-cache:
     uses: ./.github/workflows/include-check-cache.yml
 
   # We build the same JNI SWIG stub once and re-use it across platforms to ensure any problems
-  # with SWIG if we compile on each seperate platform. 
+  # with SWIG if we compile on each seperate platform.
   build-jni-swig-stub:
     runs-on: ubuntu-latest
     needs: check-cache
@@ -97,9 +98,9 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [check-cache, build-jni-swig-stub]
     if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
+      always() &&
+      !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.check-cache.outputs.jni-linux-lib-cache-hit != 'true'
 
@@ -157,16 +158,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jni-linux-lib-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/cinterop/build/realmLinuxBuild/librealmc.so 
+          path: ./packages/cinterop/build/realmLinuxBuild/librealmc.so
           retention-days: 1
 
   build-jvm-windows-native-lib:
     runs-on: windows-latest
     needs: [check-cache, build-jni-swig-stub]
     if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
+      always() &&
+      !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.check-cache.outputs.jni-windows-lib-cache-hit != 'true'
 
@@ -182,7 +183,7 @@ jobs:
           # error: tar failed with exit code: (128).
           # fatal: not a tree object: 7e4d802e3bde4154c227c0dd1da75c719be9f07a
           # TODO Implement better work-around here: https://mongodb.slack.com/archives/C017MBM0A30/p1661889411467029?thread_ts=1661888738.117769&cid=C017MBM0A30
-          fetch-depth: 0 
+          fetch-depth: 0
           submodules: "recursive"
 
       - name: Setup build cache
@@ -208,7 +209,7 @@ jobs:
         working-directory: packages
         run: |
           cd cinterop
-          mkdir build  
+          mkdir build
           cd build
           Remove-Item -Path realmWindowsBuild -Force -Recurse -ErrorAction Ignore
           mkdir realmWindowsBuild
@@ -280,8 +281,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
-          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++
 
       - name: Debug environment
         run: |
@@ -302,7 +303,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: jni-stub-${{ needs.check-cache.outputs.version-label }}
-          path: ${{ github.workspace }}/packages/jni-swig-stub/build/generated/sources/jni        
+          path: ${{ github.workspace }}/packages/jni-swig-stub/build/generated/sources/jni
 
       - name: Build packages
         working-directory: packages
@@ -317,7 +318,7 @@ jobs:
         with:
           name: jni-macos-lib-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/cinterop/build/realmMacOsBuild/librealmc.dylib
-          retention-days: 1     
+          retention-days: 1
 
   build-kotlin-metadata-package:
     runs-on: ubuntu-latest
@@ -325,9 +326,9 @@ jobs:
     env:
       NDK_VERSION: 23.2.8568313
     if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
+      always() &&
+      !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.check-cache.outputs.packages-metadata-cache-hit != 'true'
 
@@ -376,10 +377,10 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
-          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++
 
-      # This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
+      # This matches 23.2.8568313, but what happens if we a define specific ndk version in our build?
       - name: Setup NDK
         uses: nttld/setup-ndk@v1
         with:
@@ -390,7 +391,7 @@ jobs:
         with:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-metadata-${{ needs.check-cache.outputs.packages-sha }}
-          
+
       - name: Build Kotlin Metadata and Gradle and Compiler Plugin
         working-directory: packages
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=gradlePlugin,compilerPlugin -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=true
@@ -399,11 +400,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo/**/* 
+          path: ./packages/build/m2-buildrepo/**/*
           retention-days: 1
 
 
-  # This task is also responsible for creating the Gradle and Compiler Plugin as well as 
+  # This task is also responsible for creating the Gradle and Compiler Plugin as well as
   # all Kotlin Multiplatform Metadata
   build-jvm-packages:
     runs-on: macos-14
@@ -411,9 +412,9 @@ jobs:
     env:
       NDK_VERSION: 23.2.8568313
     if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
+      always() &&
+      !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.check-cache.outputs.packages-jvm-cache-hit != 'true'
 
@@ -435,7 +436,7 @@ jobs:
           # Last version will be used and available globally. Other Java versions can be accessed through env variables with such specification as 'JAVA_HOME_{{ MAJOR_VERSION }}_{{ ARCHITECTURE }}'
           java-version: |
             17
-            ${{ vars.VERSION_JAVA }} 
+            ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -469,8 +470,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
-          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++
 
       - name: Setup Android SDK
         env:
@@ -506,7 +507,7 @@ jobs:
         with:
           name: jni-macos-lib-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/cinterop/build/realmMacOsBuild
-          
+
       - name: Build JVM Package
         working-directory: packages
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.copyNativeJvmLibs=linux,windows,macos -Prealm.kotlin.mainHost=false
@@ -519,7 +520,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo/**/* 
+          path: ./packages/build/m2-buildrepo/**/*
           retention-days: 1
 
 
@@ -590,7 +591,7 @@ jobs:
         uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
- 
+
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.13
         with:
@@ -605,8 +606,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
-          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -644,7 +645,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: packages-android-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo/**/* 
+          path: ./packages/build/m2-buildrepo/**/*
           retention-days: 1
 
       - name: Upload Android Base Test APK
@@ -686,7 +687,7 @@ jobs:
         uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
- 
+
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.13
         with:
@@ -704,8 +705,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
-          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++
 
       - name: Build packages
         working-directory: packages
@@ -727,7 +728,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: packages-macos-x64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo/**/* 
+          path: ./packages/build/m2-buildrepo/**/*
           retention-days: 1
 
   build-macos-arm64-packages:
@@ -762,7 +763,7 @@ jobs:
         uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
- 
+
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.13
         with:
@@ -780,8 +781,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
-          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++
 
       - name: Build packages
         working-directory: packages
@@ -798,7 +799,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: packages-macos-arm64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo/**/* 
+          path: ./packages/build/m2-buildrepo/**/*
           retention-days: 1
 
   build-ios-x64-packages:
@@ -833,7 +834,7 @@ jobs:
         uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
- 
+
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.13
         with:
@@ -851,8 +852,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
-          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++
 
       - name: Build packages
         working-directory: packages
@@ -870,7 +871,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: packages-ios-x64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo/**/* 
+          path: ./packages/build/m2-buildrepo/**/*
           retention-days: 1
 
   build-ios-arm64-packages:
@@ -905,7 +906,7 @@ jobs:
         uses: clementetb/setup-ninja@master
         with:
           version: ${{ vars.VERSION_NINJA  }}
- 
+
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.13
         with:
@@ -923,8 +924,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
-          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++
 
       - name: Build packages
         working-directory: packages
@@ -942,7 +943,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: packages-ios-arm64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo/**/* 
+          path: ./packages/build/m2-buildrepo/**/*
           retention-days: 1
 
   test-android-packages-emulator:
@@ -954,13 +955,13 @@ jobs:
         include:
           - type: base
             test-title: Unit Test Results - Android Base (Emulator)
- 
+
     runs-on: macos-12 # android emulator does not run on arm64 - https://github.com/ReactiveCircus/android-emulator-runner/issues/350
     needs: [check-cache, build-android-packages, build-jvm-packages, build-kotlin-metadata-package]
     if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
+      always() &&
+      !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
 
     steps:
@@ -984,19 +985,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       - name: Restore m2-buildrepo (Android)
         uses: actions/download-artifact@v4
         with:
           name: packages-android-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       - name: Restore m2-buildrepo (JVM)
         uses: actions/download-artifact@v4
         with:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       # TODO This action does not support using `\` to split multiline scripts.
       - name: Run Integration Tests
@@ -1008,7 +1009,7 @@ jobs:
           disable-animations: true
           api-level: ${{ vars.VERSION_ANDROID_EMULATOR_API_LEVEL }} # Must be 30 to support aosp_atd
           target: default
-          arch: x86_64        
+          arch: x86_64
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
@@ -1023,7 +1024,7 @@ jobs:
         if: always() || failure()
         with:
           name: logcat-${{ matrix.type }}-emulator.txt
-          path: logcat.txt 
+          path: logcat.txt
           retention-days: 1
 
       - name: Publish Unit Test Results
@@ -1055,15 +1056,15 @@ jobs:
             os-id: macos
             package-prefix: macos-arm64
             test-title: Unit Test Results - MacOS arm64 Base
- 
+
     runs-on: ${{ matrix.os }}
     # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
     needs: [check-cache, build-kotlin-metadata-package, build-macos-x64-packages, build-macos-arm64-packages]
     if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
+      always() &&
+      !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
 
     steps:
@@ -1085,31 +1086,31 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: packages-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       - name: Restore Kotlin metadata artifacts
         uses: actions/download-artifact@v4
         with:
           name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       - name: Run tests
         working-directory: packages
         run: >
           ./gradlew :test-${{ matrix.type }}:macosTest
-          -PincludeSdkModules=false 
+          -PincludeSdkModules=false
           --info --no-daemon
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
-          name: ${{ matrix.test-title }} 
+          name: ${{ matrix.test-title }}
           path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
-          fail-on-error: true        
+          fail-on-error: true
 
   test-ios-packages:
     timeout-minutes: 60
@@ -1129,15 +1130,15 @@ jobs:
             package-prefix: arm64
             test-title: Unit Test Results - iOS arm64 Base
             test-task: iosTest
- 
+
     runs-on: ${{ matrix.os }}
     # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
     needs: [check-cache, build-kotlin-metadata-package, build-ios-x64-packages, build-ios-arm64-packages]
     if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
+      always() &&
+      !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
 
     steps:
@@ -1159,13 +1160,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: packages-ios-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       - name: Restore Kotlin metadata artifacts
         uses: actions/download-artifact@v4
         with:
           name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
 
       # App names are limited to 32 characters, so the appNamePrefix should not exceed 22 characters.
@@ -1173,14 +1174,14 @@ jobs:
         working-directory: packages
         run: >
           ./gradlew :test-${{ matrix.type }}:${{ matrix.test-task }}
-          -PincludeSdkModules=false 
+          -PincludeSdkModules=false
           --info --no-daemon
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
-          name: ${{ matrix.test-title }} 
+          name: ${{ matrix.test-title }}
           path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
@@ -1192,7 +1193,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-14, ubuntu-latest, windows-latest] 
+        os: [macos-12, macos-14, ubuntu-latest, windows-latest]
         type: [base]
         include:
           - os: macos-12
@@ -1215,9 +1216,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: [check-cache, build-jvm-packages, build-kotlin-metadata-package]
     if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
+      always() &&
+      !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
 
     steps:
@@ -1239,89 +1240,89 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       - name: Restore m2-buildrepo
         uses: actions/download-artifact@v4
         with:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       # App names are limited to 32 characters, so the appNamePrefix should not exceed 22 characters.
       - name: Run tests
         working-directory: packages
         run: >
           ./gradlew :test-${{ matrix.type }}:jvmTest
-          -PincludeSdkModules=false 
+          -PincludeSdkModules=false
           --info --no-daemon
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
-          name: ${{ matrix.test-title }} 
+          name: ${{ matrix.test-title }}
           path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
           fail-on-error: true
 
-  package-all-artifacts: 
+  package-all-artifacts:
     runs-on: ubuntu-latest
     needs: [check-cache, build-jvm-packages, build-android-packages, build-macos-x64-packages, build-macos-arm64-packages, build-ios-x64-packages, build-ios-arm64-packages, build-kotlin-metadata-package]
     if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
+      always() &&
+      !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # The Metadata artifact contain broken JVM publications, so it needs to be 
+      # The Metadata artifact contain broken JVM publications, so it needs to be
       # restored first, it so they can be overidden with the correct ones.
       - name: Restore Kotlin metadata artifacts
         uses: actions/download-artifact@v4
         with:
           name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       - name: Restore Android artifacts
         uses: actions/download-artifact@v4
         with:
           name: packages-android-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       - name: Restore JVM artifacts
         uses: actions/download-artifact@v4
         with:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       - name: Restore MacOS x64 artifacts
         uses: actions/download-artifact@v4
         with:
           name: packages-macos-x64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       - name: Restore MacOS arm64 artifacts
         uses: actions/download-artifact@v4
         with:
           name: packages-macos-arm64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       - name: Restore iOS x64 artifacts
         uses: actions/download-artifact@v4
         with:
           name: packages-ios-x64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       - name: Restore iOS arm64 artifacts
         uses: actions/download-artifact@v4
         with:
           name: packages-ios-arm64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+          path: ./packages/build/m2-buildrepo
 
       - name: Upload artifacts bundle
         uses: actions/upload-artifact@v4
@@ -1334,32 +1335,32 @@ jobs:
     uses: ./.github/workflows/include-integration-tests.yml
     needs: [check-cache, package-all-artifacts]
     if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
+      always() &&
+      !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled')
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
 
   deploy-snapshot:
     uses: ./.github/workflows/include-deploy-snapshot.yml
-    needs: [ 
-             check-cache, 
-             static-analysis, 
-             integration-tests, 
-             test-jvm-packages, 
-             test-macos-packages, 
-             test-ios-packages, 
-             test-android-packages-emulator, 
+    needs: [
+             check-cache,
+             static-analysis,
+             integration-tests,
+             test-jvm-packages,
+             test-macos-packages,
+             test-ios-packages,
+             test-android-packages-emulator,
              package-all-artifacts
            ]
     if: |
-      always() && 
-      !cancelled() && 
+      always() &&
+      !cancelled() &&
       endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
-      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' || github.ref == 'refs/heads/release/k2')
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' || github.ref == 'refs/heads/release/k2' || github.ref == 'refs/heads/community')
 
     secrets: inherit
     with:
@@ -1369,7 +1370,7 @@ jobs:
   check-release-build:
     runs-on: ubuntu-latest
     needs: [check-cache]
-    outputs:  
+    outputs:
       is_publish_build: ${{ steps.check_release.outputs.is_publish_build }}
 
     steps:
@@ -1395,7 +1396,7 @@ jobs:
               echo "is_publish_build=true" >> $GITHUB_OUTPUT
             fi
           fi
-          
+
 
       - name: Print is release build
         run: |
@@ -1403,24 +1404,24 @@ jobs:
 
   deploy-release:
     uses: ./.github/workflows/include-deploy-release.yml
-    needs: [ 
+    needs: [
               check-cache,
-              check-release-build, 
-              static-analysis, 
-              integration-tests, 
-              test-jvm-packages, 
-              test-macos-packages, 
-              test-ios-packages, 
-              test-android-packages-emulator, 
+              check-release-build,
+              static-analysis,
+              integration-tests,
+              test-jvm-packages,
+              test-macos-packages,
+              test-ios-packages,
+              test-android-packages-emulator,
               package-all-artifacts
             ]
     if: |
-      always() && 
-      !cancelled() && 
+      always() &&
+      !cancelled() &&
       !endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
-      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' || github.ref == 'refs/heads/release/k2') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' || github.ref == 'refs/heads/release/k2' || github.ref == 'refs/heads/community') &&
       (needs.check-release-build.outputs.is_publish_build == 'true')
 
     secrets: inherit

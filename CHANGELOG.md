@@ -1,5 +1,5 @@
 
-## 3.0.0-SNAPSHOT (YYYY-MM-DD)
+## 3.0.0 (2024-10-03)
 
 ### Breaking Changes
 * [Sync] Atlas Device Sync related functionality has been removed from the project.
