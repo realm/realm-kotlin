@@ -44,6 +44,7 @@ public actual fun currentTime(): RealmInstant {
         val jtInstant = java.time.Clock.systemUTC().instant()
         RealmInstantImpl(jtInstant.epochSecond, jtInstant.nano)
     } else {
-        RealmInstantImpl(System.currentTimeMillis(), 0)
+        val now = System.currentTimeMillis()
+        RealmInstantImpl(now / 1000, (now % 1000).toInt() * 1_000_000)
     }
 }

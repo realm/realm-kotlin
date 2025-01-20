@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* None.
+* `RealmInstant.now` was returning incorrect value on Android devices running API 25 and below (Issue: [#1849](https://github.com/realm/realm-kotlin/issues/1849)).
 
 ### Compatibility
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
