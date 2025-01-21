@@ -19,15 +19,36 @@ package io.realm.kotlin.internal.platform
 import io.realm.kotlin.internal.RealmObjectCompanion
 import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
-import kotlin.reflect.full.companionObjectInstance
+
 
 // TODO OPTIMIZE Can we eliminate the reflective approach? Maybe by embedding the information
 //  through the compiler plugin or something similar to the Native findAssociatedObject
 @PublishedApi
-internal actual fun <T : Any> realmObjectCompanionOrNull(clazz: KClass<T>): RealmObjectCompanion? =
-    if (clazz.companionObjectInstance is RealmObjectCompanion) {
-        clazz.companionObjectInstance as RealmObjectCompanion
-    } else null
+internal actual fun <T : Any> realmObjectCompanionOrNull(clazz: KClass<T>): RealmObjectCompanion? {
+    val cachedClass = reflectionCache[clazz]
+    if (cachedClass != null) {
+        return cachedClass
+    }
+
+    val companion = try {
+        Class.forName("${clazz.java.name}\$Companion").kotlin
+    } catch (thr: Throwable) {
+        try {
+            // For Parcelable classes
+            Class.forName("${clazz.java.name}\$CREATOR").kotlin
+        } catch (thr: Throwable) {
+            null
+        }
+    }?.objectInstance as? RealmObjectCompanion
+
+    if (companion != null) {
+        reflectionCache[clazz] = companion
+    }
+
+    return companion
+}
+
+private val reflectionCache = mutableMapOf<KClass<*>, RealmObjectCompanion>()
 
 @PublishedApi
 internal actual fun <T : BaseRealmObject> realmObjectCompanionOrThrow(clazz: KClass<T>): RealmObjectCompanion =
