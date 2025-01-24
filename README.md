@@ -2,6 +2,8 @@
 
 JVM has been tested to work the same as with builds with Kotlin 2.0.x.  Android is being tested.  Testing iOS and MacOS will depend on other contributors.
 
+Unlike the forked repo, this one enabled build from source on Linux.
+
 ------------------------------------
 
 > [!WARNING]
