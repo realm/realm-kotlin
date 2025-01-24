@@ -18,4 +18,6 @@ package io.realm.kotlin.demo.javacompatibility.data
 
 interface Repository {
     val count: Int
+
+    fun close()
 }

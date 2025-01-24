@@ -22,6 +22,8 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.demo.javacompatibility.TAG
 import io.realm.kotlin.demo.javacompatibility.data.Repository
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
 
@@ -36,7 +38,9 @@ class KotlinRepository: Repository {
     val realm: Realm
 
     init {
+        RealmLog.level = LogLevel.ALL
         val config = RealmConfiguration.Builder(setOf(KotlinEntity::class))
+
             .name("kotlin.realm")
             .build()
         Realm.deleteRealm(config)
@@ -47,4 +51,7 @@ class KotlinRepository: Repository {
     }
 
     override val count = realm.query<KotlinEntity>().find().size
+    override fun close() {
+        realm.close()
+    }
 }
