@@ -19,6 +19,9 @@ buildscript {
     repositories {
         jcenter()
     }
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0")
+    }
 }
 
 // Find property in either System environment or Gradle properties.
@@ -112,8 +115,8 @@ tasks {
 
     // TODO Verify we can actually use these debug symbols
     val archiveDebugSymbols by register("archiveDebugSymbols", Zip::class) {
-        archiveName = "realm-kotlin-jni-libs-unstripped-${currentVersion}.zip"
-        destinationDir = releaseMetaDataDir
+//        archiveName = "realm-kotlin-jni-libs-unstripped-${currentVersion}.zip"
+//        destinationDir = releaseMetaDataDir
         from("${rootDir}/packages/cinterop/build/intermediates/merged_native_libs/release/out/lib") {
             include("**/*.so")
         }

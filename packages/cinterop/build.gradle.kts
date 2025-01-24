@@ -426,7 +426,8 @@ val buildJVMSharedLibs: TaskProvider<Task> by tasks.registering {
     } else if (HOST_OS.isWindows()) {
         buildSharedLibrariesForJVMWindows()
     } else {
-        throw IllegalStateException("Building JVM libraries on this platform is not supported: $HOST_OS")
+        buildSharedLibrariesForJVMLinux()
+//        throw IllegalStateException("Building JVM libraries on this platform is not supported: $HOST_OS")
     }
 }
 
@@ -538,6 +539,42 @@ fun Task.buildSharedLibrariesForJVMMacOs() {
     inputs.dir(project.file("src/jvm"))
     inputs.dir(project.file("$absoluteCorePath/src"))
     outputs.file(project.file("$jvmJniPath/macos/librealmc.dylib"))
+}
+
+fun Task.buildSharedLibrariesForJVMLinux() {
+    group = "Build"
+    description = "Compile dynamic libraries loaded by the JVM fat jar for supported platforms."
+    val directory = "$buildDir/realmLinuxBuild"
+
+    doLast {
+        exec {
+            commandLine("mkdir", "-p", directory)
+        }
+        exec {
+            workingDir(project.file(directory))
+            commandLine(
+                "cmake",
+                *getSharedCMakeFlags(BuildType.RELEASE),
+                "-DCPACK_PACKAGE_DIRECTORY=..",
+                project.file("src/jvm/")
+            )
+        }
+        exec {
+            workingDir(project.file(directory))
+            commandLine("cmake", "--build", ".", "-j8")
+        }
+
+        // copy files (macos)
+        exec {
+            commandLine("mkdir", "-p", project.file("$jvmJniPath/linux"))
+        }
+        File("$directory/librealmc.so")
+            .copyTo(project.file("$jvmJniPath/linux/librealmc.so"), overwrite = true)
+    }
+
+    inputs.dir(project.file("src/jvm"))
+    inputs.dir(project.file("$absoluteCorePath/src"))
+    outputs.file(project.file("$jvmJniPath/linux/librealmc.so"))
 }
 
 fun Task.buildSharedLibrariesForJVMWindows() {

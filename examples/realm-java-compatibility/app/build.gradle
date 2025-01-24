@@ -24,7 +24,7 @@ plugins {
 apply plugin: "realm-android"
 
 android {
-    compileSdkVersion = 31
+    compileSdkVersion = 35
 
     defaultConfig {
         applicationId "io.realm.kotlin.demo.javacompatibility"

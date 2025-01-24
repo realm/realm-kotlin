@@ -1,3 +1,9 @@
+### This fork of Realm Kotlin SDK is to make it compatible with Kotlin 2.1.0 while updating various dependencies
+
+JVM has been tested to work the same as with builds with Kotlin 2.0.x.  Android is being tested.  Testing iOS and MacOS will depend on other contributors.
+
+------------------------------------
+
 > [!WARNING]
 > We announced the deprecation of Atlas Device Sync + Realm SDKs in September 2024. For more information please see:
 > - [SDK Deprecation](https://www.mongodb.com/docs/atlas/device-sdks/deprecation/)

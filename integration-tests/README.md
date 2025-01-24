@@ -10,3 +10,5 @@ This folder holds the various integration test projects.
   There are various project with specific Gradle versions that has been proven troublesome with
   regards to collecting analytics data and a `current` project that will use the versions used to 
   build the SDK.
+
+# TODO: will configure later

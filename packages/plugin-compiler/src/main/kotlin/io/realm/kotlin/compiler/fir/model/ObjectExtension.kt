@@ -67,7 +67,7 @@ class ObjectExtension(session: FirSession) : FirDeclarationGenerationExtension(s
                         owner,
                         RealmPluginGeneratorKey,
                         callableId.callableName,
-                        session.builtinTypes.stringType.type,
+                        session.builtinTypes.stringType.coneType,
                     ) {
                         modality = Modality.OPEN
                     }.symbol
@@ -78,10 +78,10 @@ class ObjectExtension(session: FirSession) : FirDeclarationGenerationExtension(s
                         owner,
                         RealmPluginGeneratorKey,
                         callableId.callableName,
-                        session.builtinTypes.booleanType.type,
+                        session.builtinTypes.booleanType.coneType,
                     ) {
                         modality = Modality.OPEN
-                        valueParameter(Name.identifier("other"), session.builtinTypes.nullableAnyType.type)
+                        valueParameter(Name.identifier("other"), session.builtinTypes.nullableAnyType.coneType)
                     }.symbol
                 )
             Names.REALM_OBJECT_HASH_CODE ->
@@ -90,7 +90,7 @@ class ObjectExtension(session: FirSession) : FirDeclarationGenerationExtension(s
                         owner,
                         RealmPluginGeneratorKey,
                         callableId.callableName,
-                        session.builtinTypes.intType.type,
+                        session.builtinTypes.intType.coneType,
                     ) {
                         modality = Modality.OPEN
                     }.symbol

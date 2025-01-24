@@ -44,6 +44,7 @@ repositories {
 buildscript {
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
+        classpath("org.jetbrains.dokka:dokka-gradle-plugin:${Versions.dokka}") // Use the latest version
     }
 }
 
@@ -51,9 +52,13 @@ buildscript {
 // These seem to propagate to all projects including the buildSrc/ directory, which also means
 // they are not allowed to set the version. It can only be set from here.
 dependencies {
+    implementation(kotlin("gradle-plugin", version = Versions.kotlin))
     implementation("io.github.gradle-nexus:publish-plugin:${Versions.nexusPublishPlugin}")
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.detektPlugin}")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
+    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
+    implementation("org.gradle.kotlin:gradle-kotlin-dsl-plugins:${Versions.kotlin}")
+    implementation("org.jetbrains.dokka:dokka-gradle-plugin:${Versions.dokka}")
     implementation("com.android.tools:r8:${Versions.Android.r8}")
     implementation("com.android.tools.build:gradle:${Versions.Android.buildTools}")
     implementation(kotlin("script-runtime"))

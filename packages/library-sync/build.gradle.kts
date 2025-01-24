@@ -23,9 +23,11 @@ plugins {
     id("realm-publisher")
     id("org.jetbrains.dokka")
 }
+
 buildscript {
     dependencies {
         classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
+        classpath("org.jetbrains.dokka:dokka-gradle-plugin:${Versions.dokka}")
     }
 }
 apply(plugin = "kotlinx-atomicfu")

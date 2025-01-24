@@ -15,8 +15,8 @@ buildscript {
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.1.3")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.20")
+        classpath("com.android.tools.build:gradle:8.7.3")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0")
         classpath("io.realm.kotlin:gradle-plugin:${rootProject.extra["realmVersion"]}")
     }
 }
