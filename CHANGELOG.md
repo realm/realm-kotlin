@@ -1,3 +1,10 @@
+## 3.2.0
+
+* changed project structure to make Intellij IDE work, buildSrc is moved out of scope io.realm
+* gradlew should be run in the root directory rather than packages
+* testing are on dev versions, not supporting testing maven artifacts yet
+* updated a few dependencies
+
 ## 3.1.0
 
 * updated to work with Kotlin 2.1.0

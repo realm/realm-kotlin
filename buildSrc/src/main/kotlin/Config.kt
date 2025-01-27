@@ -62,7 +62,7 @@ val HOST_OS: OperatingSystem = findHostOs()
 
 object Realm {
     val ciBuild = (System.getenv("CI") != null)
-    const val version = "3.1.0-SNAPSHOT"
+    const val version = "3.2.0-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
     const val pluginPortalId = "io.realm.kotlin"
@@ -111,7 +111,8 @@ object Versions {
     const val androidxTest = "1.6.1" // https://maven.google.com/web/index.html#androidx.test:rules
 
     // Must be built with same (major.minor!?) kotlin version as 'kotlin' variable below, to be binary compatible with kotlin
-    const val atomicfu = "0.18.5" // https://github.com/Kotlin/kotlinx.atomicfu
+    const val atomicfu = "0.26.1" // https://github.com/Kotlin/kotlinx.atomicfu
+    const val atomicfuPlugin = "0.27.0" // https://github.com/Kotlin/kotlinx.atomicfu
     const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
     const val buildkonfig = "0.13.3" // https://github.com/yshrsmz/BuildKonfig
     const val coroutines = "1.10.1" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core

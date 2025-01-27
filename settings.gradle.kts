@@ -17,3 +17,38 @@
 
 rootProject.name = "realm-kotlin-root"
 
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+    resolutionStrategy {
+        eachPlugin {
+//            if (requested.id.id.startsWith("org.example.buildsrc")) {
+//                useModule("org.example:buildSrc:${pluginManagement.version}")
+//            }
+            if (requested.id.id == "kotlinx-atomicfu") {
+                useModule("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.27.0")
+            }
+        }
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+include(":packages:gradle-plugin")
+include(":packages:plugin-compiler")
+include(":packages:plugin-compiler-shaded")
+include(":packages:library-base")
+include(":packages:library-sync")
+include(":packages:cinterop")
+include(":packages:jni-swig-stub")
+
+include(":packages:test-base")
+include(":packages:test-sync")

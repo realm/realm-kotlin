@@ -466,7 +466,7 @@ QStatusBar QComboBox::down-arrow {
     padding: 0;
     height: 14px;
     width: 14px;
-    image: url(/tmp/QnzDlz.png)
+    image: url(/tmp/KbaWnf.png)
 }
 
 QStatusBar QComboBox::drop-down:hover {

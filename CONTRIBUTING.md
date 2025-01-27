@@ -35,7 +35,7 @@ The repository can be built on Windows, although only for the JVM and Android ta
 
 ### Linux support
 
-This repository does currently not support building on Linux from the source code. 
+This repository can now be built in the same way as on the Mac. 
 
 
 ### Building and running tests
@@ -45,19 +45,17 @@ be developed and tested as a single project. For details on publishing and runni
 Maven artifacts see the [Running tests against Maven artifacts](#running-tests-against-maven-artifacts)-section.
 
 The tests are triggered from the IDE or by triggering the specific test tasks across the various
-platforms with:
+platforms with (in the root directory):
 ```sh
-cd packages
-./gradlew :test-base:jvmTest :test-base:connectedAndroidTest :test-base:macosTest :test-base:iosTest
+./gradlew :packages:test-base:jvmTest :packages:test-base:connectedAndroidTest :packages:test-base:macosTest :packages:test-base:iosTest
 
 # Note that running the test-sync suite requires running a local server 
 # (see `tools/sync_test_server/start_local_server.sh` and `tools/sync_test_server/stop_local_server.sh`)
 
-./gradlew :test-sync:jvmTest :test-sync:connectedAndroidTest :test-sync:macosTest :test-sync:iosTest
+./gradlew :packages:test-sync:jvmTest :packages:test-sync:connectedAndroidTest :packages:test-sync:macosTest :packages:test-sync:iosTest
 ```
 You can also the test across all modules on the various platforms with
 ```sh
-cd packages
 ./gradlew jvmTest connectedAndroidTest macosTest iosTest
 ```
 But this will also trigger tests in the SDK modules.
@@ -91,7 +89,6 @@ repository in a local folder using the default local and test against these usin
 commands:
 
 ```sh
-cd packages
 ./gradlew publishAllPublicationsToTestRepository
 ./gradlew -PincludeSdkModules=false jvmTest connectedAndroidTest macosTest iosTest 
 ```

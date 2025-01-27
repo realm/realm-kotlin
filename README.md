@@ -2,7 +2,11 @@
 
 JVM has been tested to work the same as with builds with Kotlin 2.0.x.  Android is being tested.  Testing iOS and MacOS will depend on other contributors.
 
-Unlike the forked repo, this one enabled build from source on Linux.
+Unlike the forked repo, this one can be built from source on Linux.
+
+Project structure is changed to make Intellij IDE work.  gradlew needs to be run from the root directory rather than packages.
+
+Testing are performed on the dev versions. Maven artifacts can be published (tested locally), but can not be tested upon yet.
 
 ------------------------------------
 

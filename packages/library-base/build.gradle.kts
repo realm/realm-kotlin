@@ -24,14 +24,9 @@ plugins {
     id("realm-publisher")
     id("org.jetbrains.dokka")
     kotlin("plugin.serialization") version Versions.kotlin
+    id("org.jetbrains.kotlinx.atomicfu") version Versions.atomicfuPlugin
 }
 
-buildscript {
-    dependencies {
-        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
-    }
-}
-apply(plugin = "kotlinx-atomicfu")
 // AtomicFu cannot transform JVM code. Maybe an issue with using IR backend. Throws
 // ClassCastException: org.objectweb.asm.tree.InsnList cannot be cast to java.lang.Iterable
 project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
@@ -64,7 +59,7 @@ kotlin {
 
                 // NOTE: scope needs to be API since 'implementation' will produce a POM with 'runtime' scope
                 //       causing the compiler plugin to fail to lookup classes from the 'cinterop' package
-                api(project(":cinterop"))
+                api(project(":packages:cinterop"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.serialization}")

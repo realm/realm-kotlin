@@ -24,7 +24,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":plugin-compiler"))
+    implementation(project(":packages:plugin-compiler"))
 }
 
 val mavenPublicationName = "compilerPluginShaded"

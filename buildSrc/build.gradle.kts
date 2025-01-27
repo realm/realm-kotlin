@@ -18,14 +18,19 @@
 plugins {
     `kotlin-dsl`
     `kotlin-dsl-precompiled-script-plugins`
+    kotlin("jvm") version Versions.kotlin
 }
 
 gradlePlugin {
     plugins {
         register("realm-publisher") {
             id = "realm-publisher"
-            implementationClass = "io.realm.kotlin.RealmPublishPlugin"
+            implementationClass = "org.realm.kotlin.RealmPublishPlugin"
         }
+//        create("realm-compiler") { // Plugin name (used internally)
+//            id = "io.realm.kotlin.plugin-compiler" // Plugin ID (used to apply)
+//            implementationClass = "io.realm.kotlin.compiler.Registrar"
+//        }
     }
 }
 
@@ -57,7 +62,7 @@ dependencies {
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.detektPlugin}")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
-    implementation("org.gradle.kotlin:gradle-kotlin-dsl-plugins:${Versions.kotlin}")
+    implementation("org.gradle.kotlin:gradle-kotlin-dsl-plugins:5.1.2")
     implementation("org.jetbrains.dokka:dokka-gradle-plugin:${Versions.dokka}")
     implementation("com.android.tools:r8:${Versions.Android.r8}")
     implementation("com.android.tools.build:gradle:${Versions.Android.buildTools}")

@@ -23,15 +23,9 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
     id("realm-publisher")
+    id("org.jetbrains.kotlinx.atomicfu") version Versions.atomicfuPlugin
 }
 
-buildscript {
-    dependencies {
-        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
-    }
-}
-
-apply(plugin = "kotlinx-atomicfu")
 // AtomicFu cannot transform JVM code. Throws
 // ClassCastException: org.objectweb.asm.tree.InsnList cannot be cast to java.lang.Iterable
 project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
@@ -71,7 +65,7 @@ fun checkIfBuildingNativeLibs(task: Task, action: Task.() -> Unit) {
 }
 
 val corePath = "external/core"
-val absoluteCorePath = "$rootDir/$corePath"
+val absoluteCorePath = "$rootDir/packages/$corePath"
 val jvmJniPath = "src/jvmMain/resources/jni"
 
 fun includeBinaries(binaries: List<String>): List<String> {
@@ -236,7 +230,7 @@ kotlin {
         val jvm by creating {
             dependsOn(commonMain)
             dependencies {
-                api(project(":jni-swig-stub"))
+                api(project(":packages:jni-swig-stub"))
             }
         }
         val jvmMain by getting {
@@ -746,10 +740,10 @@ afterEvaluate {
     // the cpp file as it somehow processes the CMakeList.txt-file, but haven't dug up the
     // actuals
     tasks.named("generateJsonModelDebug") {
-        inputs.files(tasks.getByPath(":jni-swig-stub:realmWrapperJvm").outputs)
+        inputs.files(tasks.getByPath(":packages:jni-swig-stub:realmWrapperJvm").outputs)
     }
     tasks.named("generateJsonModelRelease") {
-        inputs.files(tasks.getByPath(":jni-swig-stub:realmWrapperJvm").outputs)
+        inputs.files(tasks.getByPath(":packages:jni-swig-stub:realmWrapperJvm").outputs)
     }
 }
 

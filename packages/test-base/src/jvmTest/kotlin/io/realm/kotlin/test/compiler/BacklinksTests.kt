@@ -42,11 +42,15 @@ class BacklinksTests {
     fun `unsupported types`() {
         unsupportedTypes.forEach { entry ->
             val (type, value) = entry
+            println("Testing type: $type, value: $value")
 
             val result = createFileAndCompile(
                 "unsupportedTypes.kt",
                 TARGET_INVALID_TYPE.format(type, value)
             )
+            println("Exit code: ${result.exitCode}")
+            println("Messages: ${result.messages}")
+
             assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
             assertContains(
                 result.messages,
