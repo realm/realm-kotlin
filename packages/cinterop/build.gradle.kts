@@ -848,4 +848,10 @@ abstract class CmakeVersionProvider : ValueSource<String, ValueSourceParameters.
 // enable execution optimizations for generateSdkVersionConstant
 afterEvaluate {
     tasks.getByName("sourcesJar").dependsOn(generateSdkVersionConstant)
+    tasks.named("androidReleaseSourcesJar") {
+        dependsOn("generateSdkVersionConstant")
+    }
+    tasks.named("jvmSourcesJar") {
+        dependsOn("generateSdkVersionConstant")
+    }
 }

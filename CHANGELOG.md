@@ -1,3 +1,7 @@
+## 3.2.1
+
+* fixed local publishing errors (for jvm and Android)
+
 ## 3.2.0
 
 * changed project structure to make Intellij IDE work, buildSrc is moved out of scope io.realm
