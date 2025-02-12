@@ -1,3 +1,8 @@
+## 3.2.2
+
+* set Android targetSDK to 35
+* included the publishing scripts from @PavelFedoseev https://github.com/realm/realm-kotlin/issues/1857#issuecomment-2621494944
+
 ## 3.2.1
 
 * fixed local publishing errors (for jvm and Android)

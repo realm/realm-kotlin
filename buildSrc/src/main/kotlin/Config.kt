@@ -98,7 +98,7 @@ object Realm {
 object Versions {
     object Android {
         const val minSdk = 21
-        const val targetSdk = 33
+        const val targetSdk = 35
         const val compileSdkVersion = 35
         const val buildToolsVersion = "35.0.0"
         const val buildTools = "8.7.3" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
