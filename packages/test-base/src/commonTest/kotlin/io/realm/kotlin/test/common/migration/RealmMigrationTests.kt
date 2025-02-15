@@ -23,7 +23,7 @@ import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.dynamic.DynamicRealmObject
-import io.realm.kotlin.dynamic.getValue
+import io.realm.kotlin.dynamic.get
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.primarykey.PrimaryKeyString
 import io.realm.kotlin.ext.query
@@ -136,15 +136,15 @@ class RealmMigrationTests {
                 migrationContext.enumerate("MigrationSample") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject? ->
                     newObject?.run {
                         // Merge property
-                        assertEquals("", getValue("fullName"))
-                        set("fullName", "${oldObject.getValue<String>("firstName")} ${ oldObject.getValue<String>("lastName") }")
+                        assertEquals("", get("fullName"))
+                        set("fullName", "${oldObject.get<String>("firstName")} ${ oldObject.get<String>("lastName") }")
 
                         // Rename property
-                        assertEquals("", getValue("renamedProperty"))
-                        set("renamedProperty", oldObject.getValue<String>("property"))
+                        assertEquals("", get("renamedProperty"))
+                        set("renamedProperty", oldObject.get<String>("property"))
                         // Change type
-                        assertEquals("", getValue("type"))
-                        set("type", oldObject.getValue<Long>("type").toString())
+                        assertEquals("", get("type"))
+                        set("type", oldObject.get<Long>("type").toString())
                     }
                 }
             }
@@ -168,8 +168,8 @@ class RealmMigrationTests {
             // FIXME Can we get this to have the DataMigrationContext as receiver
             migration = {
                 it.enumerate("Sample") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject? ->
-                    assertEquals(initialValue, oldObject.getValue("stringField"))
-                    assertEquals(initialValue, newObject?.getValue("stringField"))
+                    assertEquals(initialValue, oldObject.get<String>("stringField"))
+                    assertEquals(initialValue, newObject?.get<String>("stringField"))
                     newObject?.set("stringField", migratedValue)
                 }
             }
@@ -193,7 +193,7 @@ class RealmMigrationTests {
             // FIXME Can we get this to have the DataMigrationContext as receiver
             migration = { migrationContext ->
                 migrationContext.enumerate("Sample") { oldObject: DynamicRealmObject, newObject: DynamicMutableRealmObject? ->
-                    if (oldObject.getValue<Long>("intField") == 1L) {
+                    if (oldObject.get<Long>("intField") == 1L) {
                         // Delete all objects
                         migrationContext.newRealm.run {
                             delete(query("Sample"))

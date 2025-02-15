@@ -70,6 +70,7 @@ import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
+import kotlin.reflect.KType
 
 /**
  * This object holds helper methods for the compiler plugin generated methods, providing the
@@ -888,16 +889,137 @@ internal object RealmObjectHelper {
         }
     }
 
+    internal fun <R> dynamicGetFromKType(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+        type: KType,
+        issueDynamicMutableObject: Boolean = false
+    ): R {
+        obj.checkValid()
+        val collectionType = when {
+            type.classifier == RealmList::class -> CollectionType.RLM_COLLECTION_TYPE_LIST
+            type.classifier == RealmSet::class -> CollectionType.RLM_COLLECTION_TYPE_SET
+            type.classifier == RealmDictionary::class -> CollectionType.RLM_COLLECTION_TYPE_DICTIONARY
+            else -> CollectionType.RLM_COLLECTION_TYPE_NONE
+        }
+        val elementType: KType = if (collectionType != CollectionType.RLM_COLLECTION_TYPE_NONE) {
+            type.arguments[0].type!!
+        } else type
+
+        val propertyMetadata = checkPropertyType(
+            obj,
+            propertyName,
+            collectionType,
+            elementType.classifier as KClass<*>,
+//            type.classifier as KClass<R & Any>,
+            elementType.isMarkedNullable
+        )
+        val operatorType = when {
+            propertyMetadata.type == PropertyType.RLM_PROPERTY_TYPE_MIXED ->
+                CollectionOperatorType.REALM_ANY
+
+            propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT ->
+                CollectionOperatorType.PRIMITIVE
+
+            !obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject ->
+                CollectionOperatorType.REALM_OBJECT
+
+            else -> CollectionOperatorType.EMBEDDED_OBJECT
+        }
+        // FIXME get<RealmAny> to return collections in mixed
+        return when (collectionType) {
+            CollectionType.RLM_COLLECTION_TYPE_NONE -> {
+                return getterScope {
+                    val transport = realm_get_value(obj.objectPointer, propertyMetadata.key)
+
+                    // Consider moving this dynamic conversion to Converters.kt
+                    val value = when (type.classifier) {
+                        DynamicRealmObject::class,
+                        DynamicMutableRealmObject::class -> realmValueToRealmObject(
+                            transport,
+                            type.classifier as KClass<out BaseRealmObject>,
+                            obj.mediator,
+                            obj.owner
+                        )
+                        RealmAny::class -> realmValueToRealmAny(
+                            realmValue = transport,
+                            parent = obj,
+                            mediator = obj.mediator,
+                            owner = obj.owner,
+                            issueDynamicObject = true,
+                            issueDynamicMutableObject = issueDynamicMutableObject,
+                            getListFunction = {
+                                RealmInterop.realm_get_list(
+                                    obj.objectPointer,
+                                    propertyMetadata.key
+                                )
+                            },
+                            getDictionaryFunction = {
+                                RealmInterop.realm_get_dictionary(
+                                    obj.objectPointer,
+                                    propertyMetadata.key
+                                )
+                            }
+                        )
+
+                        else -> with(primitiveTypeConverters.getValue(type.classifier as KClass<R & Any>)) {
+                            realmValueToPublic(transport)
+                        }
+                    }
+                    value?.let {
+                        @Suppress("UNCHECKED_CAST")
+                        if ((type.classifier as KClass<R & Any>).isInstance(value)) {
+                            value as R
+                        } else {
+                            throw ClassCastException("Retrieving value of type '${(type.classifier as KClass<R & Any>).simpleName}' but was of type '${value::class.simpleName}'")
+                        }
+                    } as R
+                }
+            }
+            CollectionType.RLM_COLLECTION_TYPE_LIST -> {
+                getListByKey(
+                    obj,
+                    propertyMetadata,
+                    elementType.classifier as KClass<R & Any>,
+                    operatorType,
+                    true,
+                    issueDynamicMutableObject
+                ) as R
+            }
+            CollectionType.RLM_COLLECTION_TYPE_SET -> {
+                getSetByKey(
+                    obj,
+                    propertyMetadata,
+                    elementType.classifier as KClass<R & Any>,
+                    operatorType,
+                    true,
+                    issueDynamicMutableObject
+                ) as R
+            }
+            CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> {
+                getDictionaryByKey(
+                    obj,
+                    propertyMetadata,
+                    elementType.classifier as KClass<R & Any>,
+                    operatorType,
+                    true,
+                    issueDynamicMutableObject
+                ) as R
+            }
+            else -> sdkError("Unknown collection type $collectionType")
+        }
+    }
+
     /**
      * Get values for non-collection properties by name.
      *
      * This will verify that the requested type (`clazz`) and nullability matches the property
      * properties in the schema.
      */
-    internal fun <R : Any> dynamicGet(
+    internal fun <R> dynamicGet(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
-        clazz: KClass<R>,
+        clazz: KClass<R & Any>,
         nullable: Boolean,
         issueDynamicMutableObject: Boolean = false
     ): R? {

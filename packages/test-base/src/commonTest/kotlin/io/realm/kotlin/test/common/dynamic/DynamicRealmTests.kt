@@ -35,7 +35,7 @@ package io.realm.kotlin.test.common.dynamic
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.dynamic.getValue
+import io.realm.kotlin.dynamic.get
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.internal.asDynamicRealm
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
@@ -84,7 +84,7 @@ class DynamicRealmTests {
         val result = dynamicRealm.query("Sample", "intField = $0", 0).find()
         assertEquals(5, result.size)
         result.forEach { sample ->
-            assertEquals(0L, sample.getValue("intField"))
+            assertEquals(0L, sample.get("intField"))
         }
     }
 
