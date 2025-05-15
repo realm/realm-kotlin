@@ -76,7 +76,6 @@ class RealmModelDefaultMethodGeneration(private val pluginContext: IrPluginConte
                     type = pluginContext.irBuiltIns.booleanType,
                     symbol = realmEquals.symbol,
                     typeArgumentsCount = 0,
-                    valueArgumentsCount = 2
                 ).apply {
                     dispatchReceiver = irGetObject(realmObjectHelper.symbol)
                     putValueArgument(0, irGet(function.dispatchReceiverParameter!!.type, function.dispatchReceiverParameter!!.symbol))
@@ -96,7 +95,6 @@ class RealmModelDefaultMethodGeneration(private val pluginContext: IrPluginConte
                     type = pluginContext.irBuiltIns.intType,
                     symbol = realmHashCode.symbol,
                     typeArgumentsCount = 0,
-                    valueArgumentsCount = 1
                 ).apply {
                     dispatchReceiver = irGetObject(realmObjectHelper.symbol)
                     putValueArgument(0, irGet(function.dispatchReceiverParameter!!.type, function.dispatchReceiverParameter!!.symbol))
@@ -115,7 +113,6 @@ class RealmModelDefaultMethodGeneration(private val pluginContext: IrPluginConte
                     type = pluginContext.irBuiltIns.stringType,
                     symbol = realmToString.symbol,
                     typeArgumentsCount = 0,
-                    valueArgumentsCount = 1
                 ).apply {
                     dispatchReceiver = irGetObject(realmObjectHelper.symbol)
                     putValueArgument(0, irGet(function.dispatchReceiverParameter!!.type, function.dispatchReceiverParameter!!.symbol))

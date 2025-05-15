@@ -92,6 +92,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
+import org.jetbrains.kotlin.ir.expressions.impl.fromSymbolOwner
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
@@ -303,7 +304,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 type = companionFieldsType,
                 symbol = mapOf,
                 typeArgumentsCount = 2,
-                valueArgumentsCount = 1,
                 origin = null,
                 superQualifierSymbol = null
             ).apply {
@@ -503,7 +503,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             type = classInfoClass.defaultType,
                             symbol = classInfoCreateMethod.symbol,
                             typeArgumentsCount = 0,
-                            valueArgumentsCount = 4
                         ).apply {
                             dispatchReceiver = irGetObject(classInfoClass.companionObject()!!.symbol)
                             var arg = 0
@@ -677,7 +676,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 } ?: irNull(pluginContext.irBuiltIns.kClassClass.typeWith(typedRealmObjectInterface.defaultType).makeNullable())
 
                                 // Define the link target. Empty string if there is none.
-                                val linkPropertyName: IrConst<String> = if (type == linkingObjectType) {
+                                val linkPropertyName: IrConst = if (type == linkingObjectType) {
                                     val targetPropertyName = getLinkingObjectPropertyName(backingField)
                                     irString(targetPropertyName)
                                 } else {
@@ -690,7 +689,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     type = propertyClass.defaultType,
                                     symbol = propertyCreateMethod,
                                     typeArgumentsCount = 0,
-                                    valueArgumentsCount = 10
                                 ).apply {
                                     var arg = 0
                                     // Persisted name

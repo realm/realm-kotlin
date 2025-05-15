@@ -72,6 +72,7 @@ import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrCall
+import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrPropertyReference
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
@@ -222,7 +223,7 @@ val FirClassSymbol<*>.isBaseRealmObject: Boolean
                             )
                 }
                 // After SUPERTYPES stage
-                is FirResolvedTypeRef -> typeRef.type.classId in realmObjectClassIds
+                is FirResolvedTypeRef -> typeRef.coneType.classId in realmObjectClassIds
                 else -> false
             }
         }
@@ -414,7 +415,7 @@ data class SchemaProperty(
     companion object {
         fun getPersistedName(declaration: IrProperty): String {
             @Suppress("UNCHECKED_CAST")
-            return (declaration.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrConstImpl<String>).value
+            return (declaration.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrConst).value!!.toString()
         }
     }
 }
@@ -436,9 +437,6 @@ internal fun <T : IrExpression> buildOf(
         type = containerType.typeWith(elementType),
         symbol = function,
         typeArgumentsCount = 1,
-        valueArgumentsCount = 1,
-        origin = null,
-        superQualifierSymbol = null
     ).apply {
         putTypeArgument(index = 0, type = elementType)
         putValueArgument(
@@ -583,11 +581,11 @@ fun IrBlockBuilder.createSafeCallConstruction(
         statements += receiverVariable
         statements += IrWhenImpl(startOffset, endOffset, resultType).apply {
             val condition = IrCallImpl(
-                startOffset, endOffset, context.irBuiltIns.booleanType,
-                context.irBuiltIns.eqeqSymbol,
-                valueArgumentsCount = 2,
-                typeArgumentsCount = 0,
-                origin = IrStatementOrigin.EQEQ
+                startOffset = startOffset,
+                endOffset = endOffset,
+                type = context.irBuiltIns.booleanType,
+                origin = IrStatementOrigin.EQEQ,
+                symbol = context.irBuiltIns.eqeqSymbol,
             ).apply {
                 putValueArgument(0, IrGetValueImpl(startOffset, endOffset, receiverVariableSymbol))
                 putValueArgument(
@@ -674,7 +672,7 @@ fun getLinkingObjectPropertyName(backingField: IrField): String {
 fun getSchemaClassName(clazz: IrClass): String {
     return if (clazz.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
         @Suppress("UNCHECKED_CAST")
-        return (clazz.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrConstImpl<String>).value
+        return (clazz.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrConst).value!!.toString()
     } else {
         clazz.name.identifier
     }
