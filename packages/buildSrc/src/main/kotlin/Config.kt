@@ -62,7 +62,7 @@ val HOST_OS: OperatingSystem = findHostOs()
 
 object Realm {
     val ciBuild = (System.getenv("CI") != null)
-    const val version = "4.0.0"
+    const val version = "3.1.0"
     // The version of the native realm binaries to avoid rebuilding them
     const val nativeRealmVersion = "3.0.0"
     const val group = "com.simprints.realm.kotlin"

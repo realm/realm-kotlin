@@ -21,6 +21,7 @@ import io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey
 import io.realm.kotlin.compiler.isBaseRealmObject
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.declarations.DirectDeclarationsAccess
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.extensions.MemberGenerationContext
 import org.jetbrains.kotlin.fir.plugin.createMemberFunction
@@ -43,6 +44,7 @@ private val realmObjectDefaultMethods = setOf(
  * Fir extension that adds `toString`, `equals` and `hashCode` to RealmObject-classes.
  */
 class ObjectExtension(session: FirSession) : FirDeclarationGenerationExtension(session) {
+    @OptIn(DirectDeclarationsAccess::class)
     override fun getCallableNamesForClass(
         classSymbol: FirClassSymbol<*>,
         context: MemberGenerationContext
@@ -67,7 +69,7 @@ class ObjectExtension(session: FirSession) : FirDeclarationGenerationExtension(s
                         owner,
                         RealmPluginGeneratorKey,
                         callableId.callableName,
-                        session.builtinTypes.stringType.type,
+                        session.builtinTypes.stringType.coneType,
                     ) {
                         modality = Modality.OPEN
                     }.symbol
@@ -78,10 +80,10 @@ class ObjectExtension(session: FirSession) : FirDeclarationGenerationExtension(s
                         owner,
                         RealmPluginGeneratorKey,
                         callableId.callableName,
-                        session.builtinTypes.booleanType.type,
+                        session.builtinTypes.booleanType.coneType,
                     ) {
                         modality = Modality.OPEN
-                        valueParameter(Name.identifier("other"), session.builtinTypes.nullableAnyType.type)
+                        valueParameter(Name.identifier("other"), session.builtinTypes.nullableAnyType.coneType)
                     }.symbol
                 )
             Names.REALM_OBJECT_HASH_CODE ->
@@ -90,7 +92,7 @@ class ObjectExtension(session: FirSession) : FirDeclarationGenerationExtension(s
                         owner,
                         RealmPluginGeneratorKey,
                         callableId.callableName,
-                        session.builtinTypes.intType.type,
+                        session.builtinTypes.intType.coneType,
                     ) {
                         modality = Modality.OPEN
                     }.symbol
