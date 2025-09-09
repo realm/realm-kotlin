@@ -1,6 +1,6 @@
 <picture>
-    <source srcset="./images/logo-dark.svg" media="(prefers-color-scheme: dark)" alt="realm by MongoDB">
-    <img src="./images/logo.svg" alt="realm by MongoDB">
+    <source srcset="./images/logo-dark.svg" media="(prefers-color-scheme: dark)" alt="realm">
+    <img src="./images/logo.svg" alt="realm">
 </picture>
 
 [![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/realm/kotlin/io.realm.kotlin.gradle.plugin/maven-metadata.xml.svg?colorB=ff6b00&label=Gradle%20Plugin%20Portal)](https://plugins.gradle.org/plugin/io.realm.kotlin)
@@ -23,13 +23,15 @@ This repository holds the source code for the Kotlin SDK for Realm, which runs o
 
 The Realm Kotlin SDK is GA.
 
-Documentation can be found [here](https://www.mongodb.com/docs/atlas/device-sdks/sdk/kotlin/).
+Documentation can be found in the [docs/](docs/README.md) dir.
 
 Sample projects can be found [here](https://github.com/realm/realm-kotlin-samples).
 
 If you are upgrading from a previous beta release of Realm Kotlin, please see the [CHANGELOG](CHANGELOG.md) for the full list of changes.
 
-If you are migrating from [Realm Java](https://github.com/realm/realm-java), please see the [Migration Guide](https://www.mongodb.com/docs/atlas/device-sdks/sdk/kotlin/migrate-from-java-sdk-to-kotlin-sdk/).
+If you are migrating from [Realm
+Java](https://github.com/realm/realm-java), please see the Migration
+Guide in the realm-java repo.
 
 
 # Usage
@@ -38,8 +40,8 @@ If you are migrating from [Realm Java](https://github.com/realm/realm-java), ple
 
 Installation differs slightly depending on the type of project. See the details in the documentation:
 
-* [Android](https://www.mongodb.com/docs/atlas/device-sdks/sdk/kotlin/install/#std-label-kotlin-install-android)
-* [Kotlin Multiplatform](https://www.mongodb.com/docs/atlas/device-sdks/sdk/kotlin/install/#std-label-kotlin-install-kotlin-multiplatform)
+* [Android](docs/guides/install.md)
+* [Kotlin Multiplatform](docs/guides/install.md)
 
 Also pay attention to restrictions on which versions of Kotlin and other dependencies that are supported. You can read 
 more in the [version compatibility matrix](#version-compatibility-matrix).
@@ -96,7 +98,7 @@ CoroutineScope(context).async {
 
 ## Query
 
-The query language supported by Realm is inspired by Apple’s [NSPredicate](https://developer.apple.com/documentation/foundation/nspredicate), see more examples [here](https://www.mongodb.com/docs/atlas/device-sdks/realm-query-language/)
+The query language supported by Realm is inspired by Apple’s [NSPredicate](https://developer.apple.com/documentation/foundation/nspredicate), see more examples [here](docs/guides/realm-query-language.md)
 
 ```Kotlin
 // All persons
