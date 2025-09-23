@@ -1,3 +1,13 @@
+## 3.1.0 (2025-05-15)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+Fix compiler crash after update to Kotlin 2.1.21 (Issue [#1857](https://github.com/realm/realm-kotlin/issues/1857))
 
 ## 3.0.0 (2024-10-03)
 

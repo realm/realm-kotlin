@@ -105,15 +105,15 @@ tasks {
     register<GradleBuild>("mavenCentralUpload") {
         description = "Push all Realm artifacts to Maven Central"
         group = "Publishing"
-        buildFile = file("${rootDir}/packages/build.gradle.kts")
+        dir = file("${rootDir}/packages/build.gradle.kts")
         tasks = listOf("publishToSonatype")
         copyProperties(this)
     }
 
     // TODO Verify we can actually use these debug symbols
     val archiveDebugSymbols by register("archiveDebugSymbols", Zip::class) {
-        archiveName = "realm-kotlin-jni-libs-unstripped-${currentVersion}.zip"
-        destinationDir = releaseMetaDataDir
+        archiveFileName.set("realm-kotlin-jni-libs-unstripped-${currentVersion}.zip")
+        destinationDirectory.set(releaseMetaDataDir)
         from("${rootDir}/packages/cinterop/build/intermediates/merged_native_libs/release/out/lib") {
             include("**/*.so")
         }
