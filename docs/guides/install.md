@@ -9,7 +9,7 @@ method and requirements:
 Before getting started, ensure your development environment
 meets the following prerequisites:
 
-- Minimum versions noted in the source code [README](../README.md)
+- Minimum versions noted in the source code [README](/README.md)
   for:
   - Android Studio
   - JDK
