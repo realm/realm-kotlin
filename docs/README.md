@@ -7,7 +7,7 @@ These docs provide minimal-explanation code examples of how to work with the Kot
 Use the SDK's open-source database - Realm - as an object store on the
 device.
 
-> ****TIP:**** See the [Quick Start](/quick-start.md) to integrate
+> ****TIP:**** See the [Quick Start](./guides/quick-start.md) to integrate
 > Realm into your Kotlin app and get started.
 >
 
