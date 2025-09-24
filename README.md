@@ -1,10 +1,18 @@
+> [!WARNING]
+> We announced the deprecation of Atlas Device Sync + Realm SDKs in September 2024. For more information please see:
+> - [SDK Deprecation](https://www.mongodb.com/docs/atlas/device-sdks/deprecation/)
+> - [Device Sync Deprecation](https://www.mongodb.com/docs/atlas/app-services/sync/device-sync-deprecation/)
+>
+> For a version of Realm Kotlin without sync features, install version `3.0.0+` or see the `community` git branch.
+
+
 <picture>
     <source srcset="./images/logo-dark.svg" media="(prefers-color-scheme: dark)" alt="realm">
     <img src="./images/logo.svg" alt="realm">
 </picture>
 
-[![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/realm/kotlin/io.realm.kotlin.gradle.plugin/maven-metadata.xml.svg?colorB=ff6b00&label=Gradle%20Plugin%20Portal)](https://plugins.gradle.org/plugin/io.realm.kotlin)
-[![Maven Central](https://img.shields.io/maven-central/v/io.realm.kotlin/gradle-plugin?colorB=4dc427&label=Maven%20Central)](https://search.maven.org/artifact/io.realm.kotlin/gradle-plugin)
+[![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/realm/kotlin/io.realm.kotlin.gradle.plugin/maven-metadata.xml.svg?colorB=ff6b00&label=Gradle%20Plugin%20Portal&versionPrefix=2)](https://plugins.gradle.org/plugin/io.realm.kotlin)
+[![Maven Central](https://img.shields.io/maven-central/v/io.realm.kotlin/gradle-plugin/2.3.0?colorB=4dc427&label=Maven%20Central)](https://search.maven.org/artifact/io.realm.kotlin/gradle-plugin)
 [![Kotlin](https://img.shields.io/badge/kotlin-2.0.20-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![License](https://img.shields.io/badge/License-Apache-blue.svg)](https://github.com/realm/realm-kotlin/blob/master/LICENSE)
 
@@ -323,8 +331,7 @@ See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L20txt) for the latest versio
 
 # Version Compatibility Matrix
 
-With Kotlin Multiplatform [still in Beta](https://kotlinlang.org/docs/components-stability.html#current-stability-of-kotlin-components) 
-and the Compiler Plugin APIs being experimental, there might be restrictions on what versions of Kotlin the Realm Kotlin
+With the Compiler Plugin APIs being experimental, there might be restrictions on what versions of Kotlin the Realm Kotlin
 SDK supports. In the matrix below, you will find the minimum supported version for the dependencies of each Realm release.
 
 | Realm Version | Requirements                                                                                                                                                                                             |
