@@ -309,7 +309,7 @@ bool realm_object_is_valid(const realm_object_t*);
 %typemap(argout) uint8_t* %{
 SWIG_JavaArrayArgoutSchar(jenv, jarr$argnum, (signed char *)$1, $input);
 %}
-%typemap(freearg) uint8_t*;
+%typemap(freearg) signed char **;
 
 // Enable passing void** as long[]
 %apply int64_t[] {void **};
@@ -322,7 +322,7 @@ SWIG_JavaArrayArgoutSchar(jenv, jarr$argnum, (signed char *)$1, $input);
 %typemap(argout) void ** %{
     SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
 %}
-%typemap(freearg) void**;
+%typemap(freearg) long long**;
 
 // Reuse above typemap for void** (from apply int64_t[]) {void **}) to pass various pointer types as
 // long[]
