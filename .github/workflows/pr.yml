@@ -84,8 +84,7 @@ jobs:
           cd ~
           brew tap homebrew/core --force
           cd "$(brew --repo homebrew/core)"
-          git fetch --unshallow
-          git checkout 3b3300546b5a4e40b74f4ee33cf225cca280defe
+          git checkout 4.1.1
           curl -L ${{ vars.VERSION_SWIG}} > swig.rb && HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true brew install swig.rb --force
 
       - name: Build JNI Stub
