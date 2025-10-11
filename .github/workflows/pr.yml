@@ -992,7 +992,7 @@ jobs:
           - type: sync
             test-title: Unit Test Results - Android Sync (Emulator)
  
-    runs-on: macos-12 # android emulator does not run on arm64 - https://github.com/ReactiveCircus/android-emulator-runner/issues/350
+    runs-on: macos-13 # android emulator does not run on arm64 - https://github.com/ReactiveCircus/android-emulator-runner/issues/350
     needs: [check-cache, build-android-packages, build-jvm-packages, build-kotlin-metadata-package]
     if: |
       always() && 
@@ -1238,15 +1238,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-14]
+        os: [macos-13, macos-14]
         type: [base, sync]
         include:
-          - os: macos-12
+          - os: macos-13
             type: base
             os-id: macos
             package-prefix: macos-x64
             test-title: Unit Test Results - MacOS x64 Base
-          - os: macos-12
+          - os: macos-13
             type: sync
             os-id: macos
             package-prefix: macos-x64
@@ -1367,15 +1367,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-14]
+        os: [macos-13, macos-14]
         type: [base, sync]
         include:
-          - os: macos-12
+          - os: macos-13
             type: base
             package-prefix: x64
             test-title: Unit Test Results - iOS x64 Base
             test-task: iosTest
-          - os: macos-12
+          - os: macos-13
             type: sync
             package-prefix: x64
             test-title: Unit Test Results - iOS x64 Sync
@@ -1496,10 +1496,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-14, ubuntu-latest, windows-latest] 
+        os: [macos-13, macos-14, ubuntu-latest, windows-latest] 
         type: [base, sync]
         include:
-          - os: macos-12
+          - os: macos-13
             os-id: mac
             type: base
             test-title: Unit Test Results - Base JVM MacOS x64
@@ -1515,7 +1515,7 @@ jobs:
             os-id: win
             type: base
             test-title: Unit Test Results - Base JVM Windows
-          - os: macos-12
+          - os: macos-13
             os-id: mac
             type: sync
             test-title: Unit Test Results - Sync JVM MacOS x64
