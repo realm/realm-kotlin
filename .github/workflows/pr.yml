@@ -82,10 +82,10 @@ jobs:
           echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
           cd ~
-          brew tap homebrew/core
+          brew tap homebrew/core --force
           cd "$(brew --repo homebrew/core)"
           git checkout 3b3300546b5a4e40b74f4ee33cf225cca280defe
-          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true brew install swig.rb
+          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true brew install swig.rb --force
 
       - name: Build JNI Stub
         working-directory: ./packages
