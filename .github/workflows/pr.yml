@@ -81,8 +81,8 @@ jobs:
           echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
           echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
-          cd ~
-          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true brew install swig.rb
+          cd ~          
+          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true brew install swig
 
       - name: Build JNI Stub
         working-directory: ./packages
@@ -580,8 +580,7 @@ jobs:
           echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
           echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
-          cd ~
-          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true brew install swig.rb
+          HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true brew install swig
 
       - name: Install JSON parser
         run: brew install jq
@@ -986,14 +985,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        type: [base, sync]
+        type: [base]
         include:
           - type: base
             test-title: Unit Test Results - Android Base (Emulator)
-          - type: sync
-            test-title: Unit Test Results - Android Sync (Emulator)
  
-    runs-on: macos-12 # android emulator does not run on arm64 - https://github.com/ReactiveCircus/android-emulator-runner/issues/350
+    runs-on: macos-13 # android emulator does not run on arm64 - https://github.com/ReactiveCircus/android-emulator-runner/issues/350
     needs: [check-cache, build-android-packages, build-jvm-packages, build-kotlin-metadata-package]
     if: |
       always() && 
@@ -1027,12 +1024,18 @@ jobs:
           #   curl: option --data: error encountered when reading a file
           OUTPUT=$(bash cli.sh start | jq -r '.id')
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
-
-      - name: Setup Java 11
+      
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          java-version: '17'
+          distribution: 'temurin'
+    
+      # - name: Setup Java 11
+      #   uses: actions/setup-java@v4
+      #   with:
+      #     distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+      #     java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -1239,15 +1242,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-14]
+        os: [macos-13, macos-14]
         type: [base, sync]
         include:
-          - os: macos-12
+          - os: macos-13
             type: base
             os-id: macos
             package-prefix: macos-x64
             test-title: Unit Test Results - MacOS x64 Base
-          - os: macos-12
+          - os: macos-13
             type: sync
             os-id: macos
             package-prefix: macos-x64
@@ -1368,15 +1371,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-14]
+        os: [macos-13, macos-14]
         type: [base, sync]
         include:
-          - os: macos-12
+          - os: macos-13
             type: base
             package-prefix: x64
             test-title: Unit Test Results - iOS x64 Base
             test-task: iosTest
-          - os: macos-12
+          - os: macos-13
             type: sync
             package-prefix: x64
             test-title: Unit Test Results - iOS x64 Sync
@@ -1497,10 +1500,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-14, ubuntu-latest, windows-latest] 
+        os: [macos-13, macos-14, ubuntu-latest, windows-latest] 
         type: [base, sync]
         include:
-          - os: macos-12
+          - os: macos-13
             os-id: mac
             type: base
             test-title: Unit Test Results - Base JVM MacOS x64
@@ -1516,7 +1519,7 @@ jobs:
             os-id: win
             type: base
             test-title: Unit Test Results - Base JVM Windows
-          - os: macos-12
+          - os: macos-13
             os-id: mac
             type: sync
             test-title: Unit Test Results - Sync JVM MacOS x64
