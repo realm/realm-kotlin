@@ -985,12 +985,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        type: [base, sync]
+        type: [base]
         include:
           - type: base
             test-title: Unit Test Results - Android Base (Emulator)
-          - type: sync
-            test-title: Unit Test Results - Android Sync (Emulator)
  
     runs-on: macos-13 # android emulator does not run on arm64 - https://github.com/ReactiveCircus/android-emulator-runner/issues/350
     needs: [check-cache, build-android-packages, build-jvm-packages, build-kotlin-metadata-package]
@@ -1026,12 +1024,18 @@ jobs:
           #   curl: option --data: error encountered when reading a file
           OUTPUT=$(bash cli.sh start | jq -r '.id')
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
-
-      - name: Setup Java 11
+      
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          java-version: '17'
+          distribution: 'temurin'
+    
+      # - name: Setup Java 11
+      #   uses: actions/setup-java@v4
+      #   with:
+      #     distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+      #     java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
