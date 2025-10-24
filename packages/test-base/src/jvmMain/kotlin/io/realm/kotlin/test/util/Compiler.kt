@@ -30,6 +30,7 @@ object Compiler {
         plugins: List<Registrar> = listOf(Registrar())
     ): JvmCompilationResult =
         KotlinCompilation().apply {
+            jvmTarget = "11"
             sources = listOf(source)
             messageOutputStream = System.out
             @Suppress("deprecation")

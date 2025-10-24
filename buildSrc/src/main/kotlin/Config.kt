@@ -126,7 +126,7 @@ object Versions {
     const val kotlin = "2.1.0" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
     const val kotlinJvmTarget = "11" // Which JVM bytecode version is kotlin compiled to.
     const val latestKotlin = "2.1.0" // https://kotlinlang.org/docs/eap.html#build-details
-    const val kotlinCompileTesting = "0.5.1" // https://github.com/zacsweers/kotlin-compile-testing
+    const val kotlinCompileTesting = "0.7.0" // https://github.com/zacsweers/kotlin-compile-testing
     const val ktlint = "0.45.2" // https://github.com/pinterest/ktlint
     const val ktor = "2.3.12" // https://github.com/ktorio/ktor
     const val multidex = "2.0.1" // https://developer.android.com/jetpack/androidx/releases/multidex
