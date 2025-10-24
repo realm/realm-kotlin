@@ -45,11 +45,11 @@ jobs:
         run: |-
           echo "::add-matcher::.github/problem-matchers/kotlin.json"
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          distribution: 'temurin'
+          java-version: 17
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -120,11 +120,11 @@ jobs:
           path: ./packages/cinterop/build/realmLinuxBuild
           key: jni-linux-lib-${{ needs.check-cache.outputs.packages-sha }}
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          distribution: 'temurin'
+          java-version: 17
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2.0.2
@@ -248,11 +248,11 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          distribution: 'temurin'
+          java-version: 17
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -344,11 +344,11 @@ jobs:
         run: |-
           echo "::add-matcher::.github/problem-matchers/kotlin.json"
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          distribution: 'temurin'
+          java-version: 17
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -692,11 +692,11 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          distribution: 'temurin'
+          java-version: 17
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -768,11 +768,11 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          distribution: 'temurin'
+          java-version: 17
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -839,11 +839,11 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          distribution: 'temurin'
+          java-version: 17
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -911,11 +911,11 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          distribution: 'temurin'
+          java-version: 17
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -1296,11 +1296,11 @@ jobs:
           OUTPUT=$(bash cli.sh start | jq -r '.id')
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          distribution: 'temurin'
+          java-version: 17
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -1425,11 +1425,11 @@ jobs:
           OUTPUT=$(bash cli.sh start | jq -r '.id')
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          distribution: 'temurin'
+          java-version: 17
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -1567,11 +1567,11 @@ jobs:
           OUTPUT=$(bash cli.sh start | jq -r '.id')
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          distribution: 'temurin'
+          java-version: 17
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
