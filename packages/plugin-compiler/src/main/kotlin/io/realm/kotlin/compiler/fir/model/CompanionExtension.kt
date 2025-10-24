@@ -66,7 +66,7 @@ class CompanionExtension(session: FirSession) : FirDeclarationGenerationExtensio
         classSymbol: FirClassSymbol<*>,
         context: MemberGenerationContext
     ): Set<Name> {
-        if (classSymbol.isCompanion && (classSymbol.getContainingClassSymbol(session) as? FirClassSymbol<*>)?.isBaseRealmObject == true) {
+        if (classSymbol.isCompanion && (classSymbol.getContainingClassSymbol() as? FirClassSymbol<*>)?.isBaseRealmObject == true) {
             return setOf(
                 Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD,
                 Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD,
@@ -88,7 +88,7 @@ class CompanionExtension(session: FirSession) : FirDeclarationGenerationExtensio
                         owner,
                         RealmPluginGeneratorKey,
                         callableId.callableName,
-                        session.builtinTypes.anyType.type,
+                        session.builtinTypes.anyType.coneType,
                     ).symbol
                 )
 
@@ -98,7 +98,7 @@ class CompanionExtension(session: FirSession) : FirDeclarationGenerationExtensio
                         owner,
                         RealmPluginGeneratorKey,
                         callableId.callableName,
-                        session.builtinTypes.anyType.type
+                        session.builtinTypes.anyType.coneType
                     ).symbol
                 )
 

@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.FirUserTypeRef
 import org.jetbrains.kotlin.fir.types.classId
+import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
@@ -226,7 +227,7 @@ val FirClassSymbol<*>.isBaseRealmObject: Boolean
                             )
                 }
                 // After SUPERTYPES stage
-                is FirResolvedTypeRef -> typeRef.type.classId in realmObjectClassIds
+                is FirResolvedTypeRef -> typeRef.coneType.classId in realmObjectClassIds
                 else -> false
             }
         }
@@ -424,7 +425,7 @@ data class SchemaProperty(
     companion object {
         fun getPersistedName(declaration: IrProperty): String {
             @Suppress("UNCHECKED_CAST")
-            return (declaration.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrConstImpl<String>).value
+            return (declaration.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrConstImpl).value?.toString() ?: ""
         }
     }
 }
@@ -446,7 +447,6 @@ internal fun <T : IrExpression> buildOf(
         type = containerType.typeWith(elementType),
         symbol = function,
         typeArgumentsCount = 1,
-        valueArgumentsCount = 1,
         origin = null,
         superQualifierSymbol = null
     ).apply {
@@ -595,7 +595,6 @@ fun IrBlockBuilder.createSafeCallConstruction(
             val condition = IrCallImpl(
                 startOffset, endOffset, context.irBuiltIns.booleanType,
                 context.irBuiltIns.eqeqSymbol,
-                valueArgumentsCount = 2,
                 typeArgumentsCount = 0,
                 origin = IrStatementOrigin.EQEQ
             ).apply {
@@ -684,7 +683,7 @@ fun getLinkingObjectPropertyName(backingField: IrField): String {
 fun getSchemaClassName(clazz: IrClass): String {
     return if (clazz.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
         @Suppress("UNCHECKED_CAST")
-        return (clazz.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrConstImpl<String>).value
+        return (clazz.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrConstImpl).value?.toString() ?: ""
     } else {
         clazz.name.identifier
     }

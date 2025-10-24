@@ -140,7 +140,6 @@ private class SyncLowering(private val pluginContext: IrPluginContext, private v
                     type = expression.type,
                     symbol = target.symbol,
                     typeArgumentsCount = 0,
-                    valueArgumentsCount = target.valueParameters.size,
                     origin = null,
                     superQualifierSymbol = null
                 ).apply {
