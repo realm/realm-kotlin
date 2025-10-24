@@ -1717,10 +1717,10 @@ jobs:
              # test-android-packages-device-farm-sync,
              package-all-artifacts
            ]
-    # if: |
-    #   always() &&
+    if: |
+      always() &&
     #   !cancelled() &&
-    #   endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
+      endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT')
     #   !contains(needs.*.result, 'failure') &&
     #   !contains(needs.*.result, 'cancelled') &&
     #   (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' || github.ref == 'refs/heads/release/k2')
