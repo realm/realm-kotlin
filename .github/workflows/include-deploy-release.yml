@@ -13,8 +13,8 @@ on:
 
 jobs:
   deploy:
-    runs-on: macos-12
-    name: Deploy release 
+    runs-on: macos-13
+    name: Deploy release
 
     steps:
       - name: git checkout
@@ -60,10 +60,10 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
-          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++
 
-      # TODO This matches 23.2.8568313, but what happens if we define specific ndk version in our build? 
+      # TODO This matches 23.2.8568313, but what happens if we define specific ndk version in our build?
       - name: Setup NDK
         uses: nttld/setup-ndk@v1
         with:
@@ -109,4 +109,3 @@ jobs:
          "${{ secrets.SLACK_URL_RELEASE }}" "${{ secrets.SLACK_URL_CI }}" \
          "${{ secrets.GRADLE_PORTAL_KEY }}" "${{ secrets.GRADLE_PORTAL_SECRET }}" \
          '-PsignBuild=true -PsignSecretRingFileKotlin="${{ secrets.GPG_SIGNING_KEY_BASE_64_DBG }}" -PsignPasswordKotlin=${{ secrets.GPG_PASS_PHRASE_DBG }} -Prealm.kotlin.copyNativeJvmLibs=linux,windows'
-        
