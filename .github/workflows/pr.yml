@@ -436,9 +436,7 @@ jobs:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           # JVM 17 is required for android-actions/setup-android@v3
           # Last version will be used and available globally. Other Java versions can be accessed through env variables with such specification as 'JAVA_HOME_{{ MAJOR_VERSION }}_{{ ARCHITECTURE }}'
-          java-version: |
-            17
-            ${{ vars.VERSION_JAVA }}
+          java-version: 17
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -556,9 +554,7 @@ jobs:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           # JVM 17 is required for android-actions/setup-android@v3
           # Last version will be used and available globally. Other Java versions can be accessed through env variables with such specification as 'JAVA_HOME_{{ MAJOR_VERSION }}_{{ ARCHITECTURE }}'
-          java-version: |
-            17
-            ${{ vars.VERSION_JAVA }}
+          java-version: 17
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
@@ -1029,8 +1025,8 @@ jobs:
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 17
-          java-version: 'temurin'
+          distribution: 'temurin'
+          java-version: 17
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/actions/setup-gradle@v3
