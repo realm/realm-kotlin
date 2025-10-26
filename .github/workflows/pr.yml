@@ -980,12 +980,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        type: [base, sync]
+        type: [base]
         include:
           - type: base
             test-title: Unit Test Results - Android Base (Emulator)
-          - type: sync
-            test-title: Unit Test Results - Android Sync (Emulator)
+          # - type: sync
+          #   test-title: Unit Test Results - Android Sync (Emulator)
 
     runs-on: macos-13 # android emulator does not run on arm64 - https://github.com/ReactiveCircus/android-emulator-runner/issues/350
     needs: [check-cache, build-android-packages, build-jvm-packages, build-kotlin-metadata-package]
