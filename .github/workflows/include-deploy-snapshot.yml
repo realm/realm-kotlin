@@ -37,7 +37,7 @@ jobs:
       - name: Restore m2-buildrepo
         uses: actions/download-artifact@v4
         with:
-          name: all-packages-${{ inputs.version-label }}
+          name: all-packages-2.4.0-SNAPSHOT
           path: ./packages/build/m2-buildrepo
 
       - name: Publish SNAPSHOT to Maven Central
