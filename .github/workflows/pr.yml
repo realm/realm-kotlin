@@ -27,7 +27,6 @@ jobs:
   # with SWIG if we compile on each seperate platform.
   build-jni-swig-stub:
     runs-on: ubuntu-latest
-    needs: check-cache
     if: always()
     steps:
       - name: Check if secrets are populated
