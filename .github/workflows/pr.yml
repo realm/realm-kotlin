@@ -23,18 +23,12 @@ env:
   # IS_RELEASE_BRANCH: "${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' }}"
 
 jobs:
-  static-analysis:
-    uses: ./.github/workflows/include-static-analysis.yml
-
-  check-cache:
-    uses: ./.github/workflows/include-check-cache.yml
-
   # We build the same JNI SWIG stub once and re-use it across platforms to ensure any problems
   # with SWIG if we compile on each seperate platform.
   build-jni-swig-stub:
     runs-on: ubuntu-latest
     needs: check-cache
-    if: always() && !cancelled() && needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
+    if: always()
     steps:
       - name: Check if secrets are populated
         # We assign secrets to environment variables for use in the 'run' block.
